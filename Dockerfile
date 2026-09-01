@@ -6,7 +6,7 @@
 # front of it — Cloudflare Tunnel connects straight to this process — so the api
 # serves the static client itself (WEB_DIST_DIR=./web).
 
-FROM node:26-alpine AS base
+FROM node:24-alpine AS base
 RUN corepack enable && apk add --no-cache openssl
 WORKDIR /app
 
