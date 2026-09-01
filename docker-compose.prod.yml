@@ -69,6 +69,8 @@ services:
     command: ["node", "dist/worker.js"]
     restart: always
     env_file: .env
+    ports:
+      - 5573:5173
     volumes:
       # The worker builds thumbnails and sweeps retention, so it needs the same
       # directory the API writes to.
