@@ -1,6 +1,15 @@
-# Production topology (PLAN/01 §5). Two processes from one image: the request
-# path and the worker never share an event loop — that is the failure isolation
-# this system actually needs.
+# Production topology (PLAN/01 §5).
+#
+# Three containers and no reverse proxy. cloudflared runs on the VM itself and
+# reaches the api container through a loopback-only published port, so nothing
+# here is on the public internet except through the tunnel.
+#
+# The api process does what a proxy used to: serves the built SPA, sets the
+# security headers, compresses, and restricts the storage hostname to the signed
+# upload route. See apps/api/src/kernel/http/.
+#
+# Two processes from one image: the request path and the worker never share an
+# event loop — that is the failure isolation this system actually needs.
 name: commercial2026
 
 services:
@@ -26,16 +35,26 @@ services:
       target: api
     restart: unless-stopped
     env_file: .env
+    # Loopback only. cloudflared on the host is the sole client; binding to
+    # 0.0.0.0 would publish the API to the VM's network for no reason.
+    ports:
+      - "127.0.0.1:3000:3000"
     volumes:
       # Photos live here while STORAGE_DRIVER=local. This volume is the single
-      # copy of the evidence: it must be in the backup job, and it is the reason
+      # copy of the evidence: it belongs in the backup job, and it is the reason
       # the README names a point at which object storage has to come back.
       - uploads:/app/uploads
     depends_on:
       postgres:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:3000/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
       interval: 30s
       timeout: 5s
       retries: 3
@@ -56,41 +75,6 @@ services:
       postgres:
         condition: service_healthy
 
-  caddy:
-    image: caddy:2-alpine
-    restart: unless-stopped
-    # No published ports. Cloudflare Tunnel reaches Caddy over the container
-    # network, so nothing is exposed on the host at all — which is most of the
-    # point of using a tunnel.
-    expose:
-      - "80"
-    volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile:ro
-      - ./apps/web/dist:/srv/web:ro
-      - caddy-data:/data
-      - caddy-config:/config
-    depends_on:
-      - api
-
-  # Publishes tire.zedth.my.id and tire-store.zedth.my.id through Cloudflare.
-  # Opt-in: `docker compose --profile tunnel up -d`.
-  #
-  # Configure both hostnames in the Cloudflare dashboard to point at the same
-  # origin, `http://caddy:80`. Caddy decides which is which by Host header, and
-  # tire-store answers 404 for everything but the signed upload route.
-  cloudflared:
-    image: cloudflare/cloudflared:latest
-    restart: unless-stopped
-    profiles: ["tunnel"]
-    command: tunnel --no-autoupdate run
-    environment:
-      # From the Cloudflare dashboard. Belongs in .env, never in this file.
-      TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN}
-    depends_on:
-      - caddy
-
 volumes:
   postgres-data:
   uploads:
-  caddy-data:
-  caddy-config:

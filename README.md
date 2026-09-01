@@ -45,33 +45,39 @@ leaving that variable empty seeds master data and the first admin only.
 
 ## How it is exposed
 
-Two hostnames behind a Cloudflare Tunnel, and the split matters:
+Cloudflare Tunnel runs on the VM and connects straight to the api container.
+There is no reverse proxy: the api process serves the built SPA, sets the
+security headers, compresses, and enforces the host split itself.
 
 | Hostname | Serves |
 |---|---|
-| `tire.zedth.my.id` | The SPA, plus `/api/*` reverse-proxied to the api container **on the same origin** |
-| `tire-store.zedth.my.id` | Nothing but `/api/uploads/{signed-token}`. Everything else answers 404 |
+| `tire.zedth.my.id` | The SPA and the whole API, on one origin |
+| `tire-store.zedth.my.id` | `/api/uploads/{signed-token}` and nothing else. Every other path answers 404 |
 
-Proxying the API on the application's own origin removes the three costs
-`PLAN/01` §4.2 accepted for splitting the SPA from the API: there is no CORS, no
-cross-site cookie handling, and one public entry point instead of two. What the
-split was actually for — a client/server boundary that cannot leak, and a backend
-not tied to React — is a property of the code, and it is unchanged.
+Point both hostnames at `http://127.0.0.1:3000`. The api tells them apart by
+Host header, in [`kernel/http/hosts.ts`](apps/api/src/kernel/http/hosts.ts) —
+code rather than proxy configuration, because it is a security boundary and a
+boundary that can be unit-tested is worth more than one in a config file.
+
+Serving the API on the application's own origin removes the three costs
+`PLAN/01` §4.2 accepted for splitting the SPA from the API: no CORS, no
+cross-site cookie handling, one entry point. What the split was for — a
+client/server boundary that cannot leak, and a backend not tied to React — is a
+property of the code and is unchanged.
 
 The storage host is separate for one reason. It serves customer fleet
 photographs, authorised solely by a signed, expiring, single-purpose token
-(`PLAN/05` §7). Because the session cookie is **host-only** on
-`tire.zedth.my.id`, it is never sent to `tire-store.zedth.my.id` at all — so a
-leaked photo URL carries no session with it. Leave `COOKIE_DOMAIN` empty in
-production; setting it to `zedth.my.id` would widen the cookie to every
-subdomain and give that property away.
+(`PLAN/05` §7). The session cookie is **host-only** on `tire.zedth.my.id`, so it
+is never sent to `tire-store.zedth.my.id` — a leaked photo URL carries no session
+with it. Leave `COOKIE_DOMAIN` empty in production; setting it to `zedth.my.id`
+would widen the cookie to every subdomain and give that property away.
 
 ```bash
-docker compose -f docker-compose.prod.yml --profile tunnel up -d
+docker compose -f docker-compose.prod.yml up -d --build
 ```
 
-Point both hostnames at the same origin, `http://caddy:80`. Caddy routes by Host
-header; cloudflared terminates TLS at the edge, so Caddy publishes no host port.
+The api publishes only to `127.0.0.1:3000`, so nothing is reachable from the
+VM's network — the tunnel is the sole way in.
 
 ## Where photos are stored
 

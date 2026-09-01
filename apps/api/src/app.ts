@@ -1,14 +1,17 @@
 import Fastify, { type FastifyInstance } from "fastify";
+import compress from "@fastify/compress";
 import cookie from "@fastify/cookie";
 import cors from "@fastify/cors";
-import helmet from "@fastify/helmet";
 import rateLimit from "@fastify/rate-limit";
 import { ERROR_DEFINITIONS } from "@c26/contracts";
 import { loadConfig } from "./kernel/config.ts";
 import { getLogger, loggerOptions } from "./kernel/logger.ts";
 import { registerRequestContext } from "./kernel/http/context.ts";
 import { verifyCsrf } from "./kernel/http/csrf.ts";
+import { isRouteAllowedForHost, isStorageHost } from "./kernel/http/hosts.ts";
 import { RATE_LIMITS } from "./kernel/http/rate-limits.ts";
+import { securityHeadersFor } from "./kernel/http/security-headers.ts";
+import { registerStaticSpa } from "./kernel/http/static-spa.ts";
 import { errorEnvelope } from "./kernel/envelope/wrap-route.ts";
 import { AppError } from "./kernel/envelope/index.ts";
 import { registerAuthRoutes, resolveActor } from "./modules/auth/index.ts";
@@ -28,6 +31,11 @@ import { registerUploadRoutes } from "./modules/uploads/index.ts";
 /**
  * Builds the Fastify application.
  *
+ * There is no reverse proxy in front of this. Cloudflare Tunnel terminates TLS
+ * at the edge and connects straight to this process, so everything a proxy used
+ * to do lives here: serving the SPA, the security headers, compression, and the
+ * host restriction that keeps the storage hostname to a single route.
+ *
  * Exported separately from `server.ts` so tests can build an app without
  * binding a port.
  */
@@ -42,7 +50,9 @@ export function buildApp(): FastifyInstance {
     // `Logger` and make every `registerXRoutes(app)` call a type error.
     logger: loggerOptions(),
     disableRequestLogging: true, // the context hook logs a single richer line
-    trustProxy: true, // Caddy sits in front
+    // cloudflared is the only client and it reaches this over loopback, so
+    // X-Forwarded-For can be believed.
+    trustProxy: true,
     // Small by default: only the upload route needs more, and it raises its own
     // limit to the 5 MB the photo contract allows.
     bodyLimit: 2 * 1024 * 1024,
@@ -50,20 +60,12 @@ export function buildApp(): FastifyInstance {
 
   registerRequestContext(app);
 
-  void app.register(helmet, {
-    // The SPA's CSP is served by Caddy; the API answers JSON only and locks
-    // itself down completely (PLAN/13 §7).
-    contentSecurityPolicy: {
-      directives: { "default-src": ["'none'"], "frame-ancestors": ["'none'"] },
-    },
-    // `frame-ancestors 'none'` is worth noting: the legacy system lived INSIDE an
-    // Apps Script sandbox iframe (B-07). This one refuses to be framed at all.
-    hsts: { maxAge: 31_536_000, includeSubDomains: true, preload: true },
-  });
+  void app.register(compress, { global: true, encodings: ["br", "gzip"], threshold: 1024 });
 
   void app.register(cors, {
-    // An explicit allowlist. Never '*', and never a reflected Origin header
-    // (PLAN/13 §2).
+    // Nearly vestigial now that the SPA is same-origin, and kept for local
+    // development where Vite runs on :5173. Still an explicit allowlist: never
+    // '*', never a reflected Origin header (PLAN/13 §2).
     // Copied into a mutable array: @fastify/cors will not take a readonly one.
     origin: [...config.allowedOrigins],
     credentials: true,
@@ -84,8 +86,45 @@ export function buildApp(): FastifyInstance {
       errorEnvelope(new AppError("RATE_LIMITED"), request.requestId),
   });
 
-  // ── Authentication and CSRF, before every handler ──────────────────────────
+  const servingSpa = registerStaticSpa(app);
+
+  // ── Security headers, chosen per response class (PLAN/13 §7) ──────────────
+  const headerContext = {
+    storageOrigin: config.STORAGE_HOST === "" ? "" : `https://${config.STORAGE_HOST}`,
+    secure: config.APP_ENV !== "local",
+  };
+
+  app.addHook("onSend", (request, reply, payload, done) => {
+    const responseClass = isStorageHost(request.hostname, config.STORAGE_HOST)
+      ? "storage"
+      : request.url.startsWith("/api/")
+        ? "api"
+        : "spa";
+
+    for (const [name, value] of Object.entries(securityHeadersFor(responseClass, headerContext))) {
+      void reply.header(name, value);
+    }
+    done(null, payload);
+  });
+
+  // ── Host restriction, authentication, and CSRF, before every handler ──────
   app.addHook("preHandler", async (request) => {
+    /**
+     * The storage hostname serves the signed upload route and nothing else.
+     *
+     * 404 rather than 403 on purpose: somebody who finds that hostname should
+     * learn nothing about what else this API can do.
+     */
+    if (
+      !isRouteAllowedForHost({
+        host: request.hostname,
+        path: request.url,
+        storageHost: config.STORAGE_HOST,
+      })
+    ) {
+      throw new AppError("NOT_FOUND");
+    }
+
     request.actor = await resolveActor(request);
 
     // Login and health are the only state-changing routes that can be reached
@@ -100,7 +139,9 @@ export function buildApp(): FastifyInstance {
     const csrfExempt =
       path === "/api/auth/login" ||
       path === "/api/health" ||
-      path.startsWith("/api/uploads/");
+      path.startsWith("/api/uploads/") ||
+      // Static assets and the SPA shell. Nothing here changes state.
+      !path.startsWith("/api/");
 
     if (!csrfExempt) verifyCsrf(request);
   });
@@ -155,14 +196,28 @@ export function buildApp(): FastifyInstance {
     return reply.status(mapped.status).send(errorEnvelope(mapped, request.requestId));
   });
 
-  app.setNotFoundHandler((request, reply) =>
-    reply.status(404).send(
+  /**
+   * One not-found handler, deciding between two very different answers.
+   *
+   * A path under /api is a genuine 404 and stays JSON — answering it with
+   * index.html would turn a mistyped endpoint into a blank white page and a
+   * mystery. Anything else is a client-side route and gets the SPA shell, so a
+   * shared link to one Serial Number resolves on a cold load. That is what
+   * closes B-07: the legacy application lived at a single URL inside an iframe
+   * sandbox, where nothing could be bookmarked and Back did not work.
+   */
+  app.setNotFoundHandler((request, reply) => {
+    if (servingSpa && request.method === "GET" && !request.url.startsWith("/api/")) {
+      return reply.header("cache-control", "no-cache").sendFile("index.html");
+    }
+
+    return reply.status(404).send(
       errorEnvelope(
         new AppError("NOT_FOUND", { message: ERROR_DEFINITIONS.NOT_FOUND.message }),
         request.requestId,
       ),
-    ),
-  );
+    );
+  });
 
   return app;
 }

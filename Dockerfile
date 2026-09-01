@@ -1,6 +1,10 @@
 # One image, two entrypoints: `node dist/server.js` and `node dist/worker.js`
 # (PLAN/01 §5). Export jobs over tens of thousands of rows must never share an
 # event loop with user requests.
+#
+# The image also carries the built SPA at /app/web. There is no reverse proxy in
+# front of it — Cloudflare Tunnel connects straight to this process — so the api
+# serves the static client itself (WEB_DIST_DIR=./web).
 
 FROM node:22-alpine AS base
 RUN corepack enable && apk add --no-cache openssl
@@ -29,11 +33,13 @@ COPY --from=build /app/packages/contracts/package.json ./packages/contracts/
 COPY --from=build /app/apps/api/node_modules ./apps/api/node_modules
 COPY --from=build /app/apps/api/dist ./dist
 COPY --from=build /app/apps/api/prisma ./prisma
+COPY --from=build /app/apps/api/prisma.config.ts ./prisma.config.ts
 COPY --from=build /app/apps/api/package.json ./package.json
+# The client, served by this same process (see kernel/http/static-spa.ts).
+COPY --from=build /app/apps/web/dist ./web
+# Photos land here when STORAGE_DRIVER=local; the compose file mounts a volume
+# over it. Created with the right owner so the unprivileged user can write.
+RUN mkdir -p /app/uploads && chown -R node:node /app/uploads
 USER node
 EXPOSE 3000
 CMD ["node", "dist/server.js"]
-
-# ── Static client, copied out by Caddy ──────────────────────────────────────
-FROM scratch AS web
-COPY --from=build /app/apps/web/dist /web
