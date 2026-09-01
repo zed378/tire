@@ -69,21 +69,53 @@ are untested claims rather than facts, and this document says so.
 
 ## Bugs found by running it, not by reading it
 
-Four defects that no amount of typechecking would have caught, and that were only
-visible once the thing was actually started:
+Eight defects that no amount of typechecking would have caught, and that were
+only visible once the thing was actually used:
 
-1. **Every inspection would have failed to get a Serial Number.** Prisma binds a
+**Found by the system owner exercising the app**
+
+1. **A transient failure logged the user out.** `RequireSession` read
+   `user === null` from a query whose `data` was `undefined` because the request
+   had FAILED — so a brief API restart during `pnpm verify` bounced them to the
+   login screen, three times, with no explanation. "We could not ask" and "the
+   answer is no" are now different states: the first shows a retry screen and
+   keeps the user in place.
+2. **Nothing could be enqueued.** The API writes to `pgboss.job` inside the
+   caller's transaction, but the schema was created only when the worker first
+   started. Every export and every photo confirmation answered 500 with
+   `relation "pgboss.job" does not exist`.
+3. **Nor could it after the schema existed.** pg-boss v10 partitions `job` by
+   queue name, so the insert then failed with `no partition of relation "job"
+   found for row`. `pnpm db:migrate` now installs the schema and a partition per
+   queue, and the API refuses to start without them rather than failing on
+   somebody's first Export.
+4. **An admin could reach screens they could not use.** `PLAN/13` §3.1 requires
+   MFA enrolment before any access; the app only showed a banner, so the first
+   privileged action returned a 403 STEP_UP_REQUIRED that could not be satisfied
+   — there was no second factor to step up with. Enrolment and the initial
+   password change are now gates, not suggestions.
+5. **Step-up was a dead end.** Even with MFA enrolled, a 403 STEP_UP_REQUIRED had
+   no way forward: no dialog, no retry. A request that needs re-verification now
+   asks for a code and replays itself.
+
+**Found by starting the thing up**
+
+6. **Every inspection would have failed to get a Serial Number.** Prisma binds a
    JS number as `int8`; `next_serial_number` takes `int4`, so PostgreSQL reported
    that the function did not exist. Fixed with an explicit `::int` cast at both
    call sites.
-2. **Every photo upload and view would have returned 414.** The signed storage
+7. **Every photo upload and view would have returned 414.** The signed storage
    token is a route parameter of about 270 characters and Fastify caps those at
    100 by default. `maxParamLength` is now 1024, with a regression test pinning
    the token size.
-3. **Fingerprinted assets were not cached at all.** `@fastify/static` sets its own
+8. **Fingerprinted assets were not cached at all.** `@fastify/static` sets its own
    `Cache-Control: public, max-age=0` — a re-download of the whole bundle on
    every visit, over exactly the 4G connections `PLAN/06` §7 budgets for.
-4. **`LOG_LEVEL=silent` was rejected**, though it is a real pino level.
+9. **`LOG_LEVEL=silent` was rejected**, though it is a real pino level.
+
+Five of the nine were in the paths a user actually touches, and none would have
+been caught by the gates as they stand. That is the strongest argument available
+for the integration suite named under G-06.
 
 ## Found while implementing
 

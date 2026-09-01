@@ -28,10 +28,22 @@ cp .env.example .env          # works as-is for local; never commit this file
 docker compose up -d          # postgres:18-alpine
 pnpm install
 pnpm --filter @c26/api prisma generate
-pnpm db:migrate               # NOT `prisma migrate dev` — see PLAN/09 §4.5
+pnpm db:migrate               # schema + the job queue. NOT `prisma migrate dev`
 pnpm db:seed                  # master data, first admin, demo data + sample photos
 pnpm dev                      # api on :3000, web on :5173
+pnpm dev:worker               # separate terminal: processes background jobs
 ```
+
+`pnpm db:migrate` runs two steps: the Prisma migration, then `queue-setup`, which
+installs the pg-boss schema **and a partition per queue**. Both are needed before
+the API can enqueue anything, because `PLAN/12` §2.1 has it write the job inside
+the caller's transaction. The API refuses to start if that schema is missing
+rather than failing later, on somebody's first Export.
+
+The worker is a separate process on purpose (`PLAN/01` §5): exports over tens of
+thousands of rows must never share an event loop with a field worker's upload.
+Without it running, jobs queue up and are processed once it starts — exports stay
+at "Menyiapkan berkas…", and the queue depth is visible on the operations panel.
 
 `pnpm db:seed` creates the `uploads/` directory, five demo accounts (one per
 role, plus a second supplier), and six inspections covering every state in the
