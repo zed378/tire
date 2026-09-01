@@ -1,0 +1,20 @@
+node_modules/
+dist/
+build/
+coverage/
+.turbo/
+*.tsbuildinfo
+
+# Kredensial — tidak pernah masuk repo (PLAN/09 §4.5, PLAN/13 §8)
+.env
+.env.*
+!.env.example
+
+# Artefak lokal
+.DS_Store
+*.log
+apps/api/prisma/*.db
+playwright-report/
+test-results/
+.stryker-tmp/
+reports/

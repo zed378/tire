@@ -1,0 +1,65 @@
+# Local development stack (PLAN/01 §5.1, environment `local`).
+# Production runs the same api/worker images behind Caddy on the Singapore VPS.
+name: commercial2026
+
+services:
+  postgres:
+    image: postgres:18-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: c26
+      POSTGRES_PASSWORD: c26_local_only
+      POSTGRES_DB: c26
+      # Deterministic collation keeps index behaviour identical across machines.
+      POSTGRES_INITDB_ARGS: "--locale-provider=icu --icu-locale=en-US --encoding=UTF8"
+    command:
+      - postgres
+      - -c
+      - max_connections=100
+      - -c
+      - shared_buffers=256MB
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/18/docker
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U c26 -d c26"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  # Stands in for Cloudflare R2 locally. Same S3 API, so no code path differs.
+  minio:
+    image: minio/minio:latest
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: c26_local
+      MINIO_ROOT_PASSWORD: c26_local_only
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio-data:/data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  minio-init:
+    image: minio/mc:latest
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c "
+      mc alias set local http://minio:9000 c26_local c26_local_only &&
+      mc mb --ignore-existing local/c26-photos &&
+      mc version enable local/c26-photos &&
+      echo 'bucket c26-photos ready'
+      "
+
+volumes:
+  postgres-data:
+  minio-data:

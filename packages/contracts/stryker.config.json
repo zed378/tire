@@ -1,0 +1,12 @@
+{
+  "$schema": "./node_modules/@stryker-mutator/core/schema/stryker-schema.json",
+  "_comment": "Gate G-07 (PLAN/09 §5). Coverage proves a line ran; it does not prove a test would notice if the line were wrong. Stryker flips operators (> to >=, && to ||) and checks whether any test goes red. On the one module that decides all downstream data, that is not a luxury.",
+  "packageManager": "pnpm",
+  "testRunner": "vitest",
+  "mutate": ["src/axle/*.ts", "!src/axle/*.test.ts", "!src/axle/index.ts"],
+  "coverageAnalysis": "perTest",
+  "reporters": ["progress", "clear-text", "html"],
+  "htmlReporter": { "fileName": "reports/mutation/index.html" },
+  "thresholds": { "high": 95, "low": 90, "break": 85 },
+  "timeoutMS": 60000
+}

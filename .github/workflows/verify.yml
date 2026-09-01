@@ -1,0 +1,161 @@
+# CI gates G-01 .. G-13 (PLAN/09 §5). These are the real code reviewer on this
+# project: there is no second human reading the diff.
+name: verify
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+env:
+  NODE_VERSION: "22"
+  PNPM_VERSION: "9.15.0"
+
+jobs:
+  static:
+    name: G-01 G-02 G-03 G-08 G-10 G-13 — static gates
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+
+      - uses: pnpm/action-setup@v4
+        with: { version: "${{ env.PNPM_VERSION }}" }
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "${{ env.NODE_VERSION }}"
+          cache: pnpm
+
+      # G-13 — the lockfile may not drift without a package.json change.
+      - name: Install (frozen lockfile)
+        run: pnpm install --frozen-lockfile
+
+      - name: Generate Prisma client
+        run: pnpm --filter @c26/api prisma generate
+
+      - name: G-01 typecheck (strict)
+        run: pnpm typecheck
+
+      - name: G-02 lint + module boundaries
+        run: pnpm lint
+
+      - name: G-03 + G-10 forbidden patterns
+        run: pnpm check:forbidden
+
+      - name: G-08 secret scan (gitleaks)
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  rules:
+    name: G-04 — every validation rule has a test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with: { version: "${{ env.PNPM_VERSION }}" }
+      - uses: actions/setup-node@v4
+        with: { node-version: "${{ env.NODE_VERSION }}", cache: pnpm }
+      - run: pnpm install --frozen-lockfile
+      - name: G-04 rule/test sync
+        run: pnpm check:rules
+
+  test:
+    name: G-05 G-06 G-09 — tests, coverage, migrations
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_USER: c26
+          POSTGRES_PASSWORD: c26_ci
+          POSTGRES_DB: c26_test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U c26 -d c26_test"
+          --health-interval 5s --health-timeout 5s --health-retries 20
+    env:
+      DATABASE_URL: postgresql://c26:c26_ci@localhost:5432/c26_test?schema=public
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with: { version: "${{ env.PNPM_VERSION }}" }
+      - uses: actions/setup-node@v4
+        with: { node-version: "${{ env.NODE_VERSION }}", cache: pnpm }
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @c26/api prisma generate
+
+      # G-09 — migrations must apply cleanly to an empty database.
+      - name: G-09 migrations on an empty database
+        run: pnpm db:migrate
+
+      # G-05 (axle branch coverage 100%) and G-06 (overall lines >= 70%) are
+      # asserted by the coverage thresholds in vitest.config.ts.
+      - name: G-05 + G-06 tests with coverage thresholds
+        run: pnpm test:coverage
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage
+          path: apps/api/coverage/
+
+  mutation:
+    name: G-07 — mutation score on the axle engine
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with: { version: "${{ env.PNPM_VERSION }}" }
+      - uses: actions/setup-node@v4
+        with: { node-version: "${{ env.NODE_VERSION }}", cache: pnpm }
+      - run: pnpm install --frozen-lockfile
+      # A test that always passes is worse than no test: it looks like coverage.
+      # Mutation testing is what catches it on the one module that decides all
+      # downstream data.
+      - name: G-07 Stryker (threshold 85%)
+        run: pnpm test:mutation
+
+  e2e:
+    name: G-11 G-12 — end-to-end and bundle budget
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_USER: c26
+          POSTGRES_PASSWORD: c26_ci
+          POSTGRES_DB: c26_e2e
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U c26 -d c26_e2e"
+          --health-interval 5s --health-timeout 5s --health-retries 20
+    env:
+      DATABASE_URL: postgresql://c26:c26_ci@localhost:5432/c26_e2e?schema=public
+      APP_ENV: staging
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with: { version: "${{ env.PNPM_VERSION }}" }
+      - uses: actions/setup-node@v4
+        with: { node-version: "${{ env.NODE_VERSION }}", cache: pnpm }
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @c26/api prisma generate
+      - run: pnpm db:migrate
+      - run: pnpm db:seed
+      - run: pnpm build
+
+      # G-12 — warning only (PLAN/09 §5). A slow PWA on 4G is a real cost, but
+      # it does not justify blocking a correctness fix.
+      - name: G-12 client bundle budget (180 KB gzipped)
+        continue-on-error: true
+        run: pnpm --filter @c26/web check:budget
+
+      - run: pnpm --filter @c26/web exec playwright install --with-deps chromium
+      - name: G-11 end-to-end QC flow
+        run: pnpm test:e2e
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: apps/web/playwright-report/

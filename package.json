@@ -1,0 +1,40 @@
+{
+  "name": "commercial2026",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Sistem Informasi Pengolahan Data Ban Bus & Truk — penulisan ulang dari Apps Script. Spesifikasi ada di PLAN/.",
+  "engines": {
+    "node": ">=22.0.0",
+    "pnpm": ">=9.0.0"
+  },
+  "packageManager": "pnpm@9.15.0",
+  "scripts": {
+    "dev": "pnpm --parallel --filter \"./apps/*\" dev",
+    "build": "pnpm --filter @c26/contracts build && pnpm --filter @c26/api build && pnpm --filter @c26/web build",
+    "typecheck": "pnpm -r typecheck",
+    "lint": "eslint . --max-warnings=0",
+    "lint:fix": "eslint . --fix",
+    "test": "pnpm -r test",
+    "test:coverage": "pnpm -r test:coverage",
+    "test:axle": "pnpm --filter @c26/contracts test -- axle",
+    "test:mutation": "pnpm --filter @c26/contracts test:mutation",
+    "test:e2e": "pnpm --filter @c26/web test:e2e",
+    "check:forbidden": "tsx scripts/check-forbidden.ts",
+    "check:rules": "tsx scripts/check-rules.ts",
+    "check:secrets": "tsx scripts/check-secrets.ts",
+    "verify": "pnpm typecheck && pnpm lint && pnpm test:coverage && pnpm check:forbidden && pnpm check:rules",
+    "db:migrate": "pnpm --filter @c26/api db:migrate",
+    "db:seed": "pnpm --filter @c26/api db:seed",
+    "db:reset": "pnpm --filter @c26/api db:reset"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.17.0",
+    "@types/node": "^22.10.2",
+    "eslint": "^9.17.0",
+    "eslint-plugin-boundaries": "^5.0.1",
+    "globals": "^15.14.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2",
+    "typescript-eslint": "^8.18.1"
+  }
+}

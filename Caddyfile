@@ -1,0 +1,48 @@
+# TLS is automatic. Security headers follow PLAN/13 §7.
+# CSP carries no 'unsafe-inline': Vite is configured without inline scripts and
+# styles from F0, because retrofitting that after hundreds of components is far
+# harder than starting with it (PLAN/13 §7, decision A-07).
+#
+# tire.zedth.my.id and tire-api.zedth.my.id share the registrable domain
+# zedth.my.id, so requests from the SPA to the API are same-site. That is what
+# lets the session cookie keep SameSite=Strict (PLAN/13 §2.1) instead of being
+# downgraded to Lax the way a genuinely cross-site split would force.
+
+(security_headers) {
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		Permissions-Policy "camera=(self), geolocation=(), microphone=()"
+		-Server
+	}
+}
+
+# ── SPA ─────────────────────────────────────────────────────────────────────
+tire.zedth.my.id {
+	import security_headers
+	header {
+		Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' https://tire-photos.zedth.my.id data: blob:; connect-src 'self' https://tire-api.zedth.my.id https://tire-photos.zedth.my.id; font-src 'self'; object-src 'none'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+	}
+
+	root * /srv/web
+
+	# The service worker must never be served stale; a stale worker serves an old
+	# app that talks to a new API (PLAN/06 §5.1).
+	@sw path /sw.js
+	header @sw Cache-Control "no-cache, must-revalidate"
+
+	@hashed path /assets/*
+	header @hashed Cache-Control "public, max-age=31536000, immutable"
+
+	encode zstd gzip
+	try_files {path} /index.html
+	file_server
+}
+
+# ── API ─────────────────────────────────────────────────────────────────────
+tire-api.zedth.my.id {
+	import security_headers
+	header Content-Security-Policy "default-src 'none'; frame-ancestors 'none'"
+	reverse_proxy api:3000
+}
