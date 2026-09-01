@@ -14,6 +14,9 @@ const SKIPPED = new Set([
   "playwright-report",
   "test-results",
   "reports",
+  // Machine output. Scanning it produces findings nobody can act on, and those
+  // bury the ones that matter.
+  "generated",
 ]);
 
 /** Walks a directory recursively, returning file paths relative to the repo root. */

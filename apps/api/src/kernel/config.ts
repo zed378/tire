@@ -20,7 +20,11 @@ const configSchema = z.object({
   // (PLAN/13 §2).
   WEB_ORIGIN: z.string().default("http://localhost:5173"),
   COOKIE_DOMAIN: z.string().default("localhost"),
-  LOG_LEVEL: z.enum(["fatal", "error", "warn", "info", "debug", "trace"]).default("info"),
+  // `silent` is a real pino level, and the one tests and noisy environments
+  // need. Leaving it out made a valid configuration fail to boot.
+  LOG_LEVEL: z
+    .enum(["fatal", "error", "warn", "info", "debug", "trace", "silent"])
+    .default("info"),
 
   DATABASE_URL: z.string().min(1, "DATABASE_URL is required"),
 

@@ -49,7 +49,9 @@ export async function startEnrollment(user: {
   }
 
   const secret = generateTotpSecret();
-  const secretEnc = encryptSecret(secret);
+  // Prisma's Bytes maps to Uint8Array; Buffer is a subclass with a different
+  // ArrayBuffer brand, so it is copied rather than cast.
+  const secretEnc = new Uint8Array(encryptSecret(secret));
 
   await getPrisma().userMfa.upsert({
     where: { userId: user.id },

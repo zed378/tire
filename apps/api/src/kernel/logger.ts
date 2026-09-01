@@ -1,4 +1,4 @@
-import pino, { type Logger } from "pino";
+import pino, { type Logger, type LoggerOptions } from "pino";
 import { loadConfig } from "./config.ts";
 
 /**
@@ -40,13 +40,19 @@ const REDACTED_PATHS = [
   "body.recoveryCode",
 ];
 
-let cached: Logger | null = null;
-
-export function getLogger(): Logger {
-  if (cached !== null) return cached;
-
+/**
+ * Pino options, exported so Fastify can build its own logger from exactly the
+ * same configuration.
+ *
+ * Sharing the OPTIONS rather than the instance is what keeps the redaction list
+ * in one place while letting Fastify own its logger — which in turn keeps the
+ * application's type as the plain `FastifyInstance` every route module expects,
+ * with no casting anywhere.
+ */
+export function loggerOptions(): LoggerOptions {
   const config = loadConfig();
-  cached = pino({
+
+  return {
     level: config.LOG_LEVEL,
     redact: { paths: REDACTED_PATHS, censor: "[redacted]" },
     base: { app: "c26-api", env: config.APP_ENV, version: config.APP_VERSION },
@@ -55,7 +61,15 @@ export function getLogger(): Logger {
       config.APP_ENV === "local"
         ? { target: "pino-pretty", options: { colorize: true, translateTime: "HH:MM:ss" } }
         : undefined,
-  });
+  };
+}
+
+let cached: Logger | null = null;
+
+/** For code outside the request path: the worker, jobs, and startup. */
+export function getLogger(): Logger {
+  if (cached !== null) return cached;
+  cached = pino(loggerOptions());
   return cached;
 }
 

@@ -5,7 +5,7 @@ import helmet from "@fastify/helmet";
 import rateLimit from "@fastify/rate-limit";
 import { ERROR_DEFINITIONS } from "@c26/contracts";
 import { loadConfig } from "./kernel/config.ts";
-import { getLogger } from "./kernel/logger.ts";
+import { getLogger, loggerOptions } from "./kernel/logger.ts";
 import { registerRequestContext } from "./kernel/http/context.ts";
 import { verifyCsrf } from "./kernel/http/csrf.ts";
 import { RATE_LIMITS } from "./kernel/http/rate-limits.ts";
@@ -36,7 +36,11 @@ export function buildApp(): FastifyInstance {
   const log = getLogger();
 
   const app = Fastify({
-    loggerInstance: log,
+    // Fastify builds its own logger from the shared options, which keeps the
+    // instance's type as the plain `FastifyInstance` the route modules take.
+    // Passing a pre-built pino instance would pin the logger generic to pino's
+    // `Logger` and make every `registerXRoutes(app)` call a type error.
+    logger: loggerOptions(),
     disableRequestLogging: true, // the context hook logs a single richer line
     trustProxy: true, // Caddy sits in front
     // Small by default: only the upload route needs more, and it raises its own
@@ -60,7 +64,8 @@ export function buildApp(): FastifyInstance {
   void app.register(cors, {
     // An explicit allowlist. Never '*', and never a reflected Origin header
     // (PLAN/13 §2).
-    origin: config.allowedOrigins,
+    // Copied into a mutable array: @fastify/cors will not take a readonly one.
+    origin: [...config.allowedOrigins],
     credentials: true,
     allowedHeaders: ["content-type", "x-csrf-token"],
     exposedHeaders: ["x-request-id", "x-app-version"],
@@ -131,7 +136,10 @@ export function buildApp(): FastifyInstance {
       return reply.status(error.status).send(errorEnvelope(error, request.requestId));
     }
 
-    const status = typeof error.statusCode === "number" ? error.statusCode : 500;
+    // Fastify types this parameter as `unknown` once a custom logger generic is
+    // in play, so it is narrowed rather than assumed.
+    const statusCode = (error as { statusCode?: unknown }).statusCode;
+    const status = typeof statusCode === "number" ? statusCode : 500;
     const mapped =
       status === 400
         ? new AppError("BAD_REQUEST")

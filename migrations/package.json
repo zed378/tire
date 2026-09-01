@@ -1,0 +1,21 @@
+{
+  "name": "@c26/migrations",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "F6 legacy migration toolkit (PLAN/07, PLAN/11 §8). Cannot run until the inventory in PLAN/07 §1 is complete.",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage"
+  },
+  "dependencies": {
+    "@c26/contracts": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "@vitest/coverage-v8": "^2.1.8",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  }
+}

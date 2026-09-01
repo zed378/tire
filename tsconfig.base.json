@@ -6,6 +6,14 @@
     "module": "ESNext",
     "moduleResolution": "Bundler",
     "resolveJsonModule": true,
+
+    // Imports carry the real `.ts` extension throughout, so a path in the editor
+    // is the path on disk. TypeScript 5.7 rewrites them to `.js` on emit, which
+    // is what makes the same source run under tsx in development and under plain
+    // Node from dist/ in production.
+    "allowImportingTsExtensions": true,
+    "rewriteRelativeImportExtensions": true,
+
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "skipLibCheck": true,

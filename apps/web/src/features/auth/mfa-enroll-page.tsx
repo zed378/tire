@@ -80,7 +80,7 @@ export function MfaEnrollPage(): ReactNode {
 
           <Button
             className="mt-4 w-full"
-            onClick={() => navigate("/inspections", { replace: true })}
+            onClick={() => void navigate("/inspections", { replace: true })}
           >
             Saya sudah menyimpannya
           </Button>

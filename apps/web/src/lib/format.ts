@@ -8,7 +8,7 @@
 
 const WIB = "Asia/Jakarta";
 
-export function formatDate(value: string | Date | null | undefined): string {
+export function formatDate(value: string | Date | number | null | undefined): string {
   if (value === null || value === undefined || value === "") return "—";
   return new Intl.DateTimeFormat("id-ID", {
     timeZone: WIB,
@@ -18,7 +18,7 @@ export function formatDate(value: string | Date | null | undefined): string {
   }).format(new Date(value));
 }
 
-export function formatDateTime(value: string | Date | null | undefined): string {
+export function formatDateTime(value: string | Date | number | null | undefined): string {
   if (value === null || value === undefined || value === "") return "—";
   return new Intl.DateTimeFormat("id-ID", {
     timeZone: WIB,
@@ -30,11 +30,13 @@ export function formatDateTime(value: string | Date | null | undefined): string 
   }).format(new Date(value));
 }
 
-export function formatRelative(value: string | Date | null | undefined): string {
+/** Accepts an epoch number too: the offline queue timestamps its items that way. */
+export function formatRelative(value: string | Date | number | null | undefined): string {
   if (value === null || value === undefined) return "—";
 
   const diffMs = Date.now() - new Date(value).getTime();
-  const minutes = Math.round(diffMs / 60_000);
+  // Floor, not round: 30 seconds ago is "baru saja", not "1 menit lalu".
+  const minutes = Math.floor(diffMs / 60_000);
 
   if (minutes < 1) return "baru saja";
   if (minutes < 60) return `${minutes} menit lalu`;

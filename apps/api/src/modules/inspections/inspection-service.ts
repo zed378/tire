@@ -1,7 +1,6 @@
 import {
   createVehicleSchema,
   derivePositions,
-  formatSerialNumber,
   GENERAL_PHOTO_SLOTS,
   INSPECTION_STATUS_LABELS,
   isNewVehiclePayload,
@@ -18,6 +17,7 @@ import { recordAudit, type AuditActor } from "../../kernel/audit.ts";
 import { inspectionScope, type Actor } from "../../kernel/authorization.ts";
 import { computeAxleResult } from "../../kernel/axle/index.ts";
 import { getPrisma, withTransaction, type Tx } from "../../kernel/db.ts";
+import type { Prisma } from "../../generated/prisma/index.js";
 import { AppError, duplicatePlate } from "../../kernel/envelope/index.ts";
 import {
   createOrAttachVehicle,
@@ -53,14 +53,7 @@ const LIST_INCLUDE = {
   },
 } as const;
 
-type InspectionRow = Awaited<ReturnType<typeof loadOne>>;
-
-async function loadOne(inspectionId: bigint) {
-  return getPrisma().inspection.findFirstOrThrow({
-    where: { id: inspectionId },
-    include: LIST_INCLUDE,
-  });
-}
+type InspectionRow = Prisma.InspectionGetPayload<{ include: typeof LIST_INCLUDE }>;
 
 function toListItem(row: InspectionRow): InspectionListItem {
   return {

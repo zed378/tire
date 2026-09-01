@@ -60,17 +60,17 @@ export function LoginPage(): ReactNode {
       }
 
       if (result.status === "mfa_enrollment_required") {
-        navigate("/profile/mfa", { replace: true });
+        void navigate("/profile/mfa", { replace: true });
         return;
       }
 
       if (result.status === "must_change_password") {
-        navigate("/profile/password", { replace: true });
+        void navigate("/profile/password", { replace: true });
         return;
       }
 
       const from = (location.state as { from?: string } | null)?.from;
-      navigate(from ?? "/inspections", { replace: true });
+      void navigate(from ?? "/inspections", { replace: true });
     } catch (caught) {
       setError(caught);
       // A second factor was supplied and rejected: keep the field, do not send

@@ -33,10 +33,10 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks: {
-          // Recharts is heavy and only the dashboard needs it. Splitting it out
-          // keeps the initial bundle inside the 180 KB budget (PLAN/06 §7),
-          // which matters on a mid-range phone over 4G.
-          charts: ["recharts"],
+          // The dashboard chart is hand-written SVG rather than a charting
+          // library — see components/ui/line-chart.tsx. That keeps the initial
+          // bundle inside the 180 KB budget (PLAN/06 §7) and keeps the CSP free
+          // of 'unsafe-inline' (PLAN/13 §7).
           vendor: ["react", "react-dom", "react-router-dom", "@tanstack/react-query"],
         },
       },

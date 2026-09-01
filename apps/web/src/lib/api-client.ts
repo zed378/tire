@@ -118,7 +118,12 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
 
   let envelope: Envelope<T>;
   try {
-    envelope = (await response.json()) as Envelope<T>;
+    // `response.json()` is typed `any`; the envelope shape is asserted here
+    // because the server contract guarantees it (PLAN/05 §2) and there is no
+    // runtime schema to parse against on this path without paying for it on
+    // every request.
+    const parsed: unknown = await response.json();
+    envelope = parsed as Envelope<T>;
   } catch {
     throw new ApiError({
       ok: false,

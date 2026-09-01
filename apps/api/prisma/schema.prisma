@@ -228,6 +228,7 @@ model User {
 }
 
 model UserRegion {
+  id         BigInt   @id @default(autoincrement())
   userId     BigInt   @map("user_id")
   provinceId BigInt?  @map("province_id")
   cityId     BigInt?  @map("city_id")
@@ -237,10 +238,11 @@ model UserRegion {
   province Province? @relation(fields: [provinceId], references: [id])
   city     City?     @relation(fields: [cityId], references: [id])
 
-  // The real uniqueness is a functional index on COALESCE(...), which Prisma
-  // cannot express. This composite id is close enough for the client; the
-  // database holds the actual guarantee.
-  @@id([userId, provinceId, cityId])
+  // The real uniqueness is a functional index over COALESCE(...), which Prisma
+  // cannot express and which the migration creates directly. Both halves of the
+  // natural key are nullable by design — a row assigns either a province or a
+  // city — so the model carries a surrogate key instead.
+  @@index([userId])
   @@map("user_regions")
 }
 

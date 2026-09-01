@@ -135,8 +135,14 @@ export function validateAxleConfiguration(input: AxleConfigurationInput): FieldE
   // ── V-06 (integrity): the derived tire count must be physically possible ──
   // A number outside 4..22 means the engine has a bug, not that the vehicle is
   // unusual. The range comes from enumerating all 34 valid combinations.
+  //
+  // Checked unconditionally rather than only once everything else has passed. An
+  // earlier version guarded this behind `errors.length === 0`, which was wrong
+  // twice over: it hid the most alarming symptom behind a lesser one, and it
+  // contradicted PLAN/05 §4.5, which asks for every failure to be reported at
+  // once so a user does not resubmit a long form to discover them one at a time.
   const tires = totalTires(configs);
-  if (errors.length === 0 && (tires < MIN_TOTAL_TIRES || tires > MAX_TOTAL_TIRES)) {
+  if (tires < MIN_TOTAL_TIRES || tires > MAX_TOTAL_TIRES) {
     errors.push({
       field: FIELD,
       code: "OUT_OF_RANGE",

@@ -1,4 +1,5 @@
 import type { UserRole } from "@c26/contracts";
+import type { Prisma } from "../generated/prisma/index.js";
 import type { Tx } from "./db.ts";
 
 /**
@@ -141,8 +142,8 @@ export async function recordAudit(tx: Tx, actor: AuditActor, input: AuditInput):
       action: input.action,
       entity: input.entity,
       entityId: BigInt(input.entityId),
-      before: sanitize(input.before) ?? undefined,
-      after: sanitize(input.after) ?? undefined,
+      before: (sanitize(input.before) ?? undefined) as Prisma.InputJsonValue | undefined,
+      after: (sanitize(input.after) ?? undefined) as Prisma.InputJsonValue | undefined,
       requestId: actor.requestId,
       ipAddress: actor.ipAddress,
     },

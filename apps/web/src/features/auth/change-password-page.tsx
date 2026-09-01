@@ -36,7 +36,7 @@ export function ChangePasswordPage(): ReactNode {
       await api.post("/api/auth/change-password", values);
       await refresh();
       toast.push({ tone: "success", message: "Password berhasil diganti." });
-      navigate("/inspections", { replace: true });
+      void navigate("/inspections", { replace: true });
     } catch (caught) {
       // Field-level errors go under the field they belong to; anything else
       // becomes the page banner (PLAN/05 §5.1).

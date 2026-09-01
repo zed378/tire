@@ -80,6 +80,17 @@ function uploadRoot(): string {
  * failure mode is total.
  */
 export function resolveStoragePath(storageKey: string): string {
+  // Every legitimate key is relative and built by `buildStorageKey`:
+  // `inspections/{year}/{serial}/{code}/{uuid}.{ext}`. An absolute-looking key
+  // is absorbed harmlessly by `join`, but it means the caller is not using
+  // `buildStorageKey`, and that is worth refusing rather than tolerating.
+  if (storageKey.startsWith("/") || storageKey.startsWith("\\") || /^[A-Za-z]:/.test(storageKey)) {
+    throw new Error(`storage key escapes the upload directory: absolute path "${storageKey}"`);
+  }
+  if (storageKey.split(/[\\/]/).includes("..")) {
+    throw new Error(`storage key escapes the upload directory: traversal in "${storageKey}"`);
+  }
+
   const root = uploadRoot();
   const target = resolve(join(root, storageKey));
   if (target !== root && !target.startsWith(root + sep)) {

@@ -1,0 +1,686 @@
+// Prisma follows the SQL, not the other way round.
+//
+// The migration in prisma/migrations/ is the authority: PLAN/02 and PLAN/11 rely
+// on generated columns, constraint triggers, partial unique indexes, table
+// partitioning, and materialised views — none of which Prisma can express. This
+// file exists to give the application typed access to those tables.
+//
+// Where a construct has no Prisma equivalent it is marked below. Views and
+// aggregates are read through $queryRaw rather than modelled here.
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ── Enums ───────────────────────────────────────────────────────────────────
+
+enum UserRole {
+  supplier
+  admin
+  manager
+  operator
+
+  @@map("user_role")
+}
+
+enum InspectionStatus {
+  draft
+  pending_qc
+  needs_revision
+  passed_qc
+  dropped_qc
+
+  @@map("submission_status")
+}
+
+enum VehicleCategory {
+  TB
+  LT
+
+  @@map("vehicle_category")
+}
+
+enum VehicleSegment {
+  bus
+  truck
+
+  @@map("vehicle_segment")
+}
+
+enum AxleType {
+  steer
+  drive
+  free_rolling
+
+  @@map("axle_type")
+}
+
+enum TireMounting {
+  single
+  double
+
+  @@map("tire_mounting")
+}
+
+enum TireSide {
+  left
+  right
+
+  @@map("tire_side")
+}
+
+enum TireDepth {
+  inner
+  outer
+
+  @@map("tire_depth")
+}
+
+enum PhotoSlot {
+  front_rear
+  side
+  tire_position
+
+  @@map("photo_slot")
+}
+
+enum QcDecision {
+  pass
+  drop
+  revision
+
+  @@map("qc_decision")
+}
+
+enum NotificationChannel {
+  in_app
+  email
+  whatsapp
+
+  @@map("notification_channel")
+}
+
+enum NotificationStatus {
+  pending
+  sent
+  failed
+  suppressed
+
+  @@map("notification_status")
+}
+
+enum ExportJobStatus {
+  queued
+  running
+  done
+  failed
+
+  @@map("export_job_status")
+}
+
+// ── Master data ─────────────────────────────────────────────────────────────
+
+model Province {
+  id        BigInt   @id @default(autoincrement())
+  code      String   @unique
+  name      String   @unique
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @default(now()) @map("updated_at") @db.Timestamptz(6)
+
+  cities      City[]
+  userRegions UserRegion[]
+
+  @@map("provinces")
+}
+
+model City {
+  id         BigInt   @id @default(autoincrement())
+  provinceId BigInt   @map("province_id")
+  code       String   @unique
+  name       String
+  isActive   Boolean  @default(true) @map("is_active")
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt  DateTime @default(now()) @map("updated_at") @db.Timestamptz(6)
+
+  province    Province     @relation(fields: [provinceId], references: [id])
+  vehicles    Vehicle[]
+  userRegions UserRegion[]
+
+  @@unique([provinceId, name])
+  @@index([provinceId])
+  @@map("cities")
+}
+
+model VehicleBrand {
+  id        BigInt   @id @default(autoincrement())
+  name      String   @unique
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @default(now()) @map("updated_at") @db.Timestamptz(6)
+
+  vehicles Vehicle[]
+
+  @@map("vehicle_brands")
+}
+
+model TireBrand {
+  id        BigInt   @id @default(autoincrement())
+  name      String   @unique
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @default(now()) @map("updated_at") @db.Timestamptz(6)
+
+  tireSpecs TireSpec[]
+
+  @@map("tire_brands")
+}
+
+// ── Users and access ────────────────────────────────────────────────────────
+
+model User {
+  id                 BigInt    @id @default(autoincrement())
+  // citext in PostgreSQL. Prisma has no citext type; the column keeps its real
+  // type and case-insensitive matching happens in the database.
+  username           String
+  displayName        String    @map("display_name")
+  passwordHash       String    @map("password_hash")
+  role               UserRole
+  email              String?
+  phone              String?
+  isActive           Boolean   @default(true) @map("is_active")
+  mustChangePassword Boolean   @default(false) @map("must_change_password")
+  lastLoginAt        DateTime? @map("last_login_at") @db.Timestamptz(6)
+  createdById        BigInt?   @map("created_by")
+  createdAt          DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt          DateTime  @default(now()) @map("updated_at") @db.Timestamptz(6)
+  deletedAt          DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  createdBy    User?  @relation("UserCreatedBy", fields: [createdById], references: [id])
+  createdUsers User[] @relation("UserCreatedBy")
+
+  regions            UserRegion[]
+  sessions           Session[]
+  mfa                UserMfa?
+  recoveryCodes      MfaRecoveryCode[]
+  createdVehicles    Vehicle[]
+  inspections        Inspection[]
+  photos             Photo[]
+  qcReviews          QcReview[]
+  tireSpecs          TireSpec[]
+  auditLogs          AuditLog[]
+  notifications      Notification[]
+  notificationPrefs  NotificationPreference[]
+  exportJobs         ExportJob[]
+  outboxEvents       Outbox[]
+  plateChanges       VehiclePlateHistory[]
+  resolvedQuarantine MigrationQuarantine[]
+  pendingUploads     PendingUpload[]
+
+  @@index([role])
+  @@map("users")
+}
+
+model UserRegion {
+  id         BigInt   @id @default(autoincrement())
+  userId     BigInt   @map("user_id")
+  provinceId BigInt?  @map("province_id")
+  cityId     BigInt?  @map("city_id")
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  province Province? @relation(fields: [provinceId], references: [id])
+  city     City?     @relation(fields: [cityId], references: [id])
+
+  // The real uniqueness is a functional index over COALESCE(...), which Prisma
+  // cannot express and which the migration creates directly. Both halves of the
+  // natural key are nullable by design — a row assigns either a province or a
+  // city — so the model carries a surrogate key instead.
+  @@index([userId])
+  @@map("user_regions")
+}
+
+model Session {
+  id                String    @id @default(uuid()) @db.Uuid
+  userId            BigInt    @map("user_id")
+  tokenHash         String    @unique @map("token_hash")
+  userAgent         String?   @map("user_agent")
+  ipAddress         String?   @map("ip_address")
+  deviceLabel       String?   @map("device_label")
+  mfaSatisfied      Boolean   @default(false) @map("mfa_satisfied")
+  elevatedUntil     DateTime? @map("elevated_until") @db.Timestamptz(6)
+  csrfToken         String    @map("csrf_token")
+  expiresAt         DateTime  @map("expires_at") @db.Timestamptz(6)
+  absoluteExpiresAt DateTime  @map("absolute_expires_at") @db.Timestamptz(6)
+  revokedAt         DateTime? @map("revoked_at") @db.Timestamptz(6)
+  lastSeenAt        DateTime  @default(now()) @map("last_seen_at") @db.Timestamptz(6)
+  createdAt         DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("sessions")
+}
+
+model LoginAttempt {
+  id            BigInt   @id @default(autoincrement())
+  username      String
+  ipAddress     String?  @map("ip_address")
+  succeeded     Boolean
+  failureReason String?  @map("failure_reason")
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([username, createdAt])
+  @@map("login_attempts")
+}
+
+model UserMfa {
+  userId      BigInt    @id @map("user_id")
+  secretEnc   Bytes     @map("secret_enc")
+  confirmedAt DateTime? @map("confirmed_at") @db.Timestamptz(6)
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_mfa")
+}
+
+model MfaRecoveryCode {
+  id        BigInt    @id @default(autoincrement())
+  userId    BigInt    @map("user_id")
+  codeHash  String    @map("code_hash")
+  usedAt    DateTime? @map("used_at") @db.Timestamptz(6)
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("mfa_recovery_codes")
+}
+
+model MfaUsedCode {
+  userId BigInt   @map("user_id")
+  code   String
+  usedAt DateTime @default(now()) @map("used_at") @db.Timestamptz(6)
+
+  @@id([userId, code])
+  @@map("mfa_used_codes")
+}
+
+// ── Vehicles ────────────────────────────────────────────────────────────────
+
+model Vehicle {
+  id            BigInt  @id @default(autoincrement())
+  chassisNumber String? @map("chassis_number")
+  plateDisplay  String  @map("plate_display")
+  // GENERATED ALWAYS AS ... STORED. Never written by the application; declared
+  // with a database-generated default so Prisma does not require it on create.
+  plateKey      String  @default(dbgenerated()) @map("plate_key")
+
+  category          VehicleCategory
+  segment           VehicleSegment
+  subSegment        String          @map("sub_segment")
+  vehicleBrandId    BigInt?         @map("vehicle_brand_id")
+  vehicleBrandOther String?         @map("vehicle_brand_other")
+  cargoType         String          @map("cargo_type")
+
+  axleCount  Int @map("axle_count")
+  totalTires Int @map("total_tires")
+
+  cityId BigInt @map("city_id")
+
+  needsReview Boolean @default(false) @map("needs_review")
+  reviewNote  String? @map("review_note")
+
+  createdById BigInt    @map("created_by")
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime  @default(now()) @map("updated_at") @db.Timestamptz(6)
+  deletedAt   DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  city         City                  @relation(fields: [cityId], references: [id])
+  vehicleBrand VehicleBrand?         @relation(fields: [vehicleBrandId], references: [id])
+  createdBy    User                  @relation(fields: [createdById], references: [id])
+  axleConfigs  AxleConfig[]
+  inspections  Inspection[]
+  plateHistory VehiclePlateHistory[]
+
+  @@index([cityId])
+  @@map("vehicles")
+}
+
+model VehiclePlateHistory {
+  id           BigInt    @id @default(autoincrement())
+  vehicleId    BigInt    @map("vehicle_id")
+  plateDisplay String    @map("plate_display")
+  validFrom    DateTime  @map("valid_from") @db.Timestamptz(6)
+  validTo      DateTime? @map("valid_to") @db.Timestamptz(6)
+  changedById  BigInt?   @map("changed_by")
+  reason       String?
+
+  vehicle   Vehicle @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  changedBy User?   @relation(fields: [changedById], references: [id])
+
+  @@index([vehicleId, validFrom])
+  @@map("vehicle_plate_history")
+}
+
+model AxleConfig {
+  id        BigInt       @id @default(autoincrement())
+  vehicleId BigInt       @map("vehicle_id")
+  axleType  AxleType     @map("axle_type")
+  axleCount Int          @map("axle_count")
+  mounting  TireMounting
+
+  vehicle Vehicle @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+
+  @@unique([vehicleId, axleType])
+  @@map("axle_configs")
+}
+
+// ── Inspections ─────────────────────────────────────────────────────────────
+
+model Inspection {
+  id           BigInt @id @default(autoincrement())
+  vehicleId    BigInt @map("vehicle_id")
+  serialNumber String @unique @map("serial_number")
+  serialYear   Int    @map("serial_year")
+  serialSeq    Int    @map("serial_seq")
+  // Present from the first migration; not part of the locking index yet
+  // (PLAN/11 §5.7, Q-14).
+  campaignYear Int    @default(dbgenerated()) @map("campaign_year")
+
+  status        InspectionStatus @default(draft)
+  submittedById BigInt           @map("submitted_by")
+  submittedAt   DateTime?        @map("submitted_at") @db.Timestamptz(6)
+  notes         String?
+
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime  @default(now()) @map("updated_at") @db.Timestamptz(6)
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  vehicle        Vehicle         @relation(fields: [vehicleId], references: [id])
+  submittedBy    User            @relation(fields: [submittedById], references: [id])
+  tirePositions  TirePosition[]
+  photos         Photo[]
+  qcReviews      QcReview[]
+  pendingUploads PendingUpload[]
+
+  @@index([status, createdAt])
+  @@index([submittedById, createdAt])
+  @@index([vehicleId, createdAt])
+  @@map("inspections")
+}
+
+model SerialCounter {
+  year    Int @id
+  lastSeq Int @default(0) @map("last_seq")
+
+  @@map("serial_counters")
+}
+
+model TirePosition {
+  id            BigInt     @id @default(autoincrement())
+  inspectionId  BigInt     @map("inspection_id")
+  positionCode  String     @map("position_code")
+  positionLabel String     @map("position_label")
+  axleType      AxleType   @map("axle_type")
+  axleIndex     Int        @map("axle_index")
+  side          TireSide
+  depth         TireDepth?
+  sortOrder     Int        @map("sort_order")
+  createdAt     DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  inspection     Inspection      @relation(fields: [inspectionId], references: [id], onDelete: Cascade)
+  tireSpec       TireSpec?
+  photos         Photo[]
+  qcComments     QcComment[]
+  pendingUploads PendingUpload[]
+
+  @@unique([inspectionId, positionCode])
+  @@unique([inspectionId, sortOrder])
+  @@index([inspectionId, sortOrder])
+  @@map("tire_positions")
+}
+
+model TireSpec {
+  id             BigInt    @id @default(autoincrement())
+  tirePositionId BigInt    @unique @map("tire_position_id")
+  tireBrandId    BigInt?   @map("tire_brand_id")
+  brandOther     String?   @map("brand_other")
+  pattern        String?
+  size           String?
+  plyRating      String?   @map("ply_rating")
+  isRetread      Boolean   @default(false) @map("is_retread")
+  filledById     BigInt?   @map("filled_by")
+  filledAt       DateTime? @map("filled_at") @db.Timestamptz(6)
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime  @default(now()) @map("updated_at") @db.Timestamptz(6)
+
+  tirePosition TirePosition @relation(fields: [tirePositionId], references: [id], onDelete: Cascade)
+  tireBrand    TireBrand?   @relation(fields: [tireBrandId], references: [id])
+  filledBy     User?        @relation(fields: [filledById], references: [id])
+
+  @@map("tire_specs")
+}
+
+model Photo {
+  id             BigInt    @id @default(autoincrement())
+  inspectionId   BigInt    @map("inspection_id")
+  tirePositionId BigInt?   @map("tire_position_id")
+  slot           PhotoSlot
+  storageKey     String    @unique @map("storage_key")
+  thumbnailKey   String?   @map("thumbnail_key")
+  checksumSha256 String    @map("checksum_sha256")
+  byteSize       Int       @map("byte_size")
+  mimeType       String    @map("mime_type")
+  width          Int?
+  height         Int?
+  capturedAt     DateTime? @map("captured_at") @db.Timestamptz(6)
+  uploadedById   BigInt    @map("uploaded_by")
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  deletedAt      DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  inspection   Inspection    @relation(fields: [inspectionId], references: [id], onDelete: Cascade)
+  tirePosition TirePosition? @relation(fields: [tirePositionId], references: [id], onDelete: Cascade)
+  uploadedBy   User          @relation(fields: [uploadedById], references: [id])
+  qcComments   QcComment[]
+
+  @@index([inspectionId])
+  @@index([tirePositionId])
+  @@map("photos")
+}
+
+model PendingUpload {
+  storageKey     String    @id @map("storage_key")
+  inspectionId   BigInt    @map("inspection_id")
+  tirePositionId BigInt?   @map("tire_position_id")
+  slot           PhotoSlot
+  checksumSha256 String    @map("checksum_sha256")
+  byteSize       Int       @map("byte_size")
+  mimeType       String    @map("mime_type")
+  requestedById  BigInt    @map("requested_by")
+  expiresAt      DateTime  @map("expires_at") @db.Timestamptz(6)
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  inspection   Inspection    @relation(fields: [inspectionId], references: [id], onDelete: Cascade)
+  tirePosition TirePosition? @relation(fields: [tirePositionId], references: [id], onDelete: Cascade)
+  requestedBy  User          @relation(fields: [requestedById], references: [id])
+
+  @@map("pending_uploads")
+}
+
+// ── Quality control ─────────────────────────────────────────────────────────
+
+model QcReview {
+  id           BigInt           @id @default(autoincrement())
+  inspectionId BigInt           @map("inspection_id")
+  reviewerId   BigInt           @map("reviewer_id")
+  decision     QcDecision
+  statusBefore InspectionStatus @map("status_before")
+  statusAfter  InspectionStatus @map("status_after")
+  notes        String?
+  reviewedAt   DateTime         @default(now()) @map("reviewed_at") @db.Timestamptz(6)
+
+  inspection Inspection  @relation(fields: [inspectionId], references: [id])
+  reviewer   User        @relation(fields: [reviewerId], references: [id])
+  comments   QcComment[]
+
+  @@index([inspectionId, reviewedAt])
+  @@map("qc_reviews")
+}
+
+model QcComment {
+  id             BigInt   @id @default(autoincrement())
+  reviewId       BigInt   @map("review_id")
+  photoId        BigInt?  @map("photo_id")
+  tirePositionId BigInt?  @map("tire_position_id")
+  body           String
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  review       QcReview      @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  photo        Photo?        @relation(fields: [photoId], references: [id])
+  tirePosition TirePosition? @relation(fields: [tirePositionId], references: [id])
+
+  @@index([reviewId])
+  @@map("qc_comments")
+}
+
+// ── Audit ───────────────────────────────────────────────────────────────────
+
+model AuditLog {
+  id        BigInt    @default(autoincrement())
+  actorId   BigInt?   @map("actor_id")
+  actorRole UserRole? @map("actor_role")
+  action    String
+  entity    String
+  entityId  BigInt    @map("entity_id")
+  before    Json?
+  after     Json?
+  requestId String?   @map("request_id")
+  ipAddress String?   @map("ip_address")
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  actor User? @relation(fields: [actorId], references: [id])
+
+  // Partitioned by created_at, so the key must include the partition column.
+  @@id([id, createdAt])
+  @@index([entity, entityId, createdAt])
+  @@index([actorId, createdAt])
+  @@map("audit_logs")
+}
+
+// ── Outbox and notifications ────────────────────────────────────────────────
+
+model Outbox {
+  id          BigInt    @id @default(autoincrement())
+  eventType   String    @map("event_type")
+  aggregateId BigInt    @map("aggregate_id")
+  payload     Json
+  actorId     BigInt?   @map("actor_id")
+  requestId   String    @map("request_id")
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  processedAt DateTime? @map("processed_at") @db.Timestamptz(6)
+
+  actor         User?          @relation(fields: [actorId], references: [id])
+  notifications Notification[]
+
+  @@index([createdAt])
+  @@map("outbox")
+}
+
+model Notification {
+  id          BigInt              @id @default(autoincrement())
+  outboxId    BigInt?             @map("outbox_id")
+  recipientId BigInt              @map("recipient_id")
+  channel     NotificationChannel
+  eventType   String              @map("event_type")
+  title       String
+  body        String
+  link        String?
+  payload     Json                @default("{}")
+  status      NotificationStatus  @default(pending)
+  attempts    Int                 @default(0)
+  lastError   String?             @map("last_error")
+  readAt      DateTime?           @map("read_at") @db.Timestamptz(6)
+  sentAt      DateTime?           @map("sent_at") @db.Timestamptz(6)
+  createdAt   DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  outbox    Outbox? @relation(fields: [outboxId], references: [id])
+  recipient User    @relation(fields: [recipientId], references: [id], onDelete: Cascade)
+
+  @@unique([outboxId, recipientId, channel], map: "uq_notif")
+  @@index([recipientId, createdAt])
+  @@map("notifications")
+}
+
+model NotificationPreference {
+  userId    BigInt              @map("user_id")
+  eventType String              @map("event_type")
+  channel   NotificationChannel
+  enabled   Boolean             @default(true)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([userId, eventType, channel])
+  @@map("notification_preferences")
+}
+
+// ── Exports, metrics, migration ─────────────────────────────────────────────
+
+model ExportJob {
+  id            String          @id @default(uuid()) @db.Uuid
+  kind          String
+  requestedById BigInt          @map("requested_by")
+  params        Json            @default("{}")
+  status        ExportJobStatus @default(queued)
+  progress      Int             @default(0)
+  rowCount      Int?            @map("row_count")
+  storageKey    String?         @map("storage_key")
+  errorMessage  String?         @map("error_message")
+  requestId     String?         @map("request_id")
+  createdAt     DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+  startedAt     DateTime?       @map("started_at") @db.Timestamptz(6)
+  finishedAt    DateTime?       @map("finished_at") @db.Timestamptz(6)
+  expiresAt     DateTime?       @map("expires_at") @db.Timestamptz(6)
+
+  requestedBy User @relation(fields: [requestedById], references: [id])
+
+  @@index([requestedById, createdAt])
+  @@map("export_jobs")
+}
+
+model DailyMetric {
+  day                DateTime @id @db.Date
+  inspectionsCreated Int      @default(0) @map("inspections_created")
+  inspectionsPassed  Int      @default(0) @map("inspections_passed")
+  inspectionsDropped Int      @default(0) @map("inspections_dropped")
+  inspectionsRevised Int      @default(0) @map("inspections_revised")
+  photosUploaded     Int      @default(0) @map("photos_uploaded")
+  photoBytes         BigInt   @default(0) @map("photo_bytes")
+  queueMaxDepth      Int      @default(0) @map("queue_max_depth")
+  computedAt         DateTime @default(now()) @map("computed_at") @db.Timestamptz(6)
+
+  @@map("daily_metrics")
+}
+
+model MigrationQuarantine {
+  id           BigInt    @id @default(autoincrement())
+  sourceSheet  String    @map("source_sheet")
+  sourceRow    Int       @map("source_row")
+  raw          Json
+  reason       String
+  resolvedAt   DateTime? @map("resolved_at") @db.Timestamptz(6)
+  resolvedById BigInt?   @map("resolved_by")
+  resolution   String?
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  resolvedBy User? @relation(fields: [resolvedById], references: [id])
+
+  @@map("migration_quarantine")
+}

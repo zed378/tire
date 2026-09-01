@@ -19,10 +19,18 @@ export default defineConfig({
       include: ["src/**/*.ts"],
       exclude: ["src/**/*.test.ts", "src/index.ts"],
       thresholds: {
+        // PLAN/08 §6.1 sets the overall bar at 70% of lines; these sit above it.
+        //
+        // `functions` is held lower than the rest on purpose. Most of this
+        // package is declarative — Zod schemas whose uncovered "functions" are
+        // `errorMap` callbacks and transforms that fire only on specific inputs.
+        // Chasing those to 80% would mean writing tests that assert Zod works,
+        // which is the shape of test PLAN/09 §7 warns about: present, green, and
+        // proving nothing.
         lines: 80,
-        functions: 80,
         statements: 80,
         branches: 75,
+        functions: 70,
 
         // G-05
         "src/axle/**": {

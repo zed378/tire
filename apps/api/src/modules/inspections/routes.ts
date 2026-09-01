@@ -89,9 +89,11 @@ export function registerInspectionRoutes(app: FastifyInstance): void {
    */
   app.post(
     "/api/inspections/preview-positions",
-    wrapRoute(async (request) => {
+    // Synchronous on purpose: the engine is pure logic with no I/O, so there is
+    // nothing to await (PLAN/01 §2.3 rule 3).
+    wrapRoute((request) => {
       requireActor(request);
-      return previewPositions(previewPositionsSchema.parse(request.body));
+      return Promise.resolve(previewPositions(previewPositionsSchema.parse(request.body)));
     }),
   );
 }

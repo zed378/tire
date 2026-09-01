@@ -1,4 +1,5 @@
 import type { EventType } from "@c26/contracts";
+import type { Prisma } from "../generated/prisma/index.js";
 import type { Tx } from "./db.ts";
 
 /**
@@ -46,7 +47,7 @@ export async function publishEvent(
         JSON.stringify(event.payload, (_key, value: unknown) =>
           typeof value === "bigint" ? value.toString() : value,
         ),
-      ) as Record<string, unknown>,
+      ) as Prisma.InputJsonValue,
       actorId: actor.id,
       requestId: actor.requestId,
     },

@@ -1,8 +1,9 @@
 import { defineConfig } from "vitest/config";
-import react from "@vitejs/plugin-react";
 
+// No React plugin here: the tests in this package cover pure client logic, and
+// wiring the plugin in would couple the test config to the Vite major version
+// for no benefit. Component tests, when they arrive, add it back.
 export default defineConfig({
-  plugins: [react()],
   test: {
     environment: "jsdom",
     include: ["src/**/*.test.{ts,tsx}"],

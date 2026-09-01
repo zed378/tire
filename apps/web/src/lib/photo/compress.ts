@@ -1,9 +1,9 @@
 import {
-  ACCEPTED_PHOTO_MIME_TYPES,
   MAX_PHOTO_BYTES,
   PHOTO_JPEG_QUALITY,
   PHOTO_MAX_EDGE_PX,
   PHOTO_WEBP_QUALITY,
+  type PhotoMimeType,
 } from "@c26/contracts";
 
 /**
@@ -20,7 +20,7 @@ import {
 
 export interface CompressedPhoto {
   blob: Blob;
-  mimeType: (typeof ACCEPTED_PHOTO_MIME_TYPES)[number];
+  mimeType: PhotoMimeType;
   width: number;
   height: number;
   checksumSha256: string;
@@ -129,7 +129,7 @@ export async function compressPhoto(file: File): Promise<CompressedPhoto> {
   bitmap.close();
 
   const useWebp = await supportsWebp();
-  const mimeType = useWebp ? "image/webp" : "image/jpeg";
+  const mimeType: PhotoMimeType = useWebp ? "image/webp" : "image/jpeg";
   const quality = useWebp ? PHOTO_WEBP_QUALITY : PHOTO_JPEG_QUALITY;
 
   let blob = await canvas.convertToBlob({ type: mimeType, quality });
@@ -146,7 +146,7 @@ export async function compressPhoto(file: File): Promise<CompressedPhoto> {
 
   return {
     blob,
-    mimeType: mimeType as CompressedPhoto["mimeType"],
+    mimeType,
     width: size.width,
     height: size.height,
     checksumSha256: await sha256Hex(blob),

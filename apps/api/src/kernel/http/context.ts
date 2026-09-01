@@ -1,7 +1,7 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { APP_VERSION_HEADER, REQUEST_ID_HEADER } from "@c26/contracts";
 import { loadConfig } from "../config.ts";
-import { generateRequestId, getLogger } from "../logger.ts";
+import { generateRequestId } from "../logger.ts";
 import type { Actor } from "../authorization.ts";
 
 declare module "fastify" {
@@ -23,7 +23,6 @@ declare module "fastify" {
  */
 export function registerRequestContext(app: FastifyInstance): void {
   const config = loadConfig();
-  const log = getLogger();
 
   app.decorateRequest("requestId", "");
   app.decorateRequest("actor", null);
@@ -47,7 +46,9 @@ export function registerRequestContext(app: FastifyInstance): void {
   });
 
   app.addHook("onResponse", (request: FastifyRequest, reply: FastifyReply, done) => {
-    log.info(
+    // request.log rather than the module-level logger: it carries Fastify's own
+    // request binding, and it is the same pino configuration either way.
+    request.log.info(
       {
         requestId: request.requestId,
         method: request.method,

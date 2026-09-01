@@ -136,6 +136,11 @@ CREATE TRIGGER trg_users_updated BEFORE UPDATE ON users
 -- D-13. No rows at all means no restriction; province rows and city rows
 -- combine as a union, never an intersection.
 CREATE TABLE user_regions (
+  -- A surrogate key. PLAN/02 §6 defines this table without one, because the
+  -- real guarantee is the functional unique index below. But a table with no
+  -- primary key cannot be addressed by the ORM, and either column of the natural
+  -- key is nullable by design.
+  id          bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
   user_id     bigint NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   province_id bigint REFERENCES provinces(id),
   city_id     bigint REFERENCES cities(id),

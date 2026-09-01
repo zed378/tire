@@ -181,6 +181,25 @@ describe("V-06: the derived tire total must be physically possible", () => {
     expect(codes({ axleCount: 2, configs: [steer(1), drive(1.5)] })).toContain("OUT_OF_RANGE");
   });
 
+  it("rejects a tire total above the physical maximum of 22", () => {
+    // Reachable only alongside other failures, because no configuration that
+    // satisfies V-01 to V-05 can exceed 22 tires. That is exactly why the check
+    // reports independently rather than waiting for everything else to pass:
+    // a total of 42 is the more alarming symptom, and hiding it behind an axle
+    // sum mismatch would bury it.
+    const runaway = codes({
+      axleCount: 6,
+      configs: [steer(1), drive(5, "double"), free(5, "double")],
+    });
+
+    expect(runaway).toContain("OUT_OF_RANGE");
+    expect(runaway).toContain("AXLE_SUM_MISMATCH");
+  });
+
+  it("rejects a tire total below the physical minimum of 4", () => {
+    expect(codes({ axleCount: 2, configs: [] })).toContain("OUT_OF_RANGE");
+  });
+
   it("keeps every one of the 34 valid combinations inside the range", () => {
     for (const combination of enumerateValidCombinations()) {
       expect(

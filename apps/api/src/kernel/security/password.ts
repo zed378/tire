@@ -97,7 +97,7 @@ export async function isPasswordBreached(plain: string): Promise<boolean> {
  * Ambiguous characters (0/O, 1/l/I) are excluded because this string is
  * dictated between an admin and a user far more often than it is copied.
  */
-const READABLE_ALPHABET = "abcdefghjkmnpqrstuvwxyzABCDEFGHJKMNPQRSTUVWXYZ23456789";
+const READABLE_ALPHABET = "abcdefghjkmnpqrstuvwxyzABCDEFGHJKMNPQRSTUVWXYZ23456789"; // not-a-secret: character set, not a value
 
 export function generateTemporaryPassword(length = 14): string {
   const bytes = randomBytes(length);

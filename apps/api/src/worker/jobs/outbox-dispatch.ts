@@ -54,8 +54,11 @@ async function resolveRecipients(
     case "inspection.passed_qc":
     case "inspection.dropped_qc":
     case "inspection.needs_revision": {
+      const inspectionId = idFrom(payload.inspectionId);
+      if (inspectionId === null) return [];
+
       const inspection = await tx.inspection.findUnique({
-        where: { id: BigInt(String(payload.inspectionId ?? "0")) },
+        where: { id: BigInt(inspectionId) },
         select: { submittedById: true },
       });
       if (inspection === null) return [];
@@ -66,11 +69,11 @@ async function resolveRecipients(
     case "export.failed":
     case "user.password_reset":
     case "user.login_from_new_device": {
-      const userId = payload.userId ?? payload.requestedBy;
-      if (userId === undefined || userId === null) return [];
+      const userId = idFrom(payload.userId) ?? idFrom(payload.requestedBy);
+      if (userId === null) return [];
       const channels: NotificationChannel[] =
         eventType.startsWith("export.") ? ["in_app"] : ["in_app", "email"];
-      return [{ userId: BigInt(String(userId)), channels }];
+      return [{ userId: BigInt(userId), channels }];
     }
 
     case "job.repeatedly_failed":
@@ -93,6 +96,13 @@ async function resolveRecipients(
       return admins.map((admin) => ({ userId: admin.id, channels: ["in_app"] }));
     }
   }
+}
+
+/** Payload values arrive as `unknown`; only a string or a number is meaningful. */
+function idFrom(value: unknown): string | null {
+  if (typeof value === "string" && value !== "") return value;
+  if (typeof value === "number") return String(value);
+  return null;
 }
 
 function linkFor(eventType: EventType, payload: Record<string, unknown>): string | null {
