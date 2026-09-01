@@ -9,7 +9,7 @@ coverage
 PLAN
 TASKS
 ACCEPTANCE
-uploads
+/uploads
 .env
 .env.*
 !.env.example
