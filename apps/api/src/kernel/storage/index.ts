@@ -1,5 +1,5 @@
 import { loadConfig } from "../config.ts";
-import type { ObjectMetadata, StorageDriver, StoredObject } from "./driver.ts";
+import type { DownloadOptions, ObjectMetadata, StorageDriver, StoredObject } from "./driver.ts";
 import { localStorageDriver } from "./local-driver.ts";
 import { s3StorageDriver } from "./s3-driver.ts";
 
@@ -33,8 +33,11 @@ export async function presignUpload(params: {
 }
 
 /** Short-lived read URL. Photos are never served from a permanently public link. */
-export async function presignDownload(storageKey: string, ttlSeconds = 900): Promise<string> {
-  return getStorageDriver().presignDownload(storageKey, ttlSeconds);
+export async function presignDownload(
+  storageKey: string,
+  options: DownloadOptions = {},
+): Promise<string> {
+  return getStorageDriver().presignDownload(storageKey, options);
 }
 
 /** Confirms the object actually landed before a `photos` row claims it did. */
@@ -62,5 +65,5 @@ export async function listObjects(prefix: string, limit = 1000): Promise<StoredO
   return getStorageDriver().list(prefix, limit);
 }
 
-export { thumbnailKeyFor } from "./driver.ts";
-export type { ObjectMetadata, StorageDriver, StoredObject } from "./driver.ts";
+export { contentTypeFor, thumbnailKeyFor } from "./driver.ts";
+export type { DownloadOptions, ObjectMetadata, StorageDriver, StoredObject } from "./driver.ts";

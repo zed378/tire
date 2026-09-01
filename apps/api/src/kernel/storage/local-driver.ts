@@ -3,7 +3,13 @@ import { mkdir, readdir, readFile, rm, stat, writeFile } from "node:fs/promises"
 import { dirname, join, resolve, sep } from "node:path";
 import { PRESIGN_TTL_SECONDS } from "@c26/contracts";
 import { loadConfig } from "../config.ts";
-import type { ObjectMetadata, PresignedUpload, StorageDriver, StoredObject } from "./driver.ts";
+import {
+  contentTypeFor,
+  type ObjectMetadata,
+  type PresignedUpload,
+  type StorageDriver,
+  type StoredObject,
+} from "./driver.ts";
 
 /**
  * Filesystem storage driver.
@@ -35,6 +41,8 @@ interface TokenPayload {
   checksum: string;
   expiresAt: number;
   operation: "put" | "get";
+  /** Present on a download token when the file should be saved, not displayed. */
+  filename?: string;
 }
 
 function signingKey(): string {
@@ -123,14 +131,19 @@ export const localStorageDriver: StorageDriver = {
     return Promise.resolve({ url: `${base}/api/uploads/${token}`, expiresAt });
   },
 
-  presignDownload(storageKey, ttlSeconds = 900): Promise<string> {
+  presignDownload(storageKey, options = {}): Promise<string> {
+    const ttlSeconds = options.ttlSeconds ?? 900;
+
     const token = createStorageToken({
       key: storageKey,
       size: 0,
-      mime: "",
+      // Carried in the signed token rather than guessed at serve time. The
+      // guess was `webp or jpeg`, which served every Excel export as an image.
+      mime: contentTypeFor(storageKey),
       checksum: "",
       expiresAt: Date.now() + ttlSeconds * 1000,
       operation: "get",
+      ...(options.filename === undefined ? {} : { filename: options.filename }),
     });
 
     const base = loadConfig().PUBLIC_API_URL.replace(/\/$/, "");

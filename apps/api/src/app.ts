@@ -1,4 +1,4 @@
-import Fastify, { type FastifyInstance } from "fastify";
+import Fastify, { LogController, type FastifyInstance } from "fastify";
 import compress from "@fastify/compress";
 import cookie from "@fastify/cookie";
 import cors from "@fastify/cors";
@@ -53,24 +53,27 @@ export function buildApp(): FastifyInstance {
     // emits one richer line instead, carrying the requestId, the actor, the
     // route, the status, and the duration (PLAN/01 §6).
     //
-    // Fastify 5 deprecates this in favour of `logController` and prints a
-    // warning at boot. The replacement is not usable yet: in 5.12 the type
-    // declares `logController?: LogControllerClass` while the runtime rejects a
-    // class with "must be an instance of LogController". Revisit on the
-    // Fastify 6 upgrade, when the option is removed and the API has settled.
-    disableRequestLogging: true,
+    // An INSTANCE, not the class: `logController?: LogControllerClass` names the
+    // instance type, because `LogController` is declared as a class. Passing the
+    // class itself is what the runtime rejects with "must be an instance of
+    // LogController". This replaces the top-level `disableRequestLogging`, which
+    // Fastify 5 deprecates and 6 removes.
+    logController: new LogController({ disableRequestLogging: true }),
     // cloudflared is the only client and it reaches this over loopback, so
     // X-Forwarded-For can be believed.
     trustProxy: true,
     // Small by default: only the upload route needs more, and it raises its own
     // limit to the 5 MB the photo contract allows.
     bodyLimit: 2 * 1024 * 1024,
-    // The signed storage token is a route parameter and runs to roughly 400
+    // The signed storage token is a route parameter and runs to roughly 270
     // characters: a base64url JSON payload carrying the storage key, size, MIME
     // type, checksum, and expiry, plus its HMAC. Fastify's default cap is 100,
-    // and exceeding it makes the router answer 414 — which would break every
-    // photo upload and every photo view, and only shows up at runtime.
-    maxParamLength: 1024,
+    // and exceeding it makes the router answer 414 — which broke every photo
+    // upload and every photo view, and only showed up at runtime.
+    //
+    // Set under `routerOptions`; the top-level form is deprecated in Fastify 5
+    // and removed in 6.
+    routerOptions: { maxParamLength: 1024 },
   });
 
   registerRequestContext(app);

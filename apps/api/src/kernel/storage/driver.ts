@@ -17,6 +17,19 @@ export interface PresignedUpload {
   expiresAt: Date;
 }
 
+export interface DownloadOptions {
+  ttlSeconds?: number;
+  /**
+   * When set, the browser is told to save the file under this name rather than
+   * try to display it.
+   *
+   * Photos are viewed inline; an Excel export must download. Getting this wrong
+   * is not cosmetic — a spreadsheet served as an image renders as a broken image
+   * icon and cannot be saved at all.
+   */
+  filename?: string;
+}
+
 export interface ObjectMetadata {
   byteSize: number;
   mimeType: string | null;
@@ -38,7 +51,7 @@ export interface StorageDriver {
     checksumSha256: string;
   }): Promise<PresignedUpload>;
 
-  presignDownload(storageKey: string, ttlSeconds?: number): Promise<string>;
+  presignDownload(storageKey: string, options?: DownloadOptions): Promise<string>;
 
   head(storageKey: string): Promise<ObjectMetadata | null>;
 
@@ -60,4 +73,28 @@ export interface StorageDriver {
 
 export function thumbnailKeyFor(storageKey: string): string {
   return storageKey.replace(/(\.[a-z0-9]+)$/i, ".thumb$1");
+}
+
+/**
+ * Content type for a stored object, by extension.
+ *
+ * The download route used to guess with `extension === "webp" ? webp : jpeg`,
+ * which meant every Excel export was served as `image/jpeg`. The browser then
+ * tried to render a spreadsheet as a photograph.
+ */
+const CONTENT_TYPES: Record<string, string> = {
+  webp: "image/webp",
+  jpg: "image/jpeg",
+  jpeg: "image/jpeg",
+  png: "image/png",
+  xlsx: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  csv: "text/csv",
+  pdf: "application/pdf",
+};
+
+export function contentTypeFor(storageKey: string): string {
+  const extension = storageKey.split(".").pop()?.toLowerCase() ?? "";
+  // Unknown types download rather than render, which is the safe default for
+  // something whose shape we do not know.
+  return CONTENT_TYPES[extension] ?? "application/octet-stream";
 }

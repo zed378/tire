@@ -9,7 +9,13 @@ import {
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { PRESIGN_TTL_SECONDS } from "@c26/contracts";
 import { loadConfig } from "../config.ts";
-import type { ObjectMetadata, PresignedUpload, StorageDriver, StoredObject } from "./driver.ts";
+import {
+  contentTypeFor,
+  type ObjectMetadata,
+  type PresignedUpload,
+  type StorageDriver,
+  type StoredObject,
+} from "./driver.ts";
 
 /**
  * Cloudflare R2 driver, spoken to over the S3 API (PLAN/01 §4.2).
@@ -66,10 +72,21 @@ export const s3StorageDriver: StorageDriver = {
     return { url, expiresAt: new Date(Date.now() + PRESIGN_TTL_SECONDS * 1000) };
   },
 
-  presignDownload(storageKey, ttlSeconds = 900): Promise<string> {
-    return getSignedUrl(getClient(), new GetObjectCommand({ Bucket: bucket(), Key: storageKey }), {
-      expiresIn: ttlSeconds,
-    });
+  presignDownload(storageKey, options = {}): Promise<string> {
+    return getSignedUrl(
+      getClient(),
+      new GetObjectCommand({
+        Bucket: bucket(),
+        Key: storageKey,
+        // R2 echoes these back on the response, so an export downloads under a
+        // sensible name and a photo still displays inline.
+        ResponseContentType: contentTypeFor(storageKey),
+        ...(options.filename === undefined
+          ? {}
+          : { ResponseContentDisposition: `attachment; filename="${options.filename}"` }),
+      }),
+      { expiresIn: options.ttlSeconds ?? 900 },
+    );
   },
 
   async head(storageKey): Promise<ObjectMetadata | null> {
