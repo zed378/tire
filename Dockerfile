@@ -15,8 +15,8 @@ COPY pnpm-workspace.yaml package.json pnpm-lock.yaml* .npmrc ./
 COPY packages/contracts/package.json packages/contracts/
 COPY apps/api/package.json apps/api/
 COPY apps/web/package.json apps/web/
-RUN pnpm install --frozen-lockfile
 RUN corepack install -g pnpm@11.25.0
+RUN pnpm install --frozen-lockfile
 
 FROM deps AS build
 COPY . .
