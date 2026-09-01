@@ -42,5 +42,6 @@ COPY --from=build /app/apps/web/dist ./web
 # over it. Created with the right owner so the unprivileged user can write.
 RUN mkdir -p /app/uploads && chown -R node:node /app/uploads
 USER node
+NODE_PATH=/app/node_modules/.pnpm/fastify@5.12.1/node_modules
 EXPOSE 3000
-CMD ["node", "--preserve-symlinks", "dist/server.js"]
+CMD ["node", "dist/server.js"]
