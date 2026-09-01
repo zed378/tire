@@ -21,7 +21,7 @@ beforeAll(() => {
   process.env.STORAGE_SIGNING_KEY = "a-test-signing-key-of-sufficient-length";
   process.env.UPLOAD_DIR = "./uploads";
   process.env.PUBLIC_API_URL = "http://localhost:3000";
-  process.env.DATABASE_URL ??= "postgresql://test:test@localhost:5432/test";
+  process.env.DATABASE_URL ??= "postgresql://test:test@localhost:5432/test"; // not-a-secret: unreachable localhost fixture, config validation only
   process.env.MFA_ENCRYPTION_KEY ??= Buffer.alloc(32, 3).toString("base64");
   resetConfigCache();
 });

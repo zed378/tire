@@ -9,7 +9,7 @@ import { resetConfigCache } from "../config.ts";
 beforeAll(() => {
   // `wrapRoute` logs, and the logger reads configuration. Minimum viable
   // environment so the wrapper can be exercised without a running server.
-  process.env.DATABASE_URL ??= "postgresql://test:test@localhost:5432/test";
+  process.env.DATABASE_URL ??= "postgresql://test:test@localhost:5432/test"; // not-a-secret: unreachable localhost fixture, config validation only
   process.env.STORAGE_SIGNING_KEY ??= "test-signing-key-at-least-16-chars";
   process.env.MFA_ENCRYPTION_KEY ??= Buffer.alloc(32, 5).toString("base64");
   process.env.LOG_LEVEL = "silent";

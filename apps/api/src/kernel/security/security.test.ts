@@ -31,7 +31,7 @@ beforeAll(() => {
   // A throwaway key for the encryption round trip. The real one lives in an
   // environment variable and is never written to this repository.
   process.env.MFA_ENCRYPTION_KEY = Buffer.alloc(32, 7).toString("base64");
-  process.env.DATABASE_URL ??= "postgresql://test:test@localhost:5432/test";
+  process.env.DATABASE_URL ??= "postgresql://test:test@localhost:5432/test"; // not-a-secret: unreachable localhost fixture, config validation only
   process.env.STORAGE_SIGNING_KEY ??= "test-signing-key-at-least-16-chars";
   resetConfigCache();
 });
