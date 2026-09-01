@@ -137,6 +137,24 @@ describe("presigned URLs", () => {
     expect(payload?.key).toBe(validPayload.key);
   });
 
+  it("keeps the token short enough to survive Fastify's route parameter cap", async () => {
+    // The token is a route parameter, and Fastify caps those at 100 characters
+    // by default — under which every photo upload and every photo view answers
+    // 414 URI Too Long. `app.ts` raises the cap to 1024; this asserts the token
+    // stays well inside it, so growing the payload cannot quietly break both
+    // flows again.
+    const signed = await localStorageDriver.presignUpload({
+      storageKey: "inspections/2026/SN2026-00001/FREE_5_L_OUT/00000000-0000-0000-0000-000000000000.webp",
+      mimeType: "image/webp",
+      byteSize: 5 * 1024 * 1024,
+      checksumSha256: "f".repeat(64),
+    });
+
+    const token = signed.url.split("/api/uploads/")[1] ?? "";
+    expect(token.length).toBeGreaterThan(100);
+    expect(token.length).toBeLessThan(700);
+  });
+
   it("returns null metadata for an object that is not there", async () => {
     expect(await localStorageDriver.head("inspections/2026/nope/missing.webp")).toBeNull();
     expect(await localStorageDriver.get("inspections/2026/nope/missing.webp")).toBeNull();

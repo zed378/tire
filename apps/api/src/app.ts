@@ -65,6 +65,12 @@ export function buildApp(): FastifyInstance {
     // Small by default: only the upload route needs more, and it raises its own
     // limit to the 5 MB the photo contract allows.
     bodyLimit: 2 * 1024 * 1024,
+    // The signed storage token is a route parameter and runs to roughly 400
+    // characters: a base64url JSON payload carrying the storage key, size, MIME
+    // type, checksum, and expiry, plus its HMAC. Fastify's default cap is 100,
+    // and exceeding it makes the router answer 414 — which would break every
+    // photo upload and every photo view, and only shows up at runtime.
+    maxParamLength: 1024,
   });
 
   registerRequestContext(app);

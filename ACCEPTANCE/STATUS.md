@@ -16,13 +16,19 @@ one.
 | G-06 overall line coverage >= 70% | **not met** | see below |
 | G-07 mutation score >= 85% on the axle engine | **not run** | Stryker is configured; needs one long run |
 | G-08 no credentials in the repo | pass | 4 lines suppressed, each with a written reason |
-| G-09 migrations apply to an empty database | **not run** | needs a running PostgreSQL |
+| G-09 migrations apply to an empty database | pass | applied to an empty PostgreSQL 18; 33 tables, 23 CHECKs, 3 audit partitions, both constraint triggers, the generated `plate_key`, the partial locking index, and the materialised view all verified present |
 | G-10 no demo panel, no hardcoded credentials | pass | zero hits |
 | G-11 end-to-end QC flow | **not run** | needs a database and a seeded environment |
 | G-12 client bundle <= 180 KB gzipped | pass | 148.8 KB |
 | G-13 lockfile does not drift | pass | frozen install |
 
-356 tests pass: 197 contracts, 129 API, 19 migration, 11 web.
+384 tests pass: 197 contracts, 157 API, 19 migration, 11 web.
+
+The seed and the running application were exercised against that database:
+six inspections covering every branch of the status machine, 70 generated
+photographs, the host split enforced (`/api/qc/queue` answers 404 on the storage
+hostname), and a signed photo URL returning a real 27 KB WebP while a token with
+one character changed returns 404.
 
 ## G-06 is the one to look at
 
@@ -49,18 +55,35 @@ What has been done instead of nothing:
 ## What running it needs
 
 ```bash
-cp .env.example .env          # fill in the values
+cp .env.example .env          # works as-is for local
 docker compose up -d          # postgres:18-alpine
 pnpm install
 pnpm --filter @c26/api prisma generate
-pnpm db:migrate               # exercises G-09
-pnpm db:seed                  # demo accounts + sample photographs
+pnpm db:migrate
+pnpm db:seed
 pnpm dev
 ```
 
-Then G-09, G-11, and the seed path can all be observed. Until a database has
-run, those three gates are untested claims rather than facts, and this document
-says so.
+G-07 (mutation) and G-11 (end-to-end) remain unrun. Until they have been, they
+are untested claims rather than facts, and this document says so.
+
+## Bugs found by running it, not by reading it
+
+Four defects that no amount of typechecking would have caught, and that were only
+visible once the thing was actually started:
+
+1. **Every inspection would have failed to get a Serial Number.** Prisma binds a
+   JS number as `int8`; `next_serial_number` takes `int4`, so PostgreSQL reported
+   that the function did not exist. Fixed with an explicit `::int` cast at both
+   call sites.
+2. **Every photo upload and view would have returned 414.** The signed storage
+   token is a route parameter of about 270 characters and Fastify caps those at
+   100 by default. `maxParamLength` is now 1024, with a regression test pinning
+   the token size.
+3. **Fingerprinted assets were not cached at all.** `@fastify/static` sets its own
+   `Cache-Control: public, max-age=0` — a re-download of the whole bundle on
+   every visit, over exactly the 4G connections `PLAN/06` §7 budgets for.
+4. **`LOG_LEVEL=silent` was rejected**, though it is a real pino level.
 
 ## Found while implementing
 
