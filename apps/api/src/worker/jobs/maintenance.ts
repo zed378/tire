@@ -5,7 +5,7 @@ import { getPrisma, withTransaction } from "../../kernel/db.ts";
 import { getLogger } from "../../kernel/logger.ts";
 import { publishEvent } from "../../kernel/outbox.ts";
 import { ALERT_THRESHOLDS } from "../../kernel/queue.ts";
-import { deleteObject, getObject, putObject, thumbnailKeyFor } from "../../kernel/storage.ts";
+import { deleteObject, getObject, putObject, thumbnailKeyFor } from "../../kernel/storage/index.ts";
 
 /**
  * Scheduled maintenance jobs (PLAN/12 §7, PLAN/06 §6).

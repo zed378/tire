@@ -12,6 +12,7 @@ disagree, the document is right.
 PLAN/                  the binding specification (14 documents)
 packages/contracts/    Zod schemas + types, imported by BOTH api and web
 apps/api/              Fastify + Prisma + PostgreSQL 18; also hosts the worker
+uploads/               photo storage while STORAGE_DRIVER=local (git-ignored)
   src/kernel/axle/     the axle configuration engine — pure logic, zero imports
 apps/web/              Vite + React 19 SPA, installable as a PWA
 migrations/            the F6 legacy migration toolkit (PLAN/07)
@@ -24,13 +25,31 @@ ACCEPTANCE/            per-phase acceptance lists, signed by a human
 
 ```bash
 cp .env.example .env          # fill in the values; never commit this file
-docker compose up -d          # postgres:18-alpine + minio
+docker compose up -d          # postgres:18-alpine
 pnpm install
 pnpm --filter @c26/api prisma generate
 pnpm db:migrate               # NOT `prisma migrate dev` — see PLAN/09 §4.5
 pnpm db:seed                  # master data + the first admin account
 pnpm dev                      # api on :3000, web on :5173
 ```
+
+## Where photos are stored
+
+`STORAGE_DRIVER=local` writes them to `./uploads` and serves them through the
+API using short-lived signed tokens. The device-side protocol is exactly the one
+in `PLAN/05` §7 — presign, PUT to the returned URL, confirm — so switching to
+Cloudflare R2 later is one environment variable and no client change.
+
+Two things the local driver gives up, stated so the decision stays visible:
+
+| Given up | Why it matters eventually |
+|---|---|
+| Uploads bypassing the app server | `PLAN/05` §7 routes them around it on purpose; at 18,000 uploads a month the bytes cost bandwidth and memory here |
+| Versioned, lifecycle-managed storage | `PLAN/01` §5.2 assumes 90 days of recovery on deleted objects. On a disk, the `uploads` volume is the only copy of the evidence, so it must be in the backup job |
+
+**Switch to `s3` when any of these is true:** photo storage passes ~50 GB, the
+retention policy in `PLAN/06` §6 starts being enforced for real, or a second
+API instance is added — two processes cannot share a local directory.
 
 ## The one command that matters
 

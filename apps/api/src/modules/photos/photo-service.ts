@@ -1,8 +1,7 @@
 import { randomUUID } from "node:crypto";
 import {
   buildStorageKey,
-  MAX_PHOTOS_PER_INSPECTION,
-  MAX_PHOTOS_PER_SLOT,
+  checkPhotoQuota,
   type ConfirmUploadInput,
   type PhotoRecord,
   type PresignInput,
@@ -13,15 +12,20 @@ import { inspectionScope, type Actor } from "../../kernel/authorization.ts";
 import { getPrisma, withTransaction } from "../../kernel/db.ts";
 import { AppError } from "../../kernel/envelope/index.ts";
 import { JOB_NAMES, sendInTransaction } from "../../kernel/queue.ts";
-import { headObject, presignDownload, presignUpload } from "../../kernel/storage.ts";
+import { headObject, presignDownload, presignUpload } from "../../kernel/storage/index.ts";
 
 /**
  * Photo upload (PLAN/05 §7, PLAN/06).
  *
- * Photos never pass through this server. It decides whether an upload is
- * allowed, hands back a 10-minute presigned URL, and records what actually
- * landed. At 18,000 uploads a month, proxying the bytes would spend bandwidth
- * and memory for nothing.
+ * This module decides whether an upload is allowed, hands back a 10-minute
+ * presigned URL, and records what actually landed. It never handles the bytes.
+ *
+ * Where those bytes go depends on the configured driver. With `s3` they never
+ * touch this server at all, which is what PLAN/05 §7 specifies: at 18,000
+ * uploads a month, proxying them spends bandwidth and memory for nothing. With
+ * the current `local` driver they pass through a separate route that is
+ * authorised by the signed token issued here. This code is identical either
+ * way — and so is the client's.
  *
  * The checksum is what makes the offline queue safe. A retry after a dropped
  * connection re-presents the same SHA-256, and the row that already exists is
@@ -166,31 +170,11 @@ async function assertQuota(inspectionId: bigint, input: PresignInput): Promise<v
     prisma.photo.count({ where: { inspectionId, deletedAt: null } }),
   ]);
 
-  if (slotCount >= MAX_PHOTOS_PER_SLOT) {
-    throw new AppError("VALIDATION_ERROR", {
-      fieldErrors: [
-        {
-          field: "photos",
-          code: "PHOTO_LIMIT_EXCEEDED",
-          message: `Maksimal ${MAX_PHOTOS_PER_SLOT} foto per slot.`,
-        },
-      ],
-    });
-  }
-
-  // New in the rewrite. Ten per slot restrains nothing once a 6-axle vehicle has
-  // 22 positions: that is the difference between 84 GB and 562 GB a year.
-  if (totalCount >= MAX_PHOTOS_PER_INSPECTION) {
-    throw new AppError("VALIDATION_ERROR", {
-      fieldErrors: [
-        {
-          field: "photos",
-          code: "PHOTO_LIMIT_EXCEEDED",
-          message: `Maksimal ${MAX_PHOTOS_PER_INSPECTION} foto per pengajuan.`,
-        },
-      ],
-    });
-  }
+  // The per-inspection cap is new in the rewrite. Ten per slot restrains nothing
+  // once a 6-axle vehicle has 22 positions: that is the difference between
+  // 84 GB and 562 GB of storage in year one (PLAN/06 §6).
+  const violation = checkPhotoQuota({ slotCount, inspectionCount: totalCount });
+  if (violation !== null) throw new AppError("VALIDATION_ERROR", { fieldErrors: [violation] });
 }
 
 export async function confirmUpload(

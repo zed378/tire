@@ -23,6 +23,7 @@ import { registerReportRoutes } from "./modules/reports/index.ts";
 import { registerNotificationRoutes } from "./modules/notifications/index.ts";
 import { registerOpsRoutes } from "./modules/ops/index.ts";
 import { registerAuditRoutes } from "./modules/audit/index.ts";
+import { registerUploadRoutes } from "./modules/uploads/index.ts";
 
 /**
  * Builds the Fastify application.
@@ -38,7 +39,9 @@ export function buildApp(): FastifyInstance {
     loggerInstance: log,
     disableRequestLogging: true, // the context hook logs a single richer line
     trustProxy: true, // Caddy sits in front
-    bodyLimit: 2 * 1024 * 1024, // photos go straight to storage, never through here
+    // Small by default: only the upload route needs more, and it raises its own
+    // limit to the 5 MB the photo contract allows.
+    bodyLimit: 2 * 1024 * 1024,
   });
 
   registerRequestContext(app);
@@ -84,7 +87,16 @@ export function buildApp(): FastifyInstance {
     // without a session; the CSRF cookie is issued at login, so it cannot be
     // required on the login request itself.
     const path = request.routeOptions.url ?? request.url;
-    const csrfExempt = path === "/api/auth/login" || path === "/api/health";
+
+    // The upload routes carry their own authorisation in a signed, short-lived,
+    // single-purpose token (see modules/uploads). A presigned URL is by design
+    // usable without a session — that is what makes the same client code work
+    // against R2 unchanged — so CSRF does not apply to them.
+    const csrfExempt =
+      path === "/api/auth/login" ||
+      path === "/api/health" ||
+      path.startsWith("/api/uploads/");
+
     if (!csrfExempt) verifyCsrf(request);
   });
 
@@ -101,6 +113,9 @@ export function buildApp(): FastifyInstance {
   registerNotificationRoutes(app);
   registerOpsRoutes(app);
   registerAuditRoutes(app);
+  // Only registered while STORAGE_DRIVER=local; with s3 the device uploads
+  // straight to R2 and these routes do not exist.
+  registerUploadRoutes(app);
 
   /**
    * The last line of defence.

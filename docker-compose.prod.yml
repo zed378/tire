@@ -26,6 +26,11 @@ services:
       target: api
     restart: unless-stopped
     env_file: .env
+    volumes:
+      # Photos live here while STORAGE_DRIVER=local. This volume is the single
+      # copy of the evidence: it must be in the backup job, and it is the reason
+      # the README names a point at which object storage has to come back.
+      - uploads:/app/uploads
     depends_on:
       postgres:
         condition: service_healthy
@@ -43,6 +48,10 @@ services:
     command: ["node", "dist/worker.js"]
     restart: unless-stopped
     env_file: .env
+    volumes:
+      # The worker builds thumbnails and sweeps retention, so it needs the same
+      # directory the API writes to.
+      - uploads:/app/uploads
     depends_on:
       postgres:
         condition: service_healthy
@@ -63,5 +72,6 @@ services:
 
 volumes:
   postgres-data:
+  uploads:
   caddy-data:
   caddy-config:

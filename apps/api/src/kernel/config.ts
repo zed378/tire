@@ -24,12 +24,22 @@ const configSchema = z.object({
 
   DATABASE_URL: z.string().min(1, "DATABASE_URL is required"),
 
-  STORAGE_ENDPOINT: z.string().url(),
+  // `local` writes to disk and serves uploads through this API with short-lived
+  // signed tokens; `s3` talks to Cloudflare R2. The client-side protocol
+  // (presign -> PUT -> confirm, PLAN/05 §7) is identical either way, so moving
+  // to R2 when volume justifies it is a driver change and nothing else.
+  STORAGE_DRIVER: z.enum(["local", "s3"]).default("local"),
+
+  UPLOAD_DIR: z.string().default("./uploads"),
+  PUBLIC_API_URL: z.string().url().default("http://localhost:3000"),
+  STORAGE_SIGNING_KEY: z.string().min(16, "STORAGE_SIGNING_KEY must be at least 16 characters"),
+
+  STORAGE_ENDPOINT: z.string().optional(),
   STORAGE_REGION: z.string().default("auto"),
-  STORAGE_BUCKET: z.string().min(1),
-  STORAGE_ACCESS_KEY_ID: z.string().min(1),
-  STORAGE_SECRET_ACCESS_KEY: z.string().min(1),
-  STORAGE_PUBLIC_URL: z.string().url(),
+  STORAGE_BUCKET: z.string().optional(),
+  STORAGE_ACCESS_KEY_ID: z.string().optional(),
+  STORAGE_SECRET_ACCESS_KEY: z.string().optional(),
+  STORAGE_PUBLIC_URL: z.string().optional(),
   STORAGE_FORCE_PATH_STYLE: z
     .string()
     .default("true")
@@ -63,6 +73,24 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
   }
 
   const value = parsed.data;
+
+  // Checked here rather than in the schema so the `local` driver is not asked
+  // for credentials it will never use.
+  if (value.STORAGE_DRIVER === "s3") {
+    const missing = (
+      [
+        "STORAGE_ENDPOINT",
+        "STORAGE_BUCKET",
+        "STORAGE_ACCESS_KEY_ID",
+        "STORAGE_SECRET_ACCESS_KEY",
+        "STORAGE_PUBLIC_URL",
+      ] as const
+    ).filter((key) => value[key] === undefined || value[key] === "");
+
+    if (missing.length > 0) {
+      throw new Error(`STORAGE_DRIVER=s3 requires: ${missing.join(", ")}`);
+    }
+  }
   cached = {
     ...value,
     allowedOrigins: value.WEB_ORIGIN.split(",").map((o) => o.trim()).filter(Boolean),

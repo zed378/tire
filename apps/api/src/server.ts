@@ -1,3 +1,8 @@
+import { loadEnvFile } from "./kernel/load-env.ts";
+
+// Must run before anything reads process.env.
+loadEnvFile();
+
 import { buildApp } from "./app.ts";
 import { loadConfig } from "./kernel/config.ts";
 import { disconnectPrisma } from "./kernel/db.ts";

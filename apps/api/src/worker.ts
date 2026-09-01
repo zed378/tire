@@ -1,3 +1,8 @@
+import { loadEnvFile } from "./kernel/load-env.ts";
+
+// Must run before anything reads process.env.
+loadEnvFile();
+
 import type PgBoss from "pg-boss";
 import { disconnectPrisma } from "./kernel/db.ts";
 import { getLogger } from "./kernel/logger.ts";

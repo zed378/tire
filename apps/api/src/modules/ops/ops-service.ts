@@ -3,7 +3,7 @@ import { recordAudit, type AuditActor } from "../../kernel/audit.ts";
 import { loadConfig } from "../../kernel/config.ts";
 import { getPrisma, withTransaction } from "../../kernel/db.ts";
 import { ALERT_THRESHOLDS } from "../../kernel/queue.ts";
-import { deleteObject } from "../../kernel/storage.ts";
+import { deleteObject } from "../../kernel/storage/index.ts";
 
 /**
  * The operations panel (PLAN/10 §3).

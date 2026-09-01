@@ -2,7 +2,7 @@ import ExcelJS from "exceljs";
 import { EXPORT_KIND_LABELS, type ExportKind } from "@c26/contracts";
 import { getPrisma, withTransaction } from "../../kernel/db.ts";
 import { publishEvent } from "../../kernel/outbox.ts";
-import { putObject } from "../../kernel/storage.ts";
+import { putObject } from "../../kernel/storage/index.ts";
 
 /**
  * Builds an Excel export (PLAN/05 §8, PLAN/08 F5).

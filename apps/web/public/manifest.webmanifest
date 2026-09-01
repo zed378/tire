@@ -1,0 +1,17 @@
+{
+  "name": "Commercial 2026 — Pendataan Ban Bus & Truk",
+  "short_name": "Commercial 2026",
+  "description": "Pendataan ban kendaraan komersial: pengajuan, verifikasi QC, dan spesifikasi ban.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#ffffff",
+  "theme_color": "#1d4ed8",
+  "lang": "id",
+  "icons": [
+    { "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
