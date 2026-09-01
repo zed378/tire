@@ -38,6 +38,7 @@ export function verifyCsrf(request: FastifyRequest): void {
   }
 }
 
+/** An empty domain means a host-only cookie; the attribute is omitted entirely. */
 export function setCsrfCookie(reply: FastifyReply, token: string, domain: string, secure: boolean): void {
   reply.setCookie(CSRF_COOKIE, token, {
     // Deliberately NOT httpOnly: the client has to read it to build the header.
@@ -47,10 +48,10 @@ export function setCsrfCookie(reply: FastifyReply, token: string, domain: string
     secure,
     sameSite: "strict",
     path: "/",
-    domain,
+    ...(domain === "" ? {} : { domain }),
   });
 }
 
 export function clearCsrfCookie(reply: FastifyReply, domain: string): void {
-  reply.clearCookie(CSRF_COOKIE, { path: "/", domain });
+  reply.clearCookie(CSRF_COOKIE, { path: "/", ...(domain === "" ? {} : { domain }) });
 }

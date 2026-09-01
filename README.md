@@ -24,7 +24,7 @@ ACCEPTANCE/            per-phase acceptance lists, signed by a human
 ## Getting started
 
 ```bash
-cp .env.example .env          # fill in the values; never commit this file
+cp .env.example .env          # works as-is for local; never commit this file
 docker compose up -d          # postgres:18-alpine
 pnpm install
 pnpm --filter @c26/api prisma generate
@@ -43,9 +43,39 @@ they belong to, so a slot/photo mismatch is obvious at a glance.
 Demo accounts share `SEED_DEMO_PASSWORD` and sign in through the normal login;
 leaving that variable empty seeds master data and the first admin only.
 
+## How it is exposed
+
+Two hostnames behind a Cloudflare Tunnel, and the split matters:
+
+| Hostname | Serves |
+|---|---|
+| `tire.zedth.my.id` | The SPA, plus `/api/*` reverse-proxied to the api container **on the same origin** |
+| `tire-store.zedth.my.id` | Nothing but `/api/uploads/{signed-token}`. Everything else answers 404 |
+
+Proxying the API on the application's own origin removes the three costs
+`PLAN/01` §4.2 accepted for splitting the SPA from the API: there is no CORS, no
+cross-site cookie handling, and one public entry point instead of two. What the
+split was actually for — a client/server boundary that cannot leak, and a backend
+not tied to React — is a property of the code, and it is unchanged.
+
+The storage host is separate for one reason. It serves customer fleet
+photographs, authorised solely by a signed, expiring, single-purpose token
+(`PLAN/05` §7). Because the session cookie is **host-only** on
+`tire.zedth.my.id`, it is never sent to `tire-store.zedth.my.id` at all — so a
+leaked photo URL carries no session with it. Leave `COOKIE_DOMAIN` empty in
+production; setting it to `zedth.my.id` would widen the cookie to every
+subdomain and give that property away.
+
+```bash
+docker compose -f docker-compose.prod.yml --profile tunnel up -d
+```
+
+Point both hostnames at the same origin, `http://caddy:80`. Caddy routes by Host
+header; cloudflared terminates TLS at the edge, so Caddy publishes no host port.
+
 ## Where photos are stored
 
-`STORAGE_DRIVER=local` writes them to `./uploads` and serves them through the
+`STORAGE_DRIVER=local` writes them to `apps/api/uploads` and serves them through the
 API using short-lived signed tokens. The device-side protocol is exactly the one
 in `PLAN/05` §7 — presign, PUT to the returned URL, confirm — so switching to
 Cloudflare R2 later is one environment variable and no client change.

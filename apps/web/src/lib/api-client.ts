@@ -89,9 +89,11 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
   try {
     response = await fetch(buildUrl(path, options.query), {
       method,
-      // Cross-origin in production (tire. -> tire-api.), so the session cookie
-      // has to be sent explicitly (PLAN/13 §2).
-      credentials: "include",
+      // Same-origin: Caddy proxies /api on the application's own hostname, and
+      // in development Vite proxies it too. `same-origin` rather than `include`
+      // is the tighter setting — it guarantees the session cookie cannot be
+      // carried to another host by an accidental absolute URL.
+      credentials: "same-origin",
       headers: {
         ...(options.body === undefined ? {} : { "content-type": "application/json" }),
         ...(method === "GET" ? {} : { [CSRF_HEADER]: csrfToken() }),

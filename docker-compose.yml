@@ -3,12 +3,12 @@
 # Photos are stored on disk under ./uploads while STORAGE_DRIVER=local. The
 # object store is not run at all — see the README for the point at which it has
 # to come back.
-name: commercial2026
+name: tire
 
 services:
   postgres:
     image: postgres:18-alpine
-    restart: unless-stopped
+    restart: always
     environment:
       POSTGRES_USER: c26
       POSTGRES_PASSWORD: c26_local_only

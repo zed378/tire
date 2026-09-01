@@ -19,12 +19,26 @@ const configSchema = z.object({
   // Comma-separated allowlist. Never '*', never a reflected Origin header
   // (PLAN/13 §2).
   WEB_ORIGIN: z.string().default("http://localhost:5173"),
-  COOKIE_DOMAIN: z.string().default("localhost"),
+  // Empty means a host-only cookie, which is what production uses: a cookie
+  // scoped to tire.zedth.my.id is never sent to tire-store.zedth.my.id, so a
+  // leaked photo URL carries no session with it.
+  COOKIE_DOMAIN: z.string().default(""),
   // `silent` is a real pino level, and the one tests and noisy environments
   // need. Leaving it out made a valid configuration fail to boot.
   LOG_LEVEL: z
     .enum(["fatal", "error", "warn", "info", "debug", "trace", "silent"])
     .default("info"),
+
+  // Hostname that serves signed photo URLs and nothing else. Empty disables the
+  // restriction, which is right for local development where everything is
+  // localhost. See kernel/http/hosts.ts.
+  // production: tire-store.zedth.my.id
+  STORAGE_HOST: z.string().default(""),
+
+  // Built SPA. Empty means this process serves no static files, which is what
+  // local development wants — Vite serves them on :5173 and proxies /api here.
+  // production: ./web
+  WEB_DIST_DIR: z.string().default(""),
 
   DATABASE_URL: z.string().min(1, "DATABASE_URL is required"),
 

@@ -258,7 +258,10 @@ async function nextSerial(
 ): Promise<{ serialNumber: string; serialYear: number; serialSeq: number }> {
   const rows = await prisma.$queryRaw<
     { serial_number: string; serial_year: number; serial_seq: number }[]
-  >`SELECT * FROM next_serial_number(${year})`;
+    // The `::int` cast is required: Prisma sends a JS number as int8, and the
+    // function takes int4, so without it PostgreSQL reports that
+    // next_serial_number(bigint) does not exist.
+  >`SELECT * FROM next_serial_number(${year}::int)`;
 
   const row = rows[0];
   if (row === undefined) throw new Error("next_serial_number returned no row");

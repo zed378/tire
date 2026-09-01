@@ -59,9 +59,11 @@ services:
   caddy:
     image: caddy:2-alpine
     restart: unless-stopped
-    ports:
-      - "80:80"
-      - "443:443"
+    # No published ports. Cloudflare Tunnel reaches Caddy over the container
+    # network, so nothing is exposed on the host at all — which is most of the
+    # point of using a tunnel.
+    expose:
+      - "80"
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
       - ./apps/web/dist:/srv/web:ro
@@ -69,6 +71,23 @@ services:
       - caddy-config:/config
     depends_on:
       - api
+
+  # Publishes tire.zedth.my.id and tire-store.zedth.my.id through Cloudflare.
+  # Opt-in: `docker compose --profile tunnel up -d`.
+  #
+  # Configure both hostnames in the Cloudflare dashboard to point at the same
+  # origin, `http://caddy:80`. Caddy decides which is which by Host header, and
+  # tire-store answers 404 for everything but the signed upload route.
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    restart: unless-stopped
+    profiles: ["tunnel"]
+    command: tunnel --no-autoupdate run
+    environment:
+      # From the Cloudflare dashboard. Belongs in .env, never in this file.
+      TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN}
+    depends_on:
+      - caddy
 
 volumes:
   postgres-data:

@@ -94,7 +94,9 @@ export function attachSessionCookies(
     // no email-link login and no third-party OAuth (PLAN/13 §2.1).
     sameSite: "strict",
     path: "/",
-    domain: config.COOKIE_DOMAIN,
+    // Omitted when COOKIE_DOMAIN is empty, giving a host-only cookie. That is
+    // what keeps the session off tire-store.zedth.my.id entirely.
+    ...(config.COOKIE_DOMAIN === "" ? {} : { domain: config.COOKIE_DOMAIN }),
     expires: session.expiresAt,
   });
 
@@ -103,7 +105,10 @@ export function attachSessionCookies(
 
 export function clearSessionCookies(reply: FastifyReply): void {
   const config = loadConfig();
-  reply.clearCookie(SESSION_COOKIE, { path: "/", domain: config.COOKIE_DOMAIN });
+  reply.clearCookie(SESSION_COOKIE, {
+    path: "/",
+    ...(config.COOKIE_DOMAIN === "" ? {} : { domain: config.COOKIE_DOMAIN }),
+  });
   clearCsrfCookie(reply, config.COOKIE_DOMAIN);
 }
 

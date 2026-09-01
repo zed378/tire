@@ -284,8 +284,12 @@ async function nextSerialNumber(tx: Tx): Promise<{ serialNumber: string; year: n
   // Atomic. B-03: in Sheets, two suppliers submitting at once could receive the
   // same number. ON CONFLICT DO UPDATE ... RETURNING locks the year row, so the
   // database guarantees two different numbers rather than the application hoping.
+  //
+  // The `::int` cast is required, not cosmetic: Prisma binds a JS number as
+  // int8, the function takes int4, and PostgreSQL then reports that
+  // next_serial_number(bigint) does not exist.
   const rows = await tx.$queryRaw<{ serial_number: string; serial_year: number; serial_seq: number }[]>`
-    SELECT * FROM next_serial_number(${year})
+    SELECT * FROM next_serial_number(${year}::int)
   `;
   const row = rows[0];
   if (row === undefined) throw new Error("next_serial_number returned no row");
