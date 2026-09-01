@@ -52,6 +52,12 @@ function csrfToken(): string {
 let onVersionMismatch: ((serverVersion: string) => void) | null = null;
 let onSessionExpired: (() => void) | null = null;
 
+/**
+ * Asks the user for a fresh authenticator code and returns whether they gave a
+ * valid one. Installed by the step-up dialog in App.tsx.
+ */
+let onStepUpRequired: (() => Promise<boolean>) | null = null;
+
 export function setVersionMismatchHandler(handler: (serverVersion: string) => void): void {
   onVersionMismatch = handler;
 }
@@ -60,11 +66,17 @@ export function setSessionExpiredHandler(handler: () => void): void {
   onSessionExpired = handler;
 }
 
+export function setStepUpHandler(handler: () => Promise<boolean>): void {
+  onStepUpRequired = handler;
+}
+
 interface RequestOptions {
   method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
   body?: unknown;
   query?: Record<string, string | number | boolean | string[] | undefined>;
   signal?: AbortSignal;
+  /** Internal: set when replaying a request after a successful step-up. */
+  afterStepUp?: boolean;
 }
 
 function buildUrl(path: string, query: RequestOptions["query"]): string {
@@ -138,6 +150,24 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
   if (envelope.ok) return envelope.data;
 
   if (envelope.code === "SESSION_EXPIRED") onSessionExpired?.();
+
+  /**
+   * Step-up (PLAN/13 §4): the action is allowed, it just needs a fresh second
+   * factor. The user is asked for a code and the original request is replayed —
+   * they should not have to work out that they must re-verify, then find the
+   * button again, then press it a second time.
+   *
+   * Replayed at most once, so a persistently refused elevation surfaces as the
+   * error it is instead of looping.
+   */
+  if (
+    envelope.code === "STEP_UP_REQUIRED" &&
+    onStepUpRequired !== null &&
+    options.afterStepUp !== true
+  ) {
+    const elevated = await onStepUpRequired();
+    if (elevated) return apiRequest<T>(path, { ...options, afterStepUp: true });
+  }
 
   throw new ApiError(envelope);
 }

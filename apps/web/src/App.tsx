@@ -9,6 +9,7 @@ import { ErrorBanner } from "./components/ui/feedback.tsx";
 import { LoginPage } from "./features/auth/login-page.tsx";
 import { ChangePasswordPage } from "./features/auth/change-password-page.tsx";
 import { MfaEnrollPage } from "./features/auth/mfa-enroll-page.tsx";
+import { StepUpDialog } from "./features/auth/step-up-dialog.tsx";
 import { InspectionListPage } from "./features/inspections/inspection-list-page.tsx";
 import { NewInspectionPage } from "./features/inspections/new-inspection-page.tsx";
 import { InspectionDetailPage } from "./features/inspections/inspection-detail-page.tsx";
@@ -40,6 +41,9 @@ export function App(): ReactNode {
   return (
     <SessionProvider>
       <ToastProvider>
+        {/* Mounted once: any request answered with STEP_UP_REQUIRED opens this
+            and is replayed after a successful verification (PLAN/13 §4). */}
+        <StepUpDialog />
         <AppRoutes />
       </ToastProvider>
     </SessionProvider>
@@ -159,6 +163,24 @@ function RequireSession({ children }: { children: ReactNode }): ReactNode {
     // The intended destination is carried through, so a shared link to one
     // Serial Number still lands there after signing in.
     return <Navigate to="/login" replace state={{ from: location.pathname }} />;
+  }
+
+  /**
+   * Two things must be settled before anything else is reachable.
+   *
+   * PLAN/04 §4.1: the system-generated initial password is single-use.
+   * PLAN/13 §3.1: a role that requires MFA "tidak dapat menyelesaikan login
+   * tanpa mendaftarkannya" — enrolment comes before any access, not alongside it.
+   *
+   * Letting an admin browse first and only fail on their first privileged action
+   * produced exactly the confusion it was meant to prevent: a 403
+   * STEP_UP_REQUIRED on "Tambah Pengguna", with no way to satisfy it, because
+   * there was no second factor to step up with.
+   */
+  const onboarding = ["/profile/password", "/profile/mfa"];
+  if (!onboarding.includes(location.pathname)) {
+    if (user.mustChangePassword) return <Navigate to="/profile/password" replace />;
+    if (user.mfaEnrollmentRequired) return <Navigate to="/profile/mfa" replace />;
   }
 
   return <>{children}</>;
