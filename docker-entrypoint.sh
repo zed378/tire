@@ -23,7 +23,10 @@ echo "Database is ready."
 
 echo "Running Prisma migrations..."
 cd /app
+echo "  Checking prisma binary..."
+ls -la ./node_modules/prisma/build/index.js 2>&1 || echo "  Binary not found at expected path"
 node ./node_modules/prisma/build/index.js migrate deploy 2>&1
+echo "  Migration output above"
 
 echo "Running full queue setup..."
 node -e "
