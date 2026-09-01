@@ -33,8 +33,10 @@ COPY packages/contracts/package.json packages/contracts/
 COPY apps/api/package.json apps/api/
 COPY apps/web/package.json apps/web/
 RUN pnpm install --frozen-lockfile
+COPY --from=build /app/packages/contracts/dist ./node_modules/@c26/contracts
 COPY --from=build /app/packages/contracts/dist ./packages/contracts/dist
 COPY --from=build /app/apps/api/dist ./dist
+COPY --from=build /app/apps/api/src/generated/prisma ./dist/generated/prisma
 COPY --from=build /app/apps/api/prisma ./prisma
 COPY --from=build /app/apps/api/prisma.config.ts ./prisma.config.ts
 # The client, served by this same process (see kernel/http/static-spa.ts).
