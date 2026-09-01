@@ -19,7 +19,6 @@ RUN pnpm install --frozen-lockfile
 
 FROM deps AS build
 COPY . .
-RUN ls -la /app/node_modules/.pnpm/prisma*/node_modules/prisma/build/index.js 2>&1 && echo "PRISMA FOUND" || echo "PRISMA NOT FOUND"
 RUN pnpm --filter @c26/api prisma generate \
  && pnpm --filter @c26/contracts build \
  && pnpm --filter @c26/api build \

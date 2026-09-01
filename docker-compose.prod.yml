@@ -16,8 +16,7 @@ services:
   postgres:
     image: postgres:18-alpine
     restart: always
-    ports:
-      - "5433:5432"
+    env_file: .env.prod
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
@@ -36,7 +35,7 @@ services:
       dockerfile: Dockerfile
       target: api
     restart: always
-    env_file: .env
+    env_file: .env.prod
     # Loopback only. cloudflared on the host is the sole client; binding to
     # 0.0.0.0 would publish the API to the VM's network for no reason.
     ports:
@@ -68,9 +67,7 @@ services:
       target: api
     command: ["node", "dist/worker.js"]
     restart: always
-    env_file: .env
-    ports:
-      - 5573:5173
+    env_file: .env.prod
     volumes:
       # The worker builds thumbnails and sweeps retention, so it needs the same
       # directory the API writes to.
