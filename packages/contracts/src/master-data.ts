@@ -94,3 +94,41 @@ export interface PendingBrandReview {
   firstSeenAt: string;
   source: "vehicle" | "tire";
 }
+
+/**
+ * V-11: the chosen city must belong to the chosen province.
+ *
+ * The wire payload carries only `cityId` — the province is derivable, and a
+ * foreign key guarantees the city exists. But the form shows a province selector
+ * that filters the city list, and a stale selection there would silently submit
+ * a city from a different province. This is the rule that catches it, on both
+ * sides, from one definition.
+ */
+export function validateCityInProvince(
+  cities: readonly Pick<City, "id" | "provinceId">[],
+  cityId: number | null | undefined,
+  provinceId: number | null | undefined,
+): { field: string; code: "REQUIRED" | "NOT_ALLOWED"; message: string }[] {
+  if (provinceId === null || provinceId === undefined) {
+    return [{ field: "provinceId", code: "REQUIRED", message: "Provinsi wajib dipilih." }];
+  }
+  if (cityId === null || cityId === undefined) {
+    return [{ field: "cityId", code: "REQUIRED", message: "Kota wajib dipilih." }];
+  }
+
+  const city = cities.find((candidate) => candidate.id === cityId);
+  if (city === undefined) {
+    return [{ field: "cityId", code: "NOT_ALLOWED", message: "Kota tidak ditemukan." }];
+  }
+  if (city.provinceId !== provinceId) {
+    return [
+      {
+        field: "cityId",
+        code: "NOT_ALLOWED",
+        message: "Kota yang dipilih tidak berada di provinsi tersebut.",
+      },
+    ];
+  }
+
+  return [];
+}

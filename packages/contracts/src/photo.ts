@@ -124,3 +124,31 @@ export function buildStorageKey(params: {
   const bucket = params.slot === "tire_position" ? (params.positionCode ?? "UNKNOWN") : params.slot;
   return `inspections/${params.year}/${params.serialNumber}/${bucket}/${params.uuid}.${extension}`;
 }
+
+/**
+ * V-13: the two photo caps, as pure logic.
+ *
+ * `trg_photo_limit` enforces both in the database as well — the constraint is
+ * the enforcement, this is what turns a violation into a message the user can
+ * act on before they waste an upload on it.
+ */
+export function checkPhotoQuota(counts: {
+  slotCount: number;
+  inspectionCount: number;
+}): { field: string; code: "PHOTO_LIMIT_EXCEEDED"; message: string } | null {
+  if (counts.slotCount >= MAX_PHOTOS_PER_SLOT) {
+    return {
+      field: "photos",
+      code: "PHOTO_LIMIT_EXCEEDED",
+      message: `Maksimal ${MAX_PHOTOS_PER_SLOT} foto per slot.`,
+    };
+  }
+  if (counts.inspectionCount >= MAX_PHOTOS_PER_INSPECTION) {
+    return {
+      field: "photos",
+      code: "PHOTO_LIMIT_EXCEEDED",
+      message: `Maksimal ${MAX_PHOTOS_PER_INSPECTION} foto per pengajuan.`,
+    };
+  }
+  return null;
+}
