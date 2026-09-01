@@ -46,4 +46,5 @@ COPY --from=build /app/apps/web/dist ./web
 RUN mkdir -p /app/uploads && chown -R node:node /app/uploads
 USER node
 EXPOSE 3000
+COPY docker-entrypoint.sh /app/docker-entrypoint.sh
 CMD ["node", "dist/server.js"]
