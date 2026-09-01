@@ -15,7 +15,7 @@ name: commercial2026
 services:
   postgres:
     image: postgres:18-alpine
-    restart: unless-stopped
+    restart: always
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
@@ -33,7 +33,7 @@ services:
       context: .
       dockerfile: Dockerfile
       target: api
-    restart: unless-stopped
+    restart: always
     env_file: .env
     # Loopback only. cloudflared on the host is the sole client; binding to
     # 0.0.0.0 would publish the API to the VM's network for no reason.
@@ -65,7 +65,7 @@ services:
       dockerfile: Dockerfile
       target: api
     command: ["node", "dist/worker.js"]
-    restart: unless-stopped
+    restart: always
     env_file: .env
     volumes:
       # The worker builds thumbnails and sweeps retention, so it needs the same
