@@ -1,5 +1,5 @@
-import { defineConfig } from "vite";
-import react from "@vitejs/plugin-react";
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
 
 /**
  * A plain Vite SPA (PLAN/01 §4.2).
@@ -17,16 +17,16 @@ import react from "@vitejs/plugin-react";
 export default defineConfig({
   plugins: [react()],
   server: {
-    host: "127.0.0.1",
-    port: 5173,
+    host: '127.0.0.1',
+    port: 5573,
     proxy: {
       // Development only. In production the SPA is static files served by Caddy
       // and talks to tire-api.zedth.my.id across origins.
-      "/api": { target: "http://localhost:3000", changeOrigin: true },
+      '/api': { target: 'http://localhost:3000', changeOrigin: true },
     },
   },
   build: {
-    target: "es2022",
+    target: 'es2022',
     sourcemap: true,
     // Keeps assets as separate files rather than data: URIs, so the CSP stays
     // tight and the cache behaves predictably.
@@ -38,7 +38,12 @@ export default defineConfig({
           // library — see components/ui/line-chart.tsx. That keeps the initial
           // bundle inside the 180 KB budget (PLAN/06 §7) and keeps the CSP free
           // of 'unsafe-inline' (PLAN/13 §7).
-          vendor: ["react", "react-dom", "react-router-dom", "@tanstack/react-query"],
+          vendor: [
+            'react',
+            'react-dom',
+            'react-router-dom',
+            '@tanstack/react-query',
+          ],
         },
       },
     },
