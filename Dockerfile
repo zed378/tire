@@ -27,7 +27,8 @@ RUN pnpm --filter @c26/api prisma generate \
 # ── API + worker ────────────────────────────────────────────────────────────
 FROM base AS api
 ENV NODE_ENV=production
-COPY --from=build /app/node_modules ./node_modules
+RUN corepack enable && apk add --no-cache openssl
+COPY --from=build /app/node_modules /app/node_modules
 COPY --from=build /app/packages/contracts/dist ./packages/contracts/dist
 COPY --from=build /app/packages/contracts/package.json ./packages/contracts/
 COPY --from=build /app/apps/api/node_modules ./apps/api/node_modules
@@ -42,4 +43,4 @@ COPY --from=build /app/apps/web/dist ./web
 RUN mkdir -p /app/uploads && chown -R node:node /app/uploads
 USER node
 EXPOSE 3000
-CMD ["node", "dist/server.js"]
+CMD ["node", "--preserve-symlinks", "dist/server.js"]
