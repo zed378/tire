@@ -1,9 +1,12 @@
 #!/bin/sh
-# docker-entrypoint.sh — Initialize pg-boss queue schema before starting the API.
+# docker-entrypoint.sh — Initialize database (migrations + queue schema) before
+# starting the API.
 #
-# The API checks for the pgboss.job table at boot (assertQueueReady). Without it
-# the server refuses to start. This script runs once per container lifecycle to
-# install the schema and register queues — idempotent, so a restart is harmless.
+# 1. Run `prisma migrate deploy` to create all application tables from the SQL
+#    migrations in prisma/migrations/.
+# 2. Run pg-boss queue setup so the job queue exists.
+#
+# Both are idempotent — safe to run on every container start.
 
 set -e
 
@@ -17,6 +20,10 @@ b.start().then(() => { b.stop({ graceful: false }); process.exit(0); })
   sleep 2
 done
 echo "Database is ready."
+
+echo "Running Prisma migrations..."
+cd /app
+node ./node_modules/prisma/build/index.js migrate deploy 2>&1
 
 echo "Running full queue setup..."
 node -e "
