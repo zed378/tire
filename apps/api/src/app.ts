@@ -10,7 +10,7 @@ import { registerRequestContext } from "./kernel/http/context.ts";
 import { verifyCsrf } from "./kernel/http/csrf.ts";
 import { isRouteAllowedForHost, isStorageHost } from "./kernel/http/hosts.ts";
 import { RATE_LIMITS } from "./kernel/http/rate-limits.ts";
-import { securityHeadersFor } from "./kernel/http/security-headers.ts";
+import { cacheControlFor, securityHeadersFor } from "./kernel/http/security-headers.ts";
 import { registerStaticSpa } from "./kernel/http/static-spa.ts";
 import { errorEnvelope } from "./kernel/envelope/wrap-route.ts";
 import { AppError } from "./kernel/envelope/index.ts";
@@ -49,7 +49,16 @@ export function buildApp(): FastifyInstance {
     // Passing a pre-built pino instance would pin the logger generic to pino's
     // `Logger` and make every `registerXRoutes(app)` call a type error.
     logger: loggerOptions(),
-    disableRequestLogging: true, // the context hook logs a single richer line
+    // Fastify's own per-request lines are off because `kernel/http/context.ts`
+    // emits one richer line instead, carrying the requestId, the actor, the
+    // route, the status, and the duration (PLAN/01 §6).
+    //
+    // Fastify 5 deprecates this in favour of `logController` and prints a
+    // warning at boot. The replacement is not usable yet: in 5.12 the type
+    // declares `logController?: LogControllerClass` while the runtime rejects a
+    // class with "must be an instance of LogController". Revisit on the
+    // Fastify 6 upgrade, when the option is removed and the API has settled.
+    disableRequestLogging: true,
     // cloudflared is the only client and it reaches this over loopback, so
     // X-Forwarded-For can be believed.
     trustProxy: true,
@@ -104,6 +113,14 @@ export function buildApp(): FastifyInstance {
     for (const [name, value] of Object.entries(securityHeadersFor(responseClass, headerContext))) {
       void reply.header(name, value);
     }
+
+    // Cache policy for static responses (PLAN/06 §5.1). Set here rather than in
+    // the static plugin so the index.html fallback is covered too, and so a
+    // route that chose its own policy — the signed photo route does — keeps it.
+    if (responseClass === "spa" && reply.getHeader("cache-control") === undefined) {
+      void reply.header("cache-control", cacheControlFor(request.url.split("?")[0] ?? ""));
+    }
+
     done(null, payload);
   });
 

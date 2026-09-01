@@ -4,7 +4,6 @@ import fastifyStatic from "@fastify/static";
 import type { FastifyInstance } from "fastify";
 import { loadConfig } from "../config.ts";
 import { getLogger } from "../logger.ts";
-import { cacheControlFor } from "./security-headers.ts";
 
 /**
  * Serves the built SPA, a job a reverse proxy used to do.
@@ -42,10 +41,14 @@ export function registerStaticSpa(app: FastifyInstance): boolean {
     // wildcard; the not-found handler does.
     wildcard: false,
     index: ["index.html"],
-    setHeaders: (response, path) => {
-      const relative = path.replace(root, "").replace(/\\/g, "/");
-      response.setHeader("cache-control", cacheControlFor(relative));
-    },
+    // The plugin's default is `public, max-age=0`, which leaves fingerprinted
+    // assets uncached — a re-download of the whole bundle on every visit, over
+    // the 4G connections PLAN/06 §7 budgets for.
+    //
+    // Switched off here, and the policy applied in the `onSend` hook in app.ts
+    // instead: that is one place, it covers the index.html fallback as well as
+    // the files on disk, and it uses `cacheControlFor`, which has tests.
+    cacheControl: false,
   });
 
   log.info({ root }, "serving the built SPA");
