@@ -12,7 +12,8 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
-    "db:migrate": "prisma migrate deploy",
+    "db:migrate": "prisma migrate deploy && tsx prisma/queue-setup.ts",
+    "db:queue": "tsx prisma/queue-setup.ts",
     "db:seed": "tsx prisma/seed.ts",
     "db:reset": "prisma migrate reset --force --skip-seed",
     "prisma": "prisma"

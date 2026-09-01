@@ -10,6 +10,7 @@
   "packageManager": "pnpm@9.15.0",
   "scripts": {
     "dev": "pnpm --filter @c26/contracts build && pnpm --parallel --filter \"./apps/*\" dev",
+    "dev:worker": "pnpm --filter @c26/api dev:worker",
     "build": "pnpm --filter @c26/contracts build && pnpm --filter @c26/api build && pnpm --filter @c26/web build",
     "typecheck": "pnpm --filter @c26/contracts build && pnpm -r typecheck",
     "lint": "eslint . --max-warnings=0",

@@ -4,7 +4,8 @@ import type { Permission } from "@c26/contracts";
 import { SessionProvider, useSession } from "./lib/session.tsx";
 import { ToastProvider } from "./components/ui/feedback.tsx";
 import { AppShell } from "./components/layout/app-shell.tsx";
-import { Spinner } from "./components/ui/primitives.tsx";
+import { Button, Spinner } from "./components/ui/primitives.tsx";
+import { ErrorBanner } from "./components/ui/feedback.tsx";
 import { LoginPage } from "./features/auth/login-page.tsx";
 import { ChangePasswordPage } from "./features/auth/change-password-page.tsx";
 import { MfaEnrollPage } from "./features/auth/mfa-enroll-page.tsx";
@@ -139,10 +140,21 @@ function AppRoutes(): ReactNode {
 }
 
 function RequireSession({ children }: { children: ReactNode }): ReactNode {
-  const { user, loading } = useSession();
+  const { user, loading, unreachable, error, retry } = useSession();
   const location = useLocation();
 
   if (loading) return <PageLoading />;
+
+  /**
+   * The API could not be reached, so we do not know whether there is a session.
+   *
+   * Showing the login screen here would be a lie, and a destructive one: it
+   * reads as "you have been signed out" when nothing of the sort happened. That
+   * is exactly what used to happen whenever the dev server restarted mid-session
+   * — three times in a row, with no explanation.
+   */
+  if (unreachable) return <SessionUnavailable error={error} onRetry={() => void retry()} />;
+
   if (user === null) {
     // The intended destination is carried through, so a shared link to one
     // Serial Number still lands there after signing in.
@@ -150,6 +162,34 @@ function RequireSession({ children }: { children: ReactNode }): ReactNode {
   }
 
   return <>{children}</>;
+}
+
+/**
+ * Shown when the session cannot be determined.
+ *
+ * Deliberately not a redirect. The user keeps their place, sees what actually
+ * happened, and gets the requestId to quote — the support flow PLAN/10 §3.3
+ * builds on. A silent bounce to /login gives them none of that.
+ */
+function SessionUnavailable({
+  error,
+  onRetry,
+}: {
+  error: unknown;
+  onRetry: () => void;
+}): ReactNode {
+  return (
+    <div className="mx-auto max-w-md px-4 py-16">
+      <ErrorBanner error={error} />
+      <p className="mt-3 text-sm text-slate-600">
+        Sesi Anda kemungkinan besar masih aktif — sistem hanya sedang tidak dapat dihubungi.
+        Coba lagi sebentar.
+      </p>
+      <Button className="mt-4 w-full" onClick={onRetry}>
+        Coba Lagi
+      </Button>
+    </div>
+  );
 }
 
 /**

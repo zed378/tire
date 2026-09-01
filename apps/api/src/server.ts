@@ -5,8 +5,9 @@ loadEnvFile();
 
 import { buildApp } from "./app.ts";
 import { loadConfig } from "./kernel/config.ts";
-import { disconnectPrisma } from "./kernel/db.ts";
+import { disconnectPrisma, getPrisma } from "./kernel/db.ts";
 import { getLogger } from "./kernel/logger.ts";
+import { assertQueueReady } from "./kernel/queue.ts";
 
 /**
  * The web process. The worker runs from `worker.ts` in a separate container
@@ -16,6 +17,10 @@ import { getLogger } from "./kernel/logger.ts";
 async function main(): Promise<void> {
   const config = loadConfig();
   const log = getLogger();
+  // Checked before the port opens. A missing queue schema would otherwise show
+  // up as a 500 the first time somebody pressed Export.
+  await assertQueueReady(getPrisma());
+
   const app = buildApp();
 
   await app.listen({ host: config.API_HOST, port: config.API_PORT });

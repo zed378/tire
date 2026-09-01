@@ -23,10 +23,21 @@ import { clearQueue } from "./photo/queue-store.ts";
 interface SessionContextValue {
   user: CurrentUser | null;
   loading: boolean;
+  /**
+   * True when the session could not be determined at all — the API was
+   * unreachable or answered 500.
+   *
+   * This is deliberately NOT the same as `user === null`. Collapsing the two is
+   * what made a brief API restart during `pnpm verify` throw the user back to
+   * the login screen: a failure to ask was being read as an answer of "no".
+   */
+  unreachable: boolean;
+  error: unknown;
   can: (permission: Permission) => boolean;
   login: (input: LoginInput) => Promise<LoginResult>;
   logout: () => Promise<void>;
   refresh: () => Promise<void>;
+  retry: () => Promise<void>;
 }
 
 const SessionContext = createContext<SessionContextValue | null>(null);
@@ -34,24 +45,41 @@ const SessionContext = createContext<SessionContextValue | null>(null);
 export function SessionProvider({ children }: { children: ReactNode }): ReactNode {
   const queryClient = useQueryClient();
 
-  const { data, isLoading, refetch } = useQuery({
+  const {
+    data,
+    isLoading,
+    error: queryError,
+    refetch,
+  } = useQuery({
     queryKey: ["session"],
     queryFn: async () => {
       try {
         return await api.get<CurrentUser>("/api/auth/me");
       } catch (error) {
-        // Not signed in is a normal state, not an error to surface.
+        // `null` is a real answer: the server said there is no session. Anything
+        // else is a failure to ask, and must not be reported as an answer.
         if (isApiError(error) && (error.code === "SESSION_EXPIRED" || error.code === "NOT_FOUND")) {
           return null;
         }
         throw error;
       }
     },
-    retry: false,
+    // A restarting API — which `pnpm dev` does on every file change — should be
+    // ridden out, not treated as a logout.
+    retry: (failureCount, error) => {
+      if (!isApiError(error)) return false;
+      const transient = error.code === "SERVICE_UNAVAILABLE" || error.code === "INTERNAL_ERROR";
+      return transient && failureCount < 3;
+    },
+    retryDelay: (attempt) => Math.min(500 * 2 ** attempt, 4000),
     staleTime: 60_000,
   });
 
   const user = data ?? null;
+
+  // `undefined` means the query never produced an answer. Paired with an error,
+  // that is "we could not ask" — not "you are signed out".
+  const unreachable = data === undefined && queryError !== null;
 
   /**
    * Wipes every trace of the previous session from the device.
@@ -93,6 +121,10 @@ export function SessionProvider({ children }: { children: ReactNode }): ReactNod
     await refetch();
   }, [refetch]);
 
+  const retry = useCallback(async () => {
+    await refetch();
+  }, [refetch]);
+
   useEffect(() => {
     setSessionExpiredHandler(() => {
       queryClient.setQueryData(["session"], null);
@@ -103,6 +135,8 @@ export function SessionProvider({ children }: { children: ReactNode }): ReactNod
     () => ({
       user,
       loading: isLoading,
+      unreachable,
+      error: queryError,
       // Layer 1 of PLAN/04 §2.2: a menu the user has no permission for is not
       // rendered at all (K-07). The server enforces the same rule regardless —
       // hiding is a courtesy, not a control.
@@ -110,8 +144,9 @@ export function SessionProvider({ children }: { children: ReactNode }): ReactNod
       login,
       logout,
       refresh,
+      retry,
     }),
-    [user, isLoading, login, logout, refresh],
+    [user, isLoading, unreachable, queryError, login, logout, refresh, retry],
   );
 
   return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>;

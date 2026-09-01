@@ -16,6 +16,15 @@ import { getLogger } from "./logger.ts";
  * volume.
  */
 
+/**
+ * The schema pg-boss owns.
+ *
+ * Named here rather than inlined because three places must agree on it: the
+ * worker that consumes, `sendInTransaction` below that enqueues by raw SQL, and
+ * `prisma/queue-setup.ts` that installs it.
+ */
+export const QUEUE_SCHEMA = "pgboss";
+
 export const JOB_NAMES = {
   /** Reads the outbox and composes notifications (PLAN/12 §7). */
   outboxDispatch: "outbox.dispatch",
@@ -43,7 +52,7 @@ export async function getQueue(): Promise<PgBoss> {
 
   boss = new PgBoss({
     connectionString: config.DATABASE_URL,
-    schema: "pgboss",
+    schema: QUEUE_SCHEMA,
     // Retained long enough for the operations panel to show a week of failures
     // (PLAN/10 §3.1).
     archiveCompletedAfterSeconds: 7 * 24 * 60 * 60,
@@ -79,6 +88,11 @@ export async function sendInTransaction(
   data: Record<string, unknown>,
   options: { retryLimit?: number; startAfterSeconds?: number } = {},
 ): Promise<void> {
+  // Writing to pg-boss's table directly couples this to its schema, which is the
+  // price of enqueueing inside the caller's transaction. The schema is installed
+  // by `prisma/queue-setup.ts` during `pnpm db:migrate`, and `assertQueueReady`
+  // below checks it at boot — so this cannot be the thing that discovers it is
+  // missing, halfway through a user's export.
   await tx.$executeRawUnsafe(
     `INSERT INTO pgboss.job (name, data, retry_limit, start_after)
      VALUES ($1, $2::jsonb, $3, now() + ($4 || ' seconds')::interval)`,
@@ -87,6 +101,29 @@ export async function sendInTransaction(
     options.retryLimit ?? 3,
     String(options.startAfterSeconds ?? 0),
   );
+}
+
+/**
+ * Fails fast at startup when the queue schema is absent.
+ *
+ * Without this the absence surfaces as a 500 the first time somebody presses
+ * Export — visible to a user, at the worst moment, rather than to whoever
+ * deployed. The message says exactly which command fixes it.
+ */
+export async function assertQueueReady(db: {
+  $queryRawUnsafe: <T>(query: string, ...values: unknown[]) => Promise<T>;
+}): Promise<void> {
+  const rows = await db.$queryRawUnsafe<{ present: boolean }[]>(
+    `SELECT to_regclass($1) IS NOT NULL AS present`,
+    `${QUEUE_SCHEMA}.job`,
+  );
+
+  if (rows[0]?.present !== true) {
+    throw new Error(
+      `The job queue schema "${QUEUE_SCHEMA}" is missing, so nothing can be enqueued ` +
+        `(exports, thumbnails, notifications). Run: pnpm db:migrate`,
+    );
+  }
 }
 
 /** Retry policy per job (PLAN/12 §7). */
