@@ -29,9 +29,19 @@ docker compose up -d          # postgres:18-alpine
 pnpm install
 pnpm --filter @c26/api prisma generate
 pnpm db:migrate               # NOT `prisma migrate dev` — see PLAN/09 §4.5
-pnpm db:seed                  # master data + the first admin account
+pnpm db:seed                  # master data, first admin, demo data + sample photos
 pnpm dev                      # api on :3000, web on :5173
 ```
+
+`pnpm db:seed` creates the `uploads/` directory, five demo accounts (one per
+role, plus a second supplier), and six inspections covering every state in the
+status machine — including a vehicle that carries both a dropped inspection and
+a fresh draft, which is the locking rule in `PLAN/11` §5.4 made visible. Sample
+photographs are generated for every tire position, labelled with the position
+they belong to, so a slot/photo mismatch is obvious at a glance.
+
+Demo accounts share `SEED_DEMO_PASSWORD` and sign in through the normal login;
+leaving that variable empty seeds master data and the first admin only.
 
 ## Where photos are stored
 

@@ -1,0 +1,41 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+ * No inline styles anywhere in the application: the CSP carries no
+ * 'unsafe-inline' (PLAN/13 §7, decision A-07). Everything lives here or in a
+ * Tailwind class.
+ */
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    @apply bg-slate-50 text-slate-900 antialiased;
+  }
+
+  /*
+   * Visible focus, always. This application is used on phones in garages with
+   * poor light, and WCAG AA contrast is a requirement rather than a preference
+   * (PLAN/00 §4).
+   */
+  :focus-visible {
+    @apply outline-none ring-2 ring-brand-600 ring-offset-2;
+  }
+
+  /* Inputs at 16px so iOS Safari does not zoom on focus mid-form. */
+  input,
+  select,
+  textarea {
+    font-size: 16px;
+  }
+}
+
+@layer utilities {
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
