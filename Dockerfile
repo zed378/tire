@@ -28,20 +28,20 @@ RUN pnpm --filter @c26/api prisma generate \
 FROM base AS api
 ENV NODE_ENV=production
 RUN corepack enable && apk add --no-cache openssl
-COPY --from=build /app/node_modules /app/node_modules
+COPY pnpm-workspace.yaml package.json pnpm-lock.yaml* .npmrc ./
+COPY packages/contracts/package.json packages/contracts/
+COPY apps/api/package.json apps/api/
+COPY apps/web/package.json apps/web/
+RUN pnpm install --frozen-lockfile
 COPY --from=build /app/packages/contracts/dist ./packages/contracts/dist
-COPY --from=build /app/packages/contracts/package.json ./packages/contracts/
-COPY --from=build /app/apps/api/node_modules ./apps/api/node_modules
 COPY --from=build /app/apps/api/dist ./dist
 COPY --from=build /app/apps/api/prisma ./prisma
 COPY --from=build /app/apps/api/prisma.config.ts ./prisma.config.ts
-COPY --from=build /app/apps/api/package.json ./package.json
 # The client, served by this same process (see kernel/http/static-spa.ts).
 COPY --from=build /app/apps/web/dist ./web
 # Photos land here when STORAGE_DRIVER=local; the compose file mounts a volume
 # over it. Created with the right owner so the unprivileged user can write.
 RUN mkdir -p /app/uploads && chown -R node:node /app/uploads
 USER node
-NODE_PATH=/app/node_modules/.pnpm/fastify@5.12.1/node_modules
 EXPOSE 3000
 CMD ["node", "dist/server.js"]
