@@ -17,7 +17,7 @@ import react from '@vitejs/plugin-react';
 export default defineConfig({
   plugins: [react()],
   server: {
-    port: 5573,
+    port: 5173,
     proxy: {
       // Development only. In production the SPA is static files served by Caddy
       // and talks to tire-api.zedth.my.id across origins.
