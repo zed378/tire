@@ -130,7 +130,7 @@ describe("presigned URLs", () => {
   });
 
   it("issues a read token for a download", async () => {
-    const url = await localStorageDriver.presignDownload(validPayload.key, 300);
+    const url = await localStorageDriver.presignDownload(validPayload.key, { ttlSeconds: 300 });
     const payload = verifyStorageToken(url.split("/api/uploads/")[1] ?? "");
 
     expect(payload?.operation).toBe("get");

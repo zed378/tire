@@ -17,7 +17,6 @@ apps/api/prisma/*.db
 playwright-report/
 test-results/
 .stryker-tmp/
-reports/
 
 # Local photo storage (STORAGE_DRIVER=local). The volume is the evidence;
 # it belongs in the backup job, not in the repository.
