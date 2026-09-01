@@ -10,7 +10,7 @@
 # sudah digunakan. Angka di sisi kanan (CONTAINER) adalah port yang digunakan oleh
 # aplikasi di dalam container dan TIDAK boleh diubah.
 #
-#   postgres  →  5433:5432   (VM host 5433 → container PostgreSQL 5432)
+#   postgres  →  5432:5432   (host 5432 → container PostgreSQL 5432)
 #   (API dijalankan secara native via `pnpm dev`, tidak di-containerisasi)
 name: tire
 
@@ -30,9 +30,9 @@ services:
       - max_connections=100
       - -c
       - shared_buffers=256MB
-    # HOST:CONTAINER — port 5433 di VM host agar tidak bentrok dengan PostgreSQL lain
+    # HOST:CONTAINER — port 5432 (5433 is occupied on this host by a local PostgreSQL installation)
     ports:
-      - "5433:5432"
+      - "5432:5432"
     volumes:
       - postgres-data:/var/lib/postgresql/18/docker
     healthcheck:
