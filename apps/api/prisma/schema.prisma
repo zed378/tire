@@ -684,17 +684,3 @@ model MigrationQuarantine {
 
   @@map("migration_quarantine")
 }
-
-// ── Auth hardening (PLAN/13 §3) ──────────────────────────────────────────────
-
-model LoginAttempt {
-  id           BigInt   @id @default(autoincrement()) @map("id")
-  username     String
-  ipAddress    String?  @map("ip_address") @db.VarChar(45)
-  succeeded    Boolean  @default(false) @map("succeeded")
-  failureReason String? @map("failure_reason") @db.VarChar(64)
-  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
-
-  @@index([username, createdAt])
-  @@map("login_attempts")
-}
