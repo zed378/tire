@@ -16,6 +16,7 @@ COPY packages/contracts/package.json packages/contracts/
 COPY apps/api/package.json apps/api/
 COPY apps/web/package.json apps/web/
 RUN pnpm install --frozen-lockfile
+RUN corepack install -g pnpm@11.25.0
 
 FROM deps AS build
 COPY . .
@@ -27,16 +28,16 @@ RUN pnpm --filter @c26/api prisma generate \
 # ── API + worker ────────────────────────────────────────────────────────────
 FROM base AS api
 ENV NODE_ENV=production
-COPY --link --from=deps /app/node_modules ./node_modules
-COPY --link --from=build /app/packages/contracts/dist ./packages/contracts/dist
-COPY --link --from=build /app/packages/contracts/package.json ./packages/contracts/
-COPY --link --from=deps /app/apps/api/node_modules ./apps/api/node_modules
-COPY --link --from=build /app/apps/api/dist ./dist
-COPY --link --from=build /app/apps/api/prisma ./prisma
-COPY --link --from=build /app/apps/api/prisma.config.ts ./prisma.config.ts
-COPY --link --from=build /app/apps/api/package.json ./package.json
+COPY --from=build /app/node_modules ./node_modules
+COPY --from=build /app/packages/contracts/dist ./packages/contracts/dist
+COPY --from=build /app/packages/contracts/package.json ./packages/contracts/
+COPY --from=build /app/apps/api/node_modules ./apps/api/node_modules
+COPY --from=build /app/apps/api/dist ./dist
+COPY --from=build /app/apps/api/prisma ./prisma
+COPY --from=build /app/apps/api/prisma.config.ts ./prisma.config.ts
+COPY --from=build /app/apps/api/package.json ./package.json
 # The client, served by this same process (see kernel/http/static-spa.ts).
-COPY --link --from=build /app/apps/web/dist ./web
+COPY --from=build /app/apps/web/dist ./web
 # Photos land here when STORAGE_DRIVER=local; the compose file mounts a volume
 # over it. Created with the right owner so the unprivileged user can write.
 RUN mkdir -p /app/uploads && chown -R node:node /app/uploads
