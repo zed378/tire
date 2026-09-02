@@ -9,7 +9,7 @@
 # Seeding: The image includes Prisma schema, migrations, and seed scripts for
 # production deployment. CSV data is optional but included if available.
 
-FROM node:26-alpine AS base
+FROM node:24-alpine AS base
 RUN corepack enable && apk add --no-cache openssl
 WORKDIR /app
 
