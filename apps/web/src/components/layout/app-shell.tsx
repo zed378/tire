@@ -122,12 +122,20 @@ export function AppShell({ children }: { children: ReactNode }): ReactNode {
 
               {/* User Profile & Logout */}
               <div className="flex items-center gap-2 border-l border-line pl-3">
-                <div className="hidden text-right sm:block">
-                  <p className="text-xs font-semibold text-body leading-tight">{user?.displayName}</p>
-                  <p className="text-[11px] text-muted leading-tight">
+                {/* The identity block is the way to the account screen — where
+                    the session list and "keluar dari semua perangkat" live. It
+                    used to be inert text. */}
+                <Link
+                  to="/profile"
+                  className="hidden rounded-md px-1.5 py-1 text-right transition-colors hover:bg-surface-sunken sm:block"
+                >
+                  <span className="block text-xs font-semibold leading-tight text-body">
+                    {user?.displayName}
+                  </span>
+                  <span className="block text-[11px] leading-tight text-muted">
                     {user === null ? "" : USER_ROLE_LABELS[user.role]}
-                  </p>
-                </div>
+                  </span>
+                </Link>
 
                 <button
                   type="button"

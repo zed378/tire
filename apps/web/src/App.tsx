@@ -9,6 +9,7 @@ import { ErrorBanner } from "./components/ui/feedback.tsx";
 import { LoginPage } from "./features/auth/login-page.tsx";
 import { RegisterPage } from "./features/auth/register-page.tsx";
 import { ChangePasswordPage } from "./features/auth/change-password-page.tsx";
+import { ProfilePage } from "./features/auth/profile-page.tsx";
 import { MfaEnrollPage } from "./features/auth/mfa-enroll-page.tsx";
 import { StepUpDialog } from "./features/auth/step-up-dialog.tsx";
 import { LandingPage } from "./features/landing/landing-page.tsx";
@@ -194,6 +195,7 @@ function AppRoutes(): ReactNode {
                   />
 
                   <Route path="notifications" element={<NotificationsPage />} />
+                  <Route path="profile" element={<ProfilePage />} />
                   <Route path="profile/password" element={<ChangePasswordPage />} />
                   <Route path="profile/mfa" element={<MfaEnrollPage />} />
 
