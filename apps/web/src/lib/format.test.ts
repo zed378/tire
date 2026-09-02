@@ -1,75 +1,144 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from 'vitest';
 import {
-  endOfDayIso,
-  formatBytes,
   formatDate,
   formatDateTime,
   formatRelative,
+  formatBytes,
+  formatNumber,
+  toDateInputValue,
   startOfDayIso,
-} from "./format.ts";
+  endOfDayIso,
+} from './format.ts';
 
-/**
- * Date handling is worth testing precisely because it looks trivial.
- *
- * The legacy QC filter used mm/dd/yyyy — an American format in an Indonesian
- * application (PLAN/02 §4). A date range built on that quietly selects the wrong
- * month, and nothing about the screen says so.
- */
-describe("dates render as dd/mm/yyyy in WIB", () => {
-  it("formats a date the way an Indonesian reader expects", () => {
-    // 2026-03-05 is 5 March, not 3 May.
-    expect(formatDate("2026-03-05T04:00:00.000Z")).toBe("05/03/2026");
+describe('formatDate', () => {
+  it('returns date in dd/mm/yyyy WIB format', () => {
+    const result = formatDate(new Date('2026-01-15T10:30:00Z'));
+    expect(result).toBe('15/01/2026');
   });
 
-  it("renders times in WIB rather than UTC", () => {
-    // 17:00 UTC is midnight WIB on the following day. The date and time are
-    // asserted separately rather than as one literal: the separator between them
-    // comes from ICU's id-ID data and varies between Node versions, which would
-    // make this test fail for a reason that has nothing to do with the product.
-    const rendered = formatDateTime("2026-03-05T17:00:00.000Z");
-
-    expect(rendered).toContain("06/03/2026");
-    expect(rendered).toMatch(/00[.:]00/);
+  it('returns dash for null', () => {
+    expect(formatDate(null)).toBe('\u2014');
   });
 
-  it("shows an em dash rather than 'Invalid Date' for a missing value", () => {
-    expect(formatDate(null)).toBe("—");
-    expect(formatDate(undefined)).toBe("—");
-    expect(formatDateTime("")).toBe("—");
-  });
-});
-
-describe("date inputs convert to WIB day boundaries", () => {
-  it("starts the day at 00:00 WIB, not 00:00 UTC", () => {
-    // A filter picking 5 March must not include the evening of 4 March.
-    expect(startOfDayIso("2026-03-05")).toBe("2026-03-04T17:00:00.000Z");
+  it('returns dash for undefined', () => {
+    expect(formatDate(undefined)).toBe('\u2014');
   });
 
-  it("ends the day at 23:59 WIB", () => {
-    expect(endOfDayIso("2026-03-05")).toBe("2026-03-05T16:59:59.000Z");
+  it('returns dash for empty string', () => {
+    expect(formatDate('')).toBe('\u2014');
+  });
+
+  it('handles date string input', () => {
+    const result = formatDate('2026-03-08T12:00:00Z');
+    expect(result).toBe('08/03/2026');
+  });
+
+  it('handles epoch number input', () => {
+    const result = formatDate(1705334400000); // 2024-01-15 00:00 UTC
+    expect(result).toBe('15/01/2024');
   });
 });
 
-describe("relative time", () => {
-  it("reads naturally for recent moments", () => {
-    expect(formatRelative(new Date(Date.now() - 30_000))).toBe("baru saja");
-    expect(formatRelative(new Date(Date.now() - 5 * 60_000))).toBe("5 menit lalu");
-    expect(formatRelative(new Date(Date.now() - 3 * 60 * 60_000))).toBe("3 jam lalu");
+describe('formatDateTime', () => {
+  it('returns datetime in dd/mm/yyyy HH:MM WIB format', () => {
+    const result = formatDateTime(new Date('2026-01-15T10:30:00Z'));
+    // WIB is UTC+7, so 10:30 UTC = 17:30 WIB
+    expect(result).toBe('15/01/2026 17:30');
   });
 
-  it("falls back to an absolute date once it is far enough away", () => {
-    const longAgo = new Date(Date.now() - 200 * 24 * 60 * 60_000);
-    expect(formatRelative(longAgo)).toMatch(/^\d{2}\/\d{2}\/\d{4}$/);
+  it('returns dash for null', () => {
+    expect(formatDateTime(null)).toBe('\u2014');
+  });
+
+  it('returns dash for empty string', () => {
+    expect(formatDateTime('')).toBe('\u2014');
   });
 });
 
-describe("byte sizes", () => {
-  it.each([
-    [512, "512 B"],
-    [1024 * 400, "400 KB"],
-    [1024 * 1024 * 2.5, "2.5 MB"],
-    [1024 * 1024 * 1024 * 84, "84.00 GB"],
-  ])("formats %i as %s", (bytes, expected) => {
-    expect(formatBytes(bytes)).toBe(expected);
+describe('formatRelative', () => {
+  it('returns baru saja for less than 1 minute ago', () => {
+    const now = new Date();
+    const recent = new Date(now.getTime() - 30_000); // 30 seconds ago
+    expect(formatRelative(recent)).toBe('baru saja');
+  });
+
+  it('returns X menit lalu for 1-59 minutes ago', () => {
+    const now = new Date();
+    const past = new Date(now.getTime() - 5 * 60_000); // 5 minutes ago
+    expect(formatRelative(past)).toBe('5 menit lalu');
+  });
+
+  it('returns X jam lalu for 1-23 hours ago', () => {
+    const now = new Date();
+    const past = new Date(now.getTime() - 3 * 60 * 60_000); // 3 hours ago
+    expect(formatRelative(past)).toBe('3 jam lalu');
+  });
+
+  it('returns X hari lalu for 1-29 days ago', () => {
+    const now = new Date();
+    const past = new Date(now.getTime() - 15 * 24 * 60 * 60_000); // 15 days ago
+    expect(formatRelative(past)).toBe('15 hari lalu');
+  });
+
+  it('returns formatted date for 30+ days ago', () => {
+    const now = new Date('2026-02-15T00:00:00Z');
+    const past = new Date('2025-12-01T00:00:00Z'); // ~45 days
+    const result = formatRelative(past);
+    expect(result).toBe('01/12/2025');
+  });
+
+  it('returns dash for null', () => {
+    expect(formatRelative(null)).toBe('\u2014');
+  });
+
+  it('returns dash for undefined', () => {
+    expect(formatRelative(undefined)).toBe('\u2014');
+  });
+});
+
+describe('formatBytes', () => {
+  it('returns bytes for less than 1024', () => {
+    expect(formatBytes(500)).toBe('500 B');
+  });
+
+  it('returns KB for 1024 to 1MB', () => {
+    expect(formatBytes(2048)).toBe('2 KB');
+    expect(formatBytes(1024)).toBe('1 KB');
+  });
+
+  it('returns MB for 1MB to 1GB', () => {
+    const result = formatBytes(1024 * 1024 * 1.5);
+    expect(result).toBe('1.5 MB');
+  });
+
+  it('returns GB for 1GB and above', () => {
+    const result = formatBytes(1024 * 1024 * 1024 * 2.5);
+    expect(result).toBe('2.50 GB');
+  });
+});
+
+describe('formatNumber', () => {
+  it('formats number with Indonesian locale', () => {
+    expect(formatNumber(1000)).toBe('1.000');
+    expect(formatNumber(1234567)).toBe('1.234.567');
+  });
+});
+
+describe('toDateInputValue', () => {
+  it('returns ISO date string without time', () => {
+    const result = toDateInputValue(new Date('2026-01-15T14:30:00Z'));
+    expect(result).toBe('2026-01-15');
+  });
+});
+
+describe('startOfDayIso / endOfDayIso', () => {
+  it('startOfDayIso returns midnight WIB', () => {
+    const result = startOfDayIso('2026-01-15');
+    expect(result).toBe('2026-01-14T17:00:00.000Z');
+  });
+
+  it('endOfDayIso returns 23:59:59 WIB', () => {
+    const result = endOfDayIso('2026-01-15');
+    expect(result).toBe('2026-01-15T16:59:59.000Z');
   });
 });

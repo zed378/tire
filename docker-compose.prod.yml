@@ -69,7 +69,7 @@ services:
       sh -c "
         echo 'Running Prisma migrations...' &&
         cd /app &&
-        node ./node_modules/prisma/build/index.js migrate deploy 2>&1 &&
+        npx prisma migrate deploy --schema=./apps/api/prisma/schema.prisma 2>&1 &&
         echo 'Running queue setup...' &&
         node -e \"
           var PgBoss = require('pg-boss');
