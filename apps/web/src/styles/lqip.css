@@ -4,7 +4,7 @@
  * Blur placeholders, one class per photograph. They live in a stylesheet
  * rather than in a `style` attribute because the CSP is `style-src 'self'`
  * with no 'unsafe-inline' (PLAN/13 §7): an inline background-image would not
- * render at all, and gate G-13 fails the build on one.
+ * render at all, and gate G-14 fails the build on one.
  */
 
 .lqip-tire-tread {

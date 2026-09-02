@@ -7,7 +7,7 @@
  * one import and no extra request.
  *
  * EVERYTHING HERE IS CSS. No animation library, no `style` attribute: the CSP
- * is `style-src 'self'` with no `unsafe-inline` (PLAN/13 §7), and gate G-13
+ * is `style-src 'self'` with no `unsafe-inline` (PLAN/13 §7), and gate G-14
  * fails the build on an inline style. JavaScript's only job on this page is to
  * add and remove class names.
  */

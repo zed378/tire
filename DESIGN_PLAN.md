@@ -528,7 +528,7 @@ ulang, dan supaya alasannya tidak hilang.
 
 | # | Brief meminta | Kenyataan repo | Keputusan |
 | --- | --- | --- | --- |
-| 1 | Motion One (~5 KB) kalau butuh library animasi | **CSP `style-src 'self'` tanpa `unsafe-inline`.** Motion One, Framer Motion, dan WAAPI-polyfill semuanya menulis ke `element.style` → diblokir peramban. Ini yang dulu menggugurkan Recharts, dan gate G-13 menangkapnya. | **CSS murni.** Keyframes + toggle kelas. Nol byte JS, dan tidak bisa gagal di produksi karena tidak ada yang bisa diblokir. |
+| 1 | Motion One (~5 KB) kalau butuh library animasi | **CSP `style-src 'self'` tanpa `unsafe-inline`.** Motion One, Framer Motion, dan WAAPI-polyfill semuanya menulis ke `element.style` → diblokir peramban. Ini yang dulu menggugurkan Recharts, dan gate G-14 menangkapnya. | **CSS murni.** Keyframes + toggle kelas. Nol byte JS, dan tidak bisa gagal di produksi karena tidak ada yang bisa diblokir. |
 | 2 | Foto dari Unsplash / Pexels / Pixabay | Repo punya 3 foto dari **Wikimedia Commons** (CC BY-SA 2.0, CC BY 2.0, Domain Publik) dengan kredit di footer. | **Tiga sumber brief lebih dulu**; Wikimedia hanya dipakai kalau foto yang sesuai tidak ada di ketiganya. Kredit tetap ditulis untuk yang mensyaratkannya. |
 | 3 | Teks error login yang menjelaskan | Server mengirim `"User ID atau Password salah."` — **identik untuk setiap sebab**, dikunci PLAN/04 §4.3, supaya tidak membocorkan apakah User ID terdaftar. | **Server menang.** Copy di §8 tinggal usulan. Mengubahnya adalah keputusan keamanan, bukan keputusan desain. |
 | 4 | Tiga keluarga font self-hosted | Repo memakai system stack — nol byte. | Lanjut. Terukur **160 KB** untuk enam berkas, subset Vietnam dibuang. IBM Plex Mono yang dilepas duluan kalau LCP meleset. |
@@ -552,5 +552,5 @@ pindah dari skala slate ke bahan yang sama.
 - Bahasa antarmuka Indonesia (K-10); identifier, nama berkas, dan komentar tetap Inggris.
 - Tanggal `dd/mm/yyyy` WIB.
 - Tidak ada `alert()` / `confirm()` / `prompt()` (D-08, gate G-03).
-- Tidak ada inline `style` dan tidak ada aset lintas origin (gate G-13).
+- Tidak ada inline `style` dan tidak ada aset lintas origin (gate G-14).
 - Bundel JS awal ≤ 180 KB gzip (gate G-12). Sekarang 165,5 KB; CSS 9,2 KB gzip.

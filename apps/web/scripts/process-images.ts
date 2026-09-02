@@ -166,7 +166,7 @@ async function build(asset: Asset): Promise<string[]> {
    * IT IS EMITTED AS A CSS CLASS, NOT AN INLINE STYLE. The obvious way to do a
    * LQIP is a `style` attribute carrying a `background-image` data URI, and
    * under this CSP that renders nothing at all — `style-src 'self'` refuses
-   * style attributes, and gate G-13 fails the build on one. A generated
+   * style attributes, and gate G-14 fails the build on one. A generated
    * stylesheet served from our own origin is allowed, so they go there.
    */
   let lqip = sharp(input);
@@ -251,7 +251,7 @@ const css = [
   " * Blur placeholders, one class per photograph. They live in a stylesheet",
   " * rather than in a `style` attribute because the CSP is `style-src 'self'`",
   " * with no 'unsafe-inline' (PLAN/13 §7): an inline background-image would not",
-  " * render at all, and gate G-13 fails the build on one.",
+  " * render at all, and gate G-14 fails the build on one.",
   " */",
   "",
   ...generated.map(

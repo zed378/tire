@@ -2,7 +2,7 @@
  * Ornament belonging to the sign-in and registration screens.
  *
  * Same rules as `landing.css`: pure CSS, class names toggled from JavaScript at
- * most, because the CSP carries no `unsafe-inline` (PLAN/13 §7) and gate G-13
+ * most, because the CSP carries no `unsafe-inline` (PLAN/13 §7) and gate G-14
  * fails the build on an inline style.
  */
 

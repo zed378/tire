@@ -6,7 +6,7 @@
  *        re-enter the new system.
  * G-10 — demo login panels and hardcoded credentials must return zero hits.
  *        Closes D-16: three buttons that logged in without any credentials.
- * G-13 — no inline `style` attributes, and no assets loaded from another
+ * G-14 — no inline `style` attributes, and no assets loaded from another
  *        origin, in the client. The CSP is `style-src
  *        'self'` with no `unsafe-inline` (PLAN/13 §7), so an inline style is
  *        silently dropped by the browser. It works perfectly in `vite dev`,
@@ -64,9 +64,9 @@ for (const file of sourceFiles) {
     });
 }
 
-// ── G-13 ──────────────────────────────────────────────────────────────────────────
+// ── G-14 ──────────────────────────────────────────────────────────────────────────
 // Only the client is scanned: the CSP governs what the browser renders.
-const g13: string[] = [];
+const g14: string[] = [];
 for (const file of sourceFiles) {
   if (!file.includes("apps/web/")) continue;
   stripComments(read(file))
@@ -78,13 +78,13 @@ for (const file of sourceFiles) {
       // in production the whole time.
       const external = /(?:src|srcSet|href)=["'{`]{1,2}https?:\/\//.exec(line);
       if (external !== null && !/rel=["']?(?:license|noopener|noreferrer)/.test(line)) {
-        g13.push(
+        g14.push(
           `${file}:${index + 1} — asset loaded from another origin; the CSP refuses it ` +
             `(PLAN/13 §7). Download it into apps/web/public/ and reference it by path.`,
         );
       }
       if (/\bstyle=\{/.test(line)) {
-        g13.push(
+        g14.push(
           `${file}:${index + 1} — inline style attribute; the CSP drops it (PLAN/13 §7). ` +
             `Use a Tailwind class, quantising the value if it is computed.`,
         );
@@ -95,6 +95,6 @@ for (const file of sourceFiles) {
 process.stdout.write(`Forbidden-pattern gates — ${sourceFiles.length} files scanned\n`);
 report("G-03 alert/confirm/prompt", g03);
 report("G-10 demo panel & hardcoded credentials", g10);
-report("G-13 CSP: inline styles & cross-origin assets", g13);
+report("G-14 CSP: inline styles & cross-origin assets", g14);
 
-if (g03.length > 0 || g10.length > 0 || g13.length > 0) process.exit(1);
+if (g03.length > 0 || g10.length > 0 || g14.length > 0) process.exit(1);
