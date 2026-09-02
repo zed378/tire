@@ -2,7 +2,7 @@ import { useState, type ReactNode } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { CreateTireSizeInput, TireSize, TireSizeListResponse } from "@c26/contracts";
 import { api } from "../../lib/api-client.ts";
-import { ErrorBanner, useToast } from "../../components/ui/feedback.tsx";
+import { ConfirmDialog, ErrorBanner, useToast } from "../../components/ui/feedback.tsx";
 import { Button, Card, Field, Input, SkeletonRows } from "../../components/ui/primitives.tsx";
 import { Pagination } from "../../components/ui/pagination.tsx";
 
@@ -216,15 +216,19 @@ export function TireSizesPage(): ReactNode {
         />
       ) : null}
 
-      {deletingId !== null ? (
-        <ConfirmDeleteDialog
+      <ConfirmDialog
+          open={deletingId !== null}
           title="Hapus ukuran ban"
           description="Ukuran ban yang dihapus tidak bisa dikembalikan."
-          onConfirm={() => remove.mutate(deletingId)}
-          onClose={() => setDeletingId(null)}
-          submitting={remove.isPending}
+          confirmLabel="Hapus"
+          loading={remove.isPending}
+          onConfirm={() => {
+            if (deletingId !== null) remove.mutate(deletingId);
+          }}
+          onClose={() => {
+            setDeletingId(null);
+          }}
         />
-      ) : null}
     </div>
   );
 }
@@ -279,35 +283,3 @@ function CreateSizeDialog({
   );
 }
 
-function ConfirmDeleteDialog({
-  title,
-  description,
-  onConfirm,
-  onClose,
-  submitting,
-}: {
-  title: string;
-  description: string;
-  onConfirm: () => void;
-  onClose: () => void;
-  submitting: boolean;
-}): ReactNode {
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="w-full max-w-lg rounded-lg bg-surface shadow-xl">
-        <div className="border-b border-line px-4 py-3">
-          <h2 className="text-base font-semibold text-body">{title}</h2>
-          <p className="mt-0.5 text-sm text-muted">{description}</p>
-        </div>
-        <div className="flex justify-end gap-2 border-t border-line px-4 py-3">
-          <Button variant="secondary" onClick={onClose} disabled={submitting}>
-            Batal
-          </Button>
-          <Button variant="danger" onClick={onConfirm} loading={submitting} loadingText="Menghapus…">
-            Hapus
-          </Button>
-        </div>
-      </div>
-    </div>
-  );
-}

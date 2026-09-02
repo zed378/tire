@@ -6,7 +6,14 @@ import type {
   VehicleBrandListResponse,
 } from "@c26/contracts";
 import { api } from "../../lib/api-client.ts";
-import { ErrorBanner, useToast } from "../../components/ui/feedback.tsx";
+import {
+  CancelButton,
+  ConfirmDialog,
+  Dialog,
+  DialogFooter,
+  ErrorBanner,
+  useToast,
+} from "../../components/ui/feedback.tsx";
 import { Button, Card, EmptyState, Field, Input, SkeletonRows } from "../../components/ui/primitives.tsx";
 import { Pagination } from "../../components/ui/pagination.tsx";
 
@@ -165,15 +172,19 @@ export function VehicleBrandsPage(): ReactNode {
         />
       ) : null}
 
-      {deletingId !== null ? (
-        <ConfirmDeleteDialog
+      <ConfirmDialog
+          open={deletingId !== null}
           title="Hapus merk kendaraan"
           description="Merk yang dihapus tidak bisa dikembalikan."
-          onConfirm={() => remove.mutate(deletingId)}
-          onClose={() => setDeletingId(null)}
-          submitting={remove.isPending}
+          confirmLabel="Hapus"
+          loading={remove.isPending}
+          onConfirm={() => {
+            if (deletingId !== null) remove.mutate(deletingId);
+          }}
+          onClose={() => {
+            setDeletingId(null);
+          }}
         />
-      ) : null}
     </div>
   );
 }
@@ -194,72 +205,37 @@ function CreateBrandDialog({
     onSubmit(name.trim());
   };
 
-   return (
-     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-       <div className="w-full max-w-lg rounded-lg bg-surface shadow-xl">
-         <div className="border-b border-line px-4 py-3">
-           <h2 className="text-base font-semibold text-body">Tambah Merk Kendaraan</h2>
-         </div>
-        <form
-          noValidate
-          onSubmit={(event) => {
-            event.preventDefault();
-            submit();
-          }}
-          className="space-y-3 p-4"
-        >
-          <Field label="Nama Merk" htmlFor="new-brand-name" required>
-            <Input
-              id="new-brand-name"
-              value={name}
-              onChange={(event) => setName(event.target.value)}
-              placeholder="Contoh: Toyota"
-              autoFocus
-            />
-          </Field>
-        </form>
-         <div className="flex justify-end gap-2 border-t border-line px-4 py-3">
-           <Button variant="secondary" onClick={onClose} disabled={submitting}>
-             Batal
-           </Button>
-           <Button onClick={submit} loading={submitting} loadingText="Menyimpan…">
-             Tambah
-           </Button>
-         </div>
-      </div>
-    </div>
+  return (
+    <Dialog open title="Tambah Merk Kendaraan" onClose={onClose}>
+      <form
+        noValidate
+        onSubmit={(event) => {
+          event.preventDefault();
+          submit();
+        }}
+        className="space-y-3"
+      >
+        <Field label="Nama Merk" htmlFor="new-brand-name" required>
+          <Input
+            id="new-brand-name"
+            value={name}
+            onChange={(event) => setName(event.target.value)}
+            placeholder="Contoh: Toyota"
+            autoFocus
+          />
+        </Field>
+
+        {/* Inside the form, so Enter and the button take the same path. They
+            used to be separate: the buttons sat outside the <form>, which meant
+            the keyboard and the mouse ran different code. */}
+        <DialogFooter>
+          <CancelButton onClick={onClose} />
+          <Button type="submit" loading={submitting} loadingText="Menyimpan…">
+            Tambah
+          </Button>
+        </DialogFooter>
+      </form>
+    </Dialog>
   );
 }
 
-function ConfirmDeleteDialog({
-  title,
-  description,
-  onConfirm,
-  onClose,
-  submitting,
-}: {
-  title: string;
-  description: string;
-  onConfirm: () => void;
-  onClose: () => void;
-  submitting: boolean;
-}): ReactNode {
-   return (
-     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-       <div className="w-full max-w-lg rounded-lg bg-surface shadow-xl">
-         <div className="border-b border-line px-4 py-3">
-           <h2 className="text-base font-semibold text-body">{title}</h2>
-           <p className="mt-0.5 text-sm text-muted">{description}</p>
-         </div>
-         <div className="flex justify-end gap-2 border-t border-line px-4 py-3">
-          <Button variant="secondary" onClick={onClose} disabled={submitting}>
-            Batal
-          </Button>
-          <Button variant="danger" onClick={onConfirm} loading={submitting} loadingText="Menghapus…">
-            Hapus
-          </Button>
-        </div>
-      </div>
-    </div>
-  );
-}

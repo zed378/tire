@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { api, isApiError, setStepUpHandler } from "../../lib/api-client.ts";
-import { CancelButton, DialogFooter } from "../../components/ui/feedback.tsx";
+import { CancelButton, Dialog, DialogFooter } from "../../components/ui/feedback.tsx";
 import { Button, Field, Input } from "../../components/ui/primitives.tsx";
 
 /**
@@ -56,17 +56,6 @@ export function StepUpDialog(): ReactNode {
     };
   }, []);
 
-  // Handle Escape key to close the dialog
-  useEffect(() => {
-    if (!open) return;
-
-    const onKeyDown = (event: KeyboardEvent): void => {
-      if (event.key === "Escape") finish(false);
-    };
-    document.addEventListener("keydown", onKeyDown);
-    return () => document.removeEventListener("keydown", onKeyDown);
-  }, [open, finish]);
-
   const submit = useCallback(async () => {
     setSubmitting(true);
     setError(undefined);
@@ -85,59 +74,63 @@ export function StepUpDialog(): ReactNode {
   }, [code, finish]);
 
   return (
-    <div className={open ? "fixed inset-0 z-[9999] flex items-end justify-center bg-black/50 p-4 sm:items-center" : "hidden"}>
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-label="Verifikasi ulang diperlukan"
-        className="w-full max-w-lg rounded-lg bg-surface shadow-xl"
+    /*
+     * The shared Dialog, not a private copy of it.
+     *
+     * The copy this replaces had drifted in three ways that all mattered here,
+     * of all places — this is the screen asking for a second factor. It had no
+     * focus trap, so Tab walked straight out of a modal and into the page
+     * behind it. It rendered its overlay permanently and merely hid it, so the
+     * markup sat in the document at all times. And it sat at `z-[9999]` while
+     * the toast layer sits at `z-50`, which put every toast underneath it.
+     */
+    <Dialog
+      open={open}
+      title="Verifikasi ulang diperlukan"
+      description="Tindakan ini menyentuh akun atau sistem, sehingga memerlukan kode autentikasi terbaru. Verifikasi berlaku 15 menit."
+      onClose={() => {
+        finish(false);
+      }}
+    >
+      <form
+        noValidate
+        onSubmit={(event) => {
+          event.preventDefault();
+          void submit();
+        }}
+        className="space-y-3"
       >
-        <header className="border-b border-line px-4 py-3">
-          <h2 className="text-base font-semibold text-body">Verifikasi ulang diperlukan</h2>
-          <p className="mt-0.5 text-sm text-muted">Tindakan ini menyentuh akun atau sistem, sehingga memerlukan kode autentikasi terbaru. Verifikasi berlaku 15 menit.</p>
-        </header>
-        <div className="p-4">
-          <form
-            noValidate
-            onSubmit={(event) => {
-              event.preventDefault();
-              void submit();
+        <Field
+          label="Kode autentikasi"
+          htmlFor="step-up-code"
+          error={error}
+          hint="Enam angka dari aplikasi authenticator Anda."
+          required
+        >
+          <Input
+            id="step-up-code"
+            inputMode="numeric"
+            autoComplete="one-time-code"
+            maxLength={6}
+            autoFocus
+            value={code}
+            invalid={error !== undefined}
+            onChange={(event) => {
+              setCode(event.target.value.replace(/\D/g, ""));
+              setError(undefined);
             }}
-            className="space-y-3"
-          >
-            <Field
-              label="Kode autentikasi"
-              htmlFor="step-up-code"
-              error={error}
-              hint="Enam angka dari aplikasi authenticator Anda."
-              required
-            >
-              <Input
-                id="step-up-code"
-                inputMode="numeric"
-                autoComplete="one-time-code"
-                maxLength={6}
-                autoFocus
-                value={code}
-                invalid={error !== undefined}
-                onChange={(event) => {
-                  setCode(event.target.value.replace(/\D/g, ""));
-                  setError(undefined);
-                }}
-              />
-            </Field>
+          />
+        </Field>
 
-            <DialogFooter>
-              {/* Cancelling resolves the promise as "not elevated", so the original
-                  request fails with its own error rather than hanging forever. */}
-              <CancelButton onClick={() => finish(false)} />
-              <Button type="submit" loading={submitting} loadingText="Memverifikasi…" disabled={code.length !== 6}>
-                Verifikasi
-              </Button>
-            </DialogFooter>
-          </form>
-        </div>
-      </div>
-    </div>
+        <DialogFooter>
+          {/* Cancelling resolves the promise as "not elevated", so the original
+              request fails with its own error rather than hanging forever. */}
+          <CancelButton onClick={() => finish(false)} />
+          <Button type="submit" loading={submitting} loadingText="Memverifikasi…" disabled={code.length !== 6}>
+            Verifikasi
+          </Button>
+        </DialogFooter>
+      </form>
+    </Dialog>
   );
 }
