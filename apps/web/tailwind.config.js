@@ -106,6 +106,30 @@ export default {
           950: "#172554",
         },
       },
+      keyframes: {
+        "fade-up": {
+          from: { opacity: "0", transform: "translateY(14px)" },
+          to: { opacity: "1", transform: "none" },
+        },
+        "fade-in": {
+          from: { opacity: "0" },
+          to: { opacity: "1" },
+        },
+        "scale-in": {
+          from: { opacity: "0", transform: "scale(0.98)" },
+          to: { opacity: "1", transform: "none" },
+        },
+        drift: {
+          "0%, 100%": { transform: "translateY(0)" },
+          "50%": { transform: "translateY(-6px)" },
+        },
+      },
+      animation: {
+        "fade-up": "fade-up 520ms cubic-bezier(0.16, 1, 0.3, 1) both",
+        "fade-in": "fade-in 420ms ease-out both",
+        "scale-in": "scale-in 420ms cubic-bezier(0.16, 1, 0.3, 1) both",
+        drift: "drift 6s ease-in-out infinite",
+      },
       fontFamily: {
         sans: ["system-ui", "-apple-system", "Segoe UI", "Roboto", "sans-serif"],
       },

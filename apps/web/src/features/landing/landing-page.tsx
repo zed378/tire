@@ -23,7 +23,7 @@ import { HERO_IMAGE, IMAGE_CREDITS, TREAD_IMAGE, WHEEL_IMAGE } from "./image-cre
  */
 export function LandingPage(): ReactNode {
   return (
-    <div className="min-h-dvh bg-slate-950 text-slate-100">
+    <div className="min-h-dvh bg-canvas text-body">
       <SiteHeader />
       <main>
         <Hero />
@@ -42,20 +42,20 @@ function SiteHeader(): ReactNode {
   const { user } = useSession();
 
   return (
-    <header className="sticky top-0 z-40 border-b border-white/10 bg-slate-950/80 backdrop-blur">
+    <header className="sticky top-0 z-40 border-b border-line bg-canvas/80 backdrop-blur">
       <div className="mx-auto flex max-w-6xl items-center gap-6 px-5 py-3.5 sm:px-8">
-        <Link to="/" className="text-sm font-semibold tracking-tight text-white">
+        <Link to="/" className="text-sm font-semibold tracking-tight text-body">
           Commercial 2026
         </Link>
 
         <nav aria-label="Navigasi halaman" className="hidden flex-1 justify-center gap-7 md:flex">
-          <a href="#masalah" className="text-sm text-slate-400 transition-colors hover:text-white">
+          <a href="#masalah" className="text-sm text-muted transition-colors hover:text-body">
             Latar belakang
           </a>
-          <a href="#alur" className="text-sm text-slate-400 transition-colors hover:text-white">
+          <a href="#alur" className="text-sm text-muted transition-colors hover:text-body">
             Alur kerja
           </a>
-          <a href="#batasan" className="text-sm text-slate-400 transition-colors hover:text-white">
+          <a href="#batasan" className="text-sm text-muted transition-colors hover:text-body">
             Batasan
           </a>
         </nav>
@@ -67,13 +67,13 @@ function SiteHeader(): ReactNode {
         <div className="ml-auto flex items-center gap-2.5 md:ml-0">
           {user !== null ? (
             <>
-              <span className="hidden text-right text-xs leading-tight text-slate-400 sm:block">
-                <span className="block font-medium text-slate-200">{user.displayName}</span>
+              <span className="hidden text-right text-xs leading-tight text-muted sm:block">
+                <span className="block font-medium text-body">{user.displayName}</span>
                 {USER_ROLE_LABELS[user.role]}
               </span>
               <Link
                 to="/welcome"
-                className="inline-flex min-h-9 items-center rounded-md bg-white px-3.5 text-sm font-semibold text-slate-950 transition-colors hover:bg-slate-200"
+                className="inline-flex min-h-9 items-center rounded-md bg-accent px-3.5 text-sm font-semibold text-on-accent transition-colors hover:bg-accent-hover"
               >
                 Buka Beranda
               </Link>
@@ -82,13 +82,13 @@ function SiteHeader(): ReactNode {
             <>
               <Link
                 to="/login"
-                className="inline-flex min-h-9 items-center rounded-md px-3 text-sm font-medium text-slate-300 transition-colors hover:text-white"
+                className="inline-flex min-h-9 items-center rounded-md px-3 text-sm font-medium text-muted transition-colors hover:text-body"
               >
                 Masuk
               </Link>
               <Link
                 to="/register"
-                className="inline-flex min-h-9 items-center rounded-md bg-white px-3.5 text-sm font-semibold text-slate-950 transition-colors hover:bg-slate-200"
+                className="inline-flex min-h-9 items-center rounded-md bg-accent px-3.5 text-sm font-semibold text-on-accent transition-colors hover:bg-accent-hover"
               >
                 Daftar
               </Link>
@@ -215,9 +215,9 @@ const NUMBERS: { value: string; label: string }[] = [
 
 function Numbers(): ReactNode {
   return (
-    <section className="border-b border-white/10 bg-slate-950">
+    <section className="border-b border-line bg-canvas">
       <div className="mx-auto max-w-6xl px-5 py-10 sm:px-8">
-        <p className="text-[11px] font-medium uppercase tracking-wider text-slate-500">
+        <p className="text-[11px] font-medium uppercase tracking-wider text-subtle">
           Aturan yang ditegakkan sistem
         </p>
         <dl className="mt-5 grid grid-cols-2 gap-6 sm:grid-cols-4">
@@ -225,10 +225,10 @@ function Numbers(): ReactNode {
             <div key={item.label}>
               <dt className="sr-only">{item.label}</dt>
               <dd>
-                <span className="block text-3xl font-semibold tabular-nums text-white">
+                <span className="block text-3xl font-semibold tabular-nums text-body">
                   {item.value}
                 </span>
-                <span className="mt-1 block text-xs leading-relaxed text-slate-400">
+                <span className="mt-1 block text-xs leading-relaxed text-muted">
                   {item.label}
                 </span>
               </dd>
@@ -262,25 +262,25 @@ const PROBLEMS: { before: string; after: string }[] = [
 
 function TheProblem(): ReactNode {
   return (
-    <section id="masalah" className="border-b border-white/10 bg-slate-950">
+    <section id="masalah" className="border-b border-line bg-canvas">
       <div className="mx-auto max-w-6xl px-5 py-16 sm:px-8 sm:py-20">
         <div className="max-w-2xl">
-          <h2 className="text-2xl font-semibold tracking-tight text-white sm:text-3xl">
+          <h2 className="text-2xl font-semibold tracking-tight text-body sm:text-3xl">
             Dibangun dari daftar hal yang dulu rusak
           </h2>
-          <p className="mt-3 text-base leading-relaxed text-slate-400">
+          <p className="mt-3 text-base leading-relaxed text-muted">
             Sistem sebelumnya berjalan di atas spreadsheet dan formulir. Ia bekerja, sampai
             volumenya naik. Empat di antaranya yang paling sering menggigit:
           </p>
         </div>
 
-        <ul className="mt-10 grid gap-px overflow-hidden rounded-xl border border-white/10 bg-white/10 sm:grid-cols-2">
+        <ul className="mt-10 grid gap-px overflow-hidden rounded-xl border border-line bg-line sm:grid-cols-2">
           {PROBLEMS.map((item) => (
-            <li key={item.before} className="bg-slate-950 p-5 sm:p-6">
-              <p className="text-sm leading-relaxed text-slate-500 line-through decoration-red-500/60">
+            <li key={item.before} className="bg-surface p-5 sm:p-6">
+              <p className="text-sm leading-relaxed text-subtle line-through decoration-danger/60">
                 {item.before}
               </p>
-              <p className="mt-3 text-sm font-medium leading-relaxed text-slate-100">{item.after}</p>
+              <p className="mt-3 text-sm font-medium leading-relaxed text-body">{item.after}</p>
             </li>
           ))}
         </ul>
@@ -310,18 +310,18 @@ const STEPS: { title: string; body: string }[] = [
 
 function HowItWorks(): ReactNode {
   return (
-    <section id="alur" className="border-b border-white/10 bg-slate-950">
+    <section id="alur" className="border-b border-line bg-canvas">
       <div className="mx-auto grid max-w-6xl gap-12 px-5 py-16 sm:px-8 sm:py-20 lg:grid-cols-[1fr_1.15fr] lg:gap-16">
         <div>
-          <h2 className="text-2xl font-semibold tracking-tight text-white sm:text-3xl">
+          <h2 className="text-2xl font-semibold tracking-tight text-body sm:text-3xl">
             Empat langkah, dari plat nomor sampai keputusan
           </h2>
-          <p className="mt-3 text-base leading-relaxed text-slate-400">
+          <p className="mt-3 text-base leading-relaxed text-muted">
             Alurnya sama untuk truk dan bus, TB maupun LT. Yang berbeda hanya jumlah ban — dan itu
             dihitung, bukan diketik.
           </p>
 
-          <figure className="mt-8 overflow-hidden rounded-xl border border-white/10">
+          <figure className="mt-8 overflow-hidden rounded-xl border border-line">
             <img
               src={HERO_IMAGE.src}
               alt={HERO_IMAGE.alt}
@@ -338,13 +338,13 @@ function HowItWorks(): ReactNode {
             <li key={step.title} className="flex gap-4">
               <span
                 aria-hidden="true"
-                className="mt-0.5 flex h-8 w-8 flex-none items-center justify-center rounded-full border border-white/20 text-sm font-semibold text-blue-300"
+                className="mt-0.5 flex h-8 w-8 flex-none items-center justify-center rounded-full border border-line-strong text-sm font-semibold text-accent-text"
               >
                 {index + 1}
               </span>
               <div>
-                <h3 className="text-base font-semibold text-white">{step.title}</h3>
-                <p className="mt-1.5 text-sm leading-relaxed text-slate-400">{step.body}</p>
+                <h3 className="text-base font-semibold text-body">{step.title}</h3>
+                <p className="mt-1.5 text-sm leading-relaxed text-muted">{step.body}</p>
               </div>
             </li>
           ))}
@@ -364,12 +364,12 @@ const REFUSALS: string[] = [
 
 function WhatItRefuses(): ReactNode {
   return (
-    <section id="batasan" className="border-b border-white/10 bg-slate-950">
+    <section id="batasan" className="border-b border-line bg-canvas">
       <div className="mx-auto max-w-6xl px-5 py-16 sm:px-8 sm:py-20">
-        <h2 className="max-w-2xl text-2xl font-semibold tracking-tight text-white sm:text-3xl">
+        <h2 className="max-w-2xl text-2xl font-semibold tracking-tight text-body sm:text-3xl">
           Hal-hal yang sistem ini tolak lakukan
         </h2>
-        <p className="mt-3 max-w-2xl text-base leading-relaxed text-slate-400">
+        <p className="mt-3 max-w-2xl text-base leading-relaxed text-muted">
           Aturan yang bisa ditegakkan basis data, ditegakkan basis data — bukan diserahkan pada
           kedisiplinan pengisi formulir.
         </p>
@@ -378,7 +378,7 @@ function WhatItRefuses(): ReactNode {
           {REFUSALS.map((item) => (
             <li
               key={item}
-              className="rounded-lg border border-white/10 bg-white/5 p-4 text-sm leading-relaxed text-slate-300"
+              className="rounded-lg border border-line bg-surface p-4 text-sm leading-relaxed text-muted"
             >
               {item}
             </li>
@@ -393,7 +393,7 @@ function ClosingCta(): ReactNode {
   const { user } = useSession();
 
   return (
-    <section className="bg-gradient-to-b from-slate-950 to-blue-900">
+    <section className="bg-gradient-to-b from-canvas to-blue-900">
       <div className="mx-auto max-w-6xl px-5 py-16 sm:px-8 sm:py-20">
         <div className="flex flex-col items-start justify-between gap-6 rounded-2xl border border-white/10 bg-white/5 p-6 sm:flex-row sm:items-center sm:p-8">
           <div>
@@ -420,18 +420,18 @@ function ClosingCta(): ReactNode {
 
 function SiteFooter(): ReactNode {
   return (
-    <footer className="border-t border-white/10 bg-slate-950">
+    <footer className="border-t border-line bg-canvas">
       <div className="mx-auto max-w-6xl px-5 py-10 sm:px-8">
         <div className="flex flex-wrap items-start justify-between gap-6">
           <div>
-            <p className="text-sm font-semibold text-white">Commercial 2026</p>
-            <p className="mt-1 text-xs text-slate-400">Sistem Data Ban Bus &amp; Truk</p>
+            <p className="text-sm font-semibold text-body">Commercial 2026</p>
+            <p className="mt-1 text-xs text-muted">Sistem Data Ban Bus &amp; Truk</p>
           </div>
           <nav aria-label="Tautan kaki halaman" className="flex flex-wrap gap-x-5 gap-y-2 text-sm">
-            <Link to="/login" className="text-slate-400 transition-colors hover:text-white">
+            <Link to="/login" className="text-muted transition-colors hover:text-body">
               Masuk
             </Link>
-            <Link to="/register" className="text-slate-400 transition-colors hover:text-white">
+            <Link to="/register" className="text-muted transition-colors hover:text-body">
               Daftar
             </Link>
           </nav>
@@ -441,14 +441,14 @@ function SiteFooter(): ReactNode {
           Required by the licences, not a nicety. CC BY and CC BY-SA both oblige
           us to name the author, state the licence, and link back to the source.
         */}
-        <div className="mt-8 border-t border-white/10 pt-6">
-          <h2 className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+        <div className="mt-8 border-t border-line pt-6">
+          <h2 className="text-[11px] font-semibold uppercase tracking-wider text-subtle">
             Kredit foto
           </h2>
-          <ul className="mt-3 space-y-1.5 text-xs leading-relaxed text-slate-400">
+          <ul className="mt-3 space-y-1.5 text-xs leading-relaxed text-muted">
             {IMAGE_CREDITS.map((credit) => (
               <li key={credit.src}>
-                <span className="text-slate-200">{credit.alt}</span> — {credit.author},{" "}
+                <span className="text-body">{credit.alt}</span> — {credit.author},{" "}
                 {credit.licenseUrl === "" ? (
                   <span>{credit.license}</span>
                 ) : (
@@ -456,7 +456,7 @@ function SiteFooter(): ReactNode {
                     href={credit.licenseUrl}
                     rel="license noopener noreferrer"
                     target="_blank"
-                    className="underline underline-offset-2 hover:text-white"
+                    className="underline underline-offset-2 hover:text-body"
                   >
                     {credit.license}
                   </a>
@@ -466,7 +466,7 @@ function SiteFooter(): ReactNode {
                   href={credit.sourceUrl}
                   rel="noopener noreferrer"
                   target="_blank"
-                  className="underline underline-offset-2 hover:text-white"
+                  className="underline underline-offset-2 hover:text-body"
                 >
                   Wikimedia Commons
                 </a>
