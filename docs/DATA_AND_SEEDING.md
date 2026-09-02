@@ -177,9 +177,10 @@ seeding (APP_ENV=local)
 
 ⚠️ **Important**: Main seed script refuses to run on production (safety feature).
 
-**Step 1: Run database migrations**
+**Step 1: Run database migrations & queue setup**
 ```bash
 pnpm db:migrate
+# Automatis dijalankan oleh container db-init pada docker-compose.prod.yml
 ```
 
 **Step 2: Create first admin**
@@ -190,12 +191,7 @@ node dist/scripts/seed-prod-admin.js "YourSecurePassword123"
 node dist/scripts/seed-prod-admin.js "YourSecurePassword123" --username=admin
 ```
 
-**Step 3: Seed master data**
-```bash
-node dist/prisma/seed.js
-```
-
-**Step 4: Seed CSV data** (optional)
+**Step 3: Seed CSV master data** (optional, recommended)
 ```bash
 node dist/scripts/seed-csv-prod.js
 ```
@@ -214,18 +210,18 @@ All production scripts enforce two strict requirements:
 apps/api/
 ├── prisma/
 │   ├── schema.prisma                   # Database schema
-│   ├── seed.ts                         # Main seed orchestration (dev)
-│   ├── seed-prod.ts                    # Production seed (node compatible)
-│   ├── migrations/
-│   │   └── 0001_init/migration.sql     # Initial database setup
-│   └── seed/
-│       ├── master-data.ts              # 34 prov, 289 cities, 46 brands (630+ lines)
-│       ├── csv-data.ts                 # CSV parsing & seeding
-│       └── demo-data.ts                # Demo accounts & sample data
+│   ├── queue-setup.ts                  # Delegator for queue setup
+│   ├── queue-smoke.ts                  # Delegator for queue smoke test
+│   ├── seed.ts                         # Dev seed orchestration
+│   ├── seed-prod.ts                    # Production seed wrapper
+│   └── migrations/
+│       └── 0001_init/migration.sql     # Initial database setup
 └── src/
     └── scripts/
-        ├── seed-prod-admin.ts          # Production admin creation
-        └── seed-csv-prod.ts            # Production CSV seeding
+        ├── queue-setup.ts              # pg-boss schema & queue setup (compiles to dist/scripts/)
+        ├── queue-smoke.ts              # Queue integration smoke test (compiles to dist/scripts/)
+        ├── seed-prod-admin.ts          # Production admin creation (compiles to dist/scripts/)
+        └── seed-csv-prod.ts            # Production CSV seeding (compiles to dist/scripts/)
 
 requirements/  (optional)
 ├── req-Vehicle Brand.csv               # 30 vehicle brands
@@ -332,9 +328,9 @@ SELECT name, COUNT(*) FROM tire_brands GROUP BY name HAVING COUNT(*) > 1;
 - [ ] `DATABASE_URL` configured correctly
 
 ### Seeding Steps
+- [ ] Run migrations & queue setup (automatically done by `db-init` container during `docker compose up`, or manually via `pnpm db:migrate`)
 - [ ] Create first admin: `node dist/scripts/seed-prod-admin.js "password"`
-- [ ] Seed master data: `node dist/prisma/seed.js`
-- [ ] (Optional) Seed CSV data: `node dist/scripts/seed-csv-prod.js`
+- [ ] (Optional) Seed CSV master data: `node dist/scripts/seed-csv-prod.js`
 
 ### Verification
 - [ ] Admin account created and can login
@@ -363,19 +359,19 @@ pnpm build
 docker build -t myapp:latest .
 ```
 
-### Module not found: dist/prisma/seed.js
+### Cannot find module load-env.ts during db:migrate
 
-**Error**: `Cannot find module '/app/dist/prisma/seed.js'`
+**Error**: `ERR_MODULE_NOT_FOUND: Cannot find module '/app/apps/api/src/kernel/load-env.ts'`
 
-**Solution**: Ensure build happens before deployment:
-```bash
-pnpm build
-docker build -t myapp:latest .
+**Solution**: `pnpm db:migrate` uses pre-compiled JavaScript in `dist/scripts/queue-setup.js`. Ensure scripts are built and source directory is copied:
+```dockerfile
+COPY --from=build /app/apps/api/src ./apps/api/src
 ```
 
-Alternatively, use TypeScript directly:
+Execution uses:
 ```bash
-tsx prisma/seed.ts
+pnpm db:migrate
+# Runs: prisma migrate deploy && node dist/scripts/queue-setup.js
 ```
 
 ### CSV files not found
@@ -387,20 +383,6 @@ tsx prisma/seed.ts
 If you want CSV files:
 1. Place them in `requirements/` directory
 2. Mount in docker-compose: `- ./requirements:/app/requirements:ro`
-
-### Script not found during db:migrate
-
-**Error**: `prisma migrate deploy && tsx prisma/queue-setup.ts` fails
-
-**Solution**: Ensure migrations directory is copied:
-```dockerfile
-COPY apps/api/prisma/migrations ./apps/api/prisma/migrations
-```
-
-Then run migrations:
-```bash
-pnpm db:migrate
-```
 
 ### Duplicate data in database
 
@@ -430,25 +412,18 @@ docker build -t commercial2026:latest .
 docker tag commercial2026:latest registry.example.com/commercial2026:latest
 docker push registry.example.com/commercial2026:latest
 
-# 3. Deploy with docker-compose
+# 3. Deploy with docker-compose (db-init runs migrations & queue setup automatically)
 docker compose -f docker-compose.prod.yml up -d --force-recreate --build
 
-# 4. Run migrations
-docker compose -f docker-compose.prod.yml exec api pnpm db:migrate
-
-# 5. Create admin
+# 4. Create admin account
 docker compose -f docker-compose.prod.yml exec api \
   node dist/scripts/seed-prod-admin.js "AdminPassword123"
 
-# 6. Seed master data
-docker compose -f docker-compose.prod.yml exec api \
-  node dist/prisma/seed.js
-
-# 7. Seed CSV data (optional)
+# 5. Seed CSV master data (optional)
 docker compose -f docker-compose.prod.yml exec api \
   node dist/scripts/seed-csv-prod.js
 
-# 8. Verify
+# 6. Verify
 curl http://127.0.0.1:3000/api/health
 curl http://127.0.0.1:3000/api/master-data/provinces
 ```

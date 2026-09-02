@@ -34,7 +34,7 @@ pnpm dev                      # api on :3000, web on :5173
 pnpm dev:worker               # separate terminal: processes background jobs
 ```
 
-`pnpm db:migrate` runs two steps: the Prisma migration, then `queue-setup`, which
+`pnpm db:migrate` runs two steps: the Prisma migration, then `node dist/scripts/queue-setup.js`, which
 installs the pg-boss schema **and a partition per queue**. Both are needed before
 the API can enqueue anything, because `PLAN/12` §2.1 has it write the job inside
 the caller's transaction. The API refuses to start if that schema is missing
@@ -89,21 +89,29 @@ docker compose -f docker-compose.prod.yml up -d --build
 ```
 
 The api publishes only to `127.0.0.1:3000`, so nothing is reachable from the
-VM's network — the tunnel is the sole way in.
+VM's network — the tunnel is the sole way in. The production compose topology includes:
+- `api`: API server and SPA static file host (`127.0.0.1:3000`)
+- `worker`: Background job worker
+- `db-init`: Automatic database migration & pg-boss queue setup container (`pnpm db:migrate`)
+- `postgres`: PostgreSQL 18 database engine
+- `pgadmin`: Database GUI manager (`127.0.0.1:5050`, dev local on `:5050`)
 
-### Seeding the Admin Account in Production
+### Database Seeding in Production
 
-In a production environment (`APP_ENV=production`), the default `pnpm db:seed` script refuses to create admin accounts. To create the initial administrator account in production, use the dedicated `seed-prod-admin.js` script, which **must be executed from inside a container**:
+In a production environment (`APP_ENV=production`), the default `pnpm db:seed` script refuses to create admin accounts or demo data. To create the initial administrator account and seed master data in production, run the pre-compiled JS scripts inside the running container:
 
 ```bash
-# Run inside the running API container:
+# 1. Create initial admin account:
 docker exec -it commercial2026-api-1 node dist/scripts/seed-prod-admin.js "PasswordProdSecret123!"
 
-# Or via the pnpm shortcut:
+# Or via pnpm shortcut:
 docker exec -it commercial2026-api-1 pnpm db:seed:prod-admin "PasswordProdSecret123!"
 
 # Optional: specify a custom admin username (default: admin)
 docker exec -it commercial2026-api-1 node dist/scripts/seed-prod-admin.js "PasswordProdSecret123!" --username=superadmin
+
+# 2. Seed CSV master data (Tire Brands, Patterns, Sizes, Vehicle Brands):
+docker exec -it commercial2026-api-1 node dist/scripts/seed-csv-prod.js
 ```
 
 ## Where photos are stored
