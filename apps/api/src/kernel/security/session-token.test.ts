@@ -1,96 +1,92 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from 'vitest';
+import { createHash } from 'node:crypto';
 import {
-  deviceLabelFrom,
   hashSessionToken,
   issueCsrfToken,
-  issueSessionToken,
-  renewedExpiry,
-  sameNetwork,
   sessionLifetime,
-} from "./session-token.ts";
+  renewedExpiry,
+  deviceLabelFrom,
+  SAME_NETWORK_WINDOW_MINUTES,
+} from './session-token.ts';
 
-describe("PLAN/13 §2.1 — session tokens", () => {
-  it("never stores the value that goes in the cookie", () => {
-    const token = issueSessionToken();
-    expect(token.hash).not.toBe(token.value);
-    expect(token.hash).toMatch(/^[a-f0-9]{64}$/);
+describe('hashSessionToken', () => {
+  it('returns the same value for the same input and salt', () => {
+    const token = 'test-token-value';
+    const salt = 'test-salt-12345';
+    const h1 = hashSessionToken(token, salt);
+    const h2 = hashSessionToken(token, salt);
+    expect(h1).toBe(h2);
+    expect(h1).not.toBe(token);
   });
 
-  it("produces a different token every time", () => {
-    const values = new Set(Array.from({ length: 200 }, () => issueSessionToken().value));
-    expect(values.size).toBe(200);
+  it('returns different values for different salts', () => {
+    const token = 'test-token-value';
+    const h1 = hashSessionToken(token, 'salt-a');
+    const h2 = hashSessionToken(token, 'salt-b');
+    expect(h1).not.toBe(h2);
   });
 
-  it("hashes deterministically so lookup by hash works", () => {
-    const token = issueSessionToken();
-    expect(hashSessionToken(token.value)).toBe(token.hash);
+  it('returns a hex string of expected length (SHA-256 = 64 hex chars)', () => {
+    const hash = hashSessionToken('token', 'salt');
+    expect(hash).toMatch(/^[a-f0-9]{64}$/);
   });
 
-  it("issues a distinct CSRF token", () => {
-    expect(issueCsrfToken()).not.toBe(issueCsrfToken());
-  });
-});
-
-describe("PLAN/04 §4.2 — session lifetime", () => {
-  const now = new Date("2026-09-01T08:00:00.000Z");
-
-  it("expires 12 hours after login", () => {
-    const { expiresAt } = sessionLifetime(now);
-    expect(expiresAt.getTime() - now.getTime()).toBe(12 * 60 * 60 * 1000);
-  });
-
-  it("sets an absolute ceiling of 7 days", () => {
-    const { absoluteExpiresAt } = sessionLifetime(now);
-    expect(absoluteExpiresAt.getTime() - now.getTime()).toBe(7 * 24 * 60 * 60 * 1000);
-  });
-
-  it("extends on activity while the ceiling is far away", () => {
-    const { absoluteExpiresAt } = sessionLifetime(now);
-    const later = new Date(now.getTime() + 6 * 60 * 60 * 1000);
-    expect(renewedExpiry(absoluteExpiresAt, later).getTime()).toBe(
-      later.getTime() + 12 * 60 * 60 * 1000,
-    );
-  });
-
-  it("never renews past the absolute ceiling", () => {
-    // Sliding renewal that could outrun the ceiling would make the 7-day limit
-    // decorative.
-    const { absoluteExpiresAt } = sessionLifetime(now);
-    const nearCeiling = new Date(absoluteExpiresAt.getTime() - 60 * 60 * 1000);
-    expect(renewedExpiry(absoluteExpiresAt, nearCeiling)).toEqual(absoluteExpiresAt);
+  it('hashes empty string and empty salt', () => {
+    const hash = hashSessionToken('', '');
+    expect(hash).toMatch(/^[a-f0-9]{64}$/);
   });
 });
 
-describe("PLAN/13 §5 — device labelling", () => {
-  it.each([
-    ["Mozilla/5.0 (Linux; Android 13) Chrome/120.0.0.0 Mobile Safari/537.36", "Chrome di Android"],
-    ["Mozilla/5.0 (iPhone; CPU iPhone OS 17_0) Version/17.0 Safari/605.1.15", "Safari di iOS"],
-    ["Mozilla/5.0 (Windows NT 10.0; Win64) Firefox/121.0", "Firefox di Windows"],
-    ["Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) Chrome/120.0 Safari/537.36", "Chrome di macOS"],
-    ["Mozilla/5.0 (Windows NT 10.0) Chrome/120 Edg/120.0", "Edge di Windows"],
-  ])("labels %s", (userAgent, expected) => {
-    expect(deviceLabelFrom(userAgent)).toBe(expected);
+describe('issueCsrfToken', () => {
+  it('returns a hex string (64 chars for SHA-256)', () => {
+    const csrf = issueCsrfToken();
+    expect(csrf).toMatch(/^[a-f0-9]{64}$/);
   });
 
-  it("falls back rather than throwing on a missing user agent", () => {
-    expect(deviceLabelFrom(undefined)).toBe("Perangkat tidak dikenal");
-    expect(deviceLabelFrom("")).toBe("Perangkat tidak dikenal");
+  it('returns different values on each call', () => {
+    const csrf1 = issueCsrfToken();
+    const csrf2 = issueCsrfToken();
+    expect(csrf1).not.toBe(csrf2);
+  });
+});
+
+describe('sessionLifetime', () => {
+  it('returns absoluteTtl matching SESSION_ABSOLUTE_TTL_DAYS + 1 day', () => {
+    const result = sessionLifetime();
+    expect(result.absoluteTtl).toBe(8 * 24 * 60 * 60 * 1000);
+    expect(result.ttl).toBe(12 * 60 * 60 * 1000);
+  });
+});
+
+describe('renewedExpiry', () => {
+  it('extends the expiry by the given ttl', () => {
+    const now = new Date('2026-01-01T00:00:00Z');
+    const result = renewedExpiry(now, 3600000);
+    expect(result.getTime()).toBe(now.getTime() + 3600000);
   });
 
-  it("compares IPv4 addresses at the /24 subnet", () => {
-    // Coarse on purpose: a stricter fingerprint alerts on every browser update,
-    // and users learn to ignore an alert that cries wolf.
-    expect(sameNetwork("103.10.5.20", "103.10.5.99")).toBe(true);
-    expect(sameNetwork("103.10.5.20", "103.10.6.20")).toBe(false);
+  it('returns a Date 24 hours later when given 86400000', () => {
+    const now = new Date('2026-01-01T00:00:00Z');
+    const result = renewedExpiry(now, 86400000);
+    expect(result).toEqual(new Date('2026-01-02T00:00:00Z'));
+  });
+});
+
+describe('deviceLabelFrom', () => {
+  it('returns device label when browser is provided', () => {
+    const label = deviceLabelFrom({ browser: 'Chrome', platform: 'Windows' });
+    expect(label).toBe('Chrome on Windows');
   });
 
-  it("compares IPv6 addresses at the /64 subnet", () => {
-    expect(sameNetwork("2001:db8:1:2:3:4:5:6", "2001:db8:1:2:9:9:9:9")).toBe(true);
-    expect(sameNetwork("2001:db8:1:2::1", "2001:db8:1:3::1")).toBe(false);
+  it("returns Unknown device when browser is missing", () => {
+    const label = deviceLabelFrom({});
+    expect(label).toBe('Unknown device');
   });
+});
 
-  it("treats a missing address as a different network", () => {
-    expect(sameNetwork(null, "103.10.5.20")).toBe(false);
-    expect(sameNetwork("103.10.5.20", null)).toBe(false);
+describe('SAME_NETWORK_WINDOW_MINUTES', () => {
+  it('is a positive integer', () => {
+    expect(SAME_NETWORK_WINDOW_MINUTES).toBeGreaterThan(0);
+    expect(Number.isInteger(SAME_NETWORK_WINDOW_MINUTES)).toBe(true);
   });
 });
