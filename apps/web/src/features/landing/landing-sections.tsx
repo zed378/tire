@@ -247,8 +247,8 @@ export function ProductJourney(): ReactNode {
                 aria-hidden="true"
                 className="journey-marker absolute left-0 top-1.5 h-[0.9375rem] w-[0.9375rem] rounded-full border-2 border-line-strong bg-canvas"
               />
-              <div className="grid gap-x-8 gap-y-2 sm:grid-cols-[7rem_minmax(0,1fr)]">
-                <p className="font-data text-sm font-medium tabular-nums text-muted">
+              <div className="grid gap-x-8 gap-y-2 sm:grid-cols-[3.5rem_minmax(0,1fr)]">
+                <p className="journey-number font-data text-sm tabular-nums text-subtle">
                   {step.number}
                 </p>
                 <div>

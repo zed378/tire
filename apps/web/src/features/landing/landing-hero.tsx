@@ -80,7 +80,7 @@ export function LandingHero(): ReactNode {
         box.
       */}
       <div className="mx-auto max-w-site px-5 pb-10 pt-14 sm:px-8 lg:pb-24 lg:pt-24">
-        <div className="hero-settle max-w-prose lg:w-[52%] lg:max-w-none lg:pr-8">
+        <div className="hero-settle max-w-prose lg:w-[56%] lg:max-w-none lg:pr-6">
           <p className="text-sm text-subtle">Manajemen ban armada</p>
 
           <h1 className="mt-4 font-display text-2xl font-bold leading-[1.08] tracking-tight text-body sm:text-3xl">
@@ -113,7 +113,7 @@ export function LandingHero(): ReactNode {
 
       {/* On mobile it follows the text at a fixed ratio; on desktop it is
           pinned to the right half of the viewport, full height. */}
-      <div className="relative mx-5 aspect-[4/3] overflow-hidden rounded-panel bg-graphite sm:mx-8 lg:absolute lg:inset-y-0 lg:right-0 lg:mx-0 lg:aspect-auto lg:w-[45%] lg:rounded-l-panel lg:rounded-r-none">
+      <div className="relative mx-5 aspect-[4/3] overflow-hidden rounded-panel bg-graphite sm:mx-8 lg:absolute lg:inset-y-0 lg:right-0 lg:mx-0 lg:aspect-auto lg:w-[42%] lg:rounded-l-panel lg:rounded-r-none">
         <img
           src={TREAD_IMAGE.src}
           alt={TREAD_IMAGE.alt}

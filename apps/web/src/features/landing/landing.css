@@ -192,14 +192,22 @@
  * no sticky viewport takeover on mobile.
  */
 
-.journey-step {
+/*
+ * The active step gains weight; the inactive ones do NOT lose contrast.
+ *
+ * The obvious version of this dims the inactive steps with `opacity`, and it
+ * looks good in a screenshot — but it drops the body text of five of the six
+ * steps below 4.5:1, and this page is read in bad light. Emphasis moves to the
+ * step's own number and marker instead, which carry no reading load.
+ */
+.journey-step .journey-number {
   transition:
     color 250ms cubic-bezier(0.2, 0.8, 0.2, 1),
-    opacity 250ms cubic-bezier(0.2, 0.8, 0.2, 1);
-  opacity: 0.55;
+    font-weight 250ms cubic-bezier(0.2, 0.8, 0.2, 1);
 }
-.journey-step--active {
-  opacity: 1;
+.journey-step--active .journey-number {
+  color: rgb(var(--color-body));
+  font-weight: 600;
 }
 .journey-marker {
   transition:
@@ -313,7 +321,7 @@
     display: none;
   }
 
-  .journey-step,
+  .journey-step .journey-number,
   .journey-marker,
   .journey-progress,
   .surface-interactive,
@@ -328,7 +336,7 @@
   }
 
   /* The journey renders as six static steps with no scroll binding. */
-  .journey-step {
-    opacity: 1;
+  .journey-progress {
+    transform: scaleY(1);
   }
 }
