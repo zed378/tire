@@ -15,19 +15,19 @@ export interface PhotoCredit {
 }
 
 export const PHOTO_CREDITS = {
-  "undefined": {
+  "tire-tread": {
     author: "Lee Coursey from Decatur, GA",
     license: "CC BY 2.0",
     licenseUrl: "https://creativecommons.org/licenses/by/2.0",
     sourceUrl: "https://commons.wikimedia.org/wiki/File:Texture_-_tire_tread_(30784753).jpg",
   },
-  "undefined": {
+  "tire-stack": {
     author: "Biso",
     license: "CC BY 3.0",
     licenseUrl: "https://creativecommons.org/licenses/by/3.0",
     sourceUrl: "https://commons.wikimedia.org/wiki/File:Truck_tires.JPG",
   },
-  "undefined": {
+  "depot": {
     author: "THE STEPHEN J MASON PHOTOGRAPHY COLLECTION",
     license: "CC BY-SA 2.0",
     licenseUrl: "https://creativecommons.org/licenses/by-sa/2.0",
