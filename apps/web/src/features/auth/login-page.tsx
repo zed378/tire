@@ -32,7 +32,6 @@ export function LoginPage(): ReactNode {
   const [error, setError] = useState<unknown>(null);
   const [needsTotp, setNeedsTotp] = useState(false);
   const [useRecoveryCode, setUseRecoveryCode] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
 
   const {
     register,

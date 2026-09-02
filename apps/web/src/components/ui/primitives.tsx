@@ -209,11 +209,42 @@ export function Field({
             {hint}
           </p>
         ) : null}
-        {error !== undefined ? (
-          <p id={errorId} role="alert" className="text-sm font-medium text-danger-text">
-            {error}
-          </p>
-        ) : null}
+        {/*
+          A polite live region, always present, rather than an element that
+          appears with `role="alert"`.
+
+          Two reasons. `alert` is assertive: it interrupts whatever the reader
+          is being told, which is wrong for a message produced by leaving a
+          field. And a live region has to exist before the text is put into it
+          — a node that is inserted already containing its message is often not
+          announced at all, which is why validation errors so often go silent.
+
+          The icon is not decoration either. Colour alone does not carry a
+          message to a reader who cannot distinguish it (brief §30).
+        */}
+        <div aria-live="polite" className={error === undefined ? "hidden" : undefined}>
+          {error !== undefined ? (
+            <p
+              id={errorId}
+              className="flex items-start gap-1.5 text-sm font-medium text-danger-text"
+            >
+              <svg
+                viewBox="0 0 24 24"
+                className="mt-0.5 h-3.5 w-3.5 flex-none"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <circle cx="12" cy="12" r="10" />
+                <path d="M12 8v4M12 16h.01" />
+              </svg>
+              {error}
+            </p>
+          ) : null}
+        </div>
       </div>
     </FieldContext.Provider>
   );

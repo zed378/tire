@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -8,12 +8,13 @@ import { Banner } from "../../components/ui/feedback.tsx";
 import { Button, Field, Input } from "../../components/ui/primitives.tsx";
 import { WHEEL_IMAGE } from "../landing/image-credits.ts";
 import { AUTH_FIELD, AuthLayout } from "./auth-layout.tsx";
+import { PasswordChecklist, PasswordField, TreadGauge, scorePassword } from "./auth-fields.tsx";
+import { formatDate } from "../../lib/format.ts";
 
 export function RegisterPage(): ReactNode {
   const navigate = useNavigate();
   const [error, setError] = useState<unknown>(null);
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [succeeded, setSucceeded] = useState(false);
 
   const {
     register,
@@ -22,28 +23,19 @@ export function RegisterPage(): ReactNode {
     formState: { errors, isSubmitting },
   } = useForm<RegisterInput>({
     resolver: zodResolver(registerSchema),
-    mode: "onSubmit",
+    // Blur, not keystroke. `reValidateMode` then keeps a field that has already
+    // failed updating live, which is when live feedback helps (brief §30).
+    mode: "onBlur",
+    reValidateMode: "onChange",
   });
 
-  const password = watch("password") || "";
+  const password = watch("password") ?? "";
+  const strength = scorePassword(password);
 
-  // Password strength helper
-  const getPasswordStrength = (pwd: string): { label: string; score: number; color: string } => {
-    if (!pwd) return { label: "Belum diisi", score: 0, color: "bg-slate-300 dark:bg-slate-700" };
-    let score = 0;
-    if (pwd.length >= 10) score++;
-    if (pwd.length >= 14) score++;
-    if (/[A-Z]/.test(pwd) && /[a-z]/.test(pwd)) score++;
-    if (/[0-9]/.test(pwd)) score++;
-    if (/[^A-Za-z0-9]/.test(pwd)) score++;
-
-    if (score <= 1) return { label: "Sangat Lemah", score: 1, color: "bg-red-500" };
-    if (score === 2) return { label: "Cukup", score: 2, color: "bg-amber-500" };
-    if (score === 3) return { label: "Baik", score: 3, color: "bg-blue-500" };
-    return { label: "Kuat", score: 4, color: "bg-emerald-500" };
-  };
-
-  const strength = getPasswordStrength(password);
+  const errorRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (error !== null) errorRef.current?.focus();
+  }, [error]);
 
   const onSubmit = handleSubmit(async (values) => {
     setError(null);
@@ -51,8 +43,18 @@ export function RegisterPage(): ReactNode {
     try {
       await api.post("/api/auth/register", values);
 
-      // Redirect to welcome dashboard upon registration
-      void navigate("/welcome", { replace: true });
+      /*
+       * A calm beat before the redirect, naming what happens next.
+       *
+       * Registration signs the account in immediately, so without this the
+       * screen simply vanishes and is replaced by a dashboard — which reads as
+       * a glitch rather than as success, and gives no chance to notice that
+       * the account was created at all.
+       */
+      setSucceeded(true);
+      window.setTimeout(() => {
+        void navigate("/welcome", { replace: true });
+      }, 800);
     } catch (caught: unknown) {
       setError(caught);
     }
@@ -60,13 +62,10 @@ export function RegisterPage(): ReactNode {
 
   return (
     <AuthLayout
-      title="Buat akun baru"
-      subtitle="Akun baru menunggu persetujuan admin sebelum bisa dipakai."
+      title="Mulai menggunakan"
+      subtitle="Akun langsung aktif dengan peran Supplier. Admin dapat mengubah peran Anda nanti."
       image={WHEEL_IMAGE}
-      imageCaption={[
-        { label: "34 konfigurasi poros", detail: "Slot foto dihitung, bukan diketik" },
-        { label: "Drive 1 Kiri Dalam", detail: "Setiap posisi ban punya namanya sendiri" },
-      ]}
+      note={`${formatDate(new Date())} WIB`}
       footer={
         <>
           <p className="text-xs text-muted">
@@ -76,171 +75,115 @@ export function RegisterPage(): ReactNode {
             </Link>
           </p>
           <p className="mt-2 text-xs text-subtle">
-            Admin akan menetapkan peran Anda setelah akun ditinjau.
+            Peran Supplier dapat membuat dan mengirim pemeriksaan. Untuk akses lain, hubungi
+            admin.
           </p>
         </>
       }
     >
-      <form onSubmit={(event) => void onSubmit(event)} noValidate className="space-y-4">
-        {error !== null ? (
-          <Banner tone="error" onDismiss={() => setError(null)}>
-            {isApiError(error)
-              ? error.envelope.message
-              : "Pendaftaran gagal. Silakan coba lagi."}
-          </Banner>
-        ) : null}
-
-        <Field
-          label="User ID"
-          htmlFor="username"
-          error={errors.username?.message}
-          hint="3–64 karakter (huruf, angka, titik, strip)"
-          required
-        >
-          <Input
-            id="username"
-            autoComplete="username"
-            autoCapitalize="none"
-            autoFocus
-            placeholder="contoh: joko_inspector"
-            invalid={errors.username !== undefined}
-            className={AUTH_FIELD}
-            {...register("username")}
-          />
-        </Field>
-
-        <Field label="Nama Lengkap" htmlFor="displayName" error={errors.displayName?.message} required>
-          <Input
-            id="displayName"
-            autoComplete="name"
-            placeholder="contoh: Joko Susanto"
-            invalid={errors.displayName !== undefined}
-            className={AUTH_FIELD}
-            {...register("displayName")}
-          />
-        </Field>
-
-        <Field
-          label="Password"
-          htmlFor="password"
-          error={errors.password?.message}
-          hint="Minimal 10 karakter"
-          required
-        >
-          <div className="relative">
-            <Input
-              id="password"
-              type={showPassword ? "text" : "password"}
-              autoComplete="new-password"
-              invalid={errors.password !== undefined}
-              className={`${AUTH_FIELD} pr-11`}
-              {...register("password")}
-            />
-            <PasswordToggle
-              shown={showPassword}
-              onToggle={() => {
-                setShowPassword((prev) => !prev);
-              }}
-            />
-          </div>
-
-          {password ? (
-            <div className="mt-2">
-              <div
-                className="flex h-1.5 gap-1 overflow-hidden rounded-full bg-surface-sunken"
-                role="img"
-                aria-label={`Kekuatan password: ${strength.label}`}
-              >
-                <div className={`h-full flex-1 ${strength.score >= 1 ? strength.color : ""}`} />
-                <div className={`h-full flex-1 ${strength.score >= 2 ? strength.color : ""}`} />
-                <div className={`h-full flex-1 ${strength.score >= 3 ? strength.color : ""}`} />
-                <div className={`h-full flex-1 ${strength.score >= 4 ? strength.color : ""}`} />
-              </div>
-              <div className="mt-1 flex justify-between text-[11px] text-muted">
-                <span>Kekuatan password:</span>
-                <span className="font-semibold text-body">{strength.label}</span>
-              </div>
+      {succeeded ? (
+        /*
+         * The success beat. It is a status, not an alert: `polite` lets a
+         * screen reader finish whatever it was saying before announcing it,
+         * and nothing here is urgent.
+         */
+        <div role="status" className="py-4 text-center">
+          <p className="font-display text-lg font-semibold text-body">Akun dibuat.</p>
+          <p className="mt-2 text-sm text-muted">
+            Anda sudah masuk. Membuka beranda…
+          </p>
+        </div>
+      ) : (
+        <form onSubmit={(event) => void onSubmit(event)} noValidate className="auth-stagger space-y-4">
+          {error !== null ? (
+            <div ref={errorRef} tabIndex={-1} className="outline-none">
+              <Banner tone="error" onDismiss={() => setError(null)}>
+                {isApiError(error)
+                  ? error.envelope.message
+                  : "Server tidak merespons. Periksa koneksi Anda, lalu coba lagi."}
+              </Banner>
             </div>
           ) : null}
-        </Field>
 
-        <Field
-          label="Konfirmasi Password"
-          htmlFor="confirmPassword"
-          error={errors.confirmPassword?.message}
-          required
-        >
-          <div className="relative">
-            <Input
+          <Field
+            label="User ID"
+            htmlFor="username"
+            error={errors.username?.message}
+            hint="3–64 karakter (huruf, angka, titik, garis bawah, strip)"
+            required
+          >
+            <div className="auth-field">
+              <Input
+                id="username"
+                autoComplete="username"
+                autoCapitalize="none"
+                autoFocus
+                placeholder="joko_inspector"
+                invalid={errors.username !== undefined}
+                className={AUTH_FIELD}
+                {...register("username")}
+              />
+            </div>
+          </Field>
+
+          <Field
+            label="Nama Lengkap"
+            htmlFor="displayName"
+            error={errors.displayName?.message}
+            required
+          >
+            <div className="auth-field">
+              <Input
+                id="displayName"
+                autoComplete="name"
+                placeholder="Joko Susanto"
+                invalid={errors.displayName !== undefined}
+                className={AUTH_FIELD}
+                {...register("displayName")}
+              />
+            </div>
+          </Field>
+
+          <Field label="Password" htmlFor="password" error={errors.password?.message} required>
+            <PasswordField
+              id="password"
+              autoComplete="new-password"
+              invalid={errors.password !== undefined}
+              className={AUTH_FIELD}
+              {...register("password")}
+            />
+            {/* The gauge appears once there is something to measure. The
+                checklist is there from the start, because requirements one
+                cannot see are requirements one fails. */}
+            {password.length > 0 ? <TreadGauge strength={strength} /> : null}
+            <PasswordChecklist password={password} />
+          </Field>
+
+          <Field
+            label="Konfirmasi Password"
+            htmlFor="confirmPassword"
+            error={errors.confirmPassword?.message}
+            required
+          >
+            <PasswordField
               id="confirmPassword"
-              type={showConfirmPassword ? "text" : "password"}
               autoComplete="new-password"
               invalid={errors.confirmPassword !== undefined}
-              className={`${AUTH_FIELD} pr-11`}
+              className={AUTH_FIELD}
               {...register("confirmPassword")}
             />
-            <PasswordToggle
-              shown={showConfirmPassword}
-              onToggle={() => {
-                setShowConfirmPassword((prev) => !prev);
-              }}
-            />
-          </div>
-        </Field>
+          </Field>
 
-        <Button
-          type="submit"
-          className="w-full rounded-xl"
-          loading={isSubmitting}
-          loadingText="Mendaftarkan…"
-        >
-          Daftar akun
-        </Button>
-      </form>
-    </AuthLayout>
-  );
-}
-
-/**
- * Show/hide for a password field.
- *
- * A real button rather than the `<span onClick>` this replaces — twice on this
- * page, and neither was reachable by keyboard or announced to a screen reader.
- */
-function PasswordToggle({ shown, onToggle }: { shown: boolean; onToggle: () => void }): ReactNode {
-  return (
-    <button
-      type="button"
-      onClick={onToggle}
-      aria-pressed={shown}
-      aria-label={shown ? "Sembunyikan password" : "Tampilkan password"}
-      className="absolute right-1 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-lg text-subtle transition-colors hover:text-body"
-    >
-      {shown ? (
-        <svg
-          className="h-4 w-4"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          aria-hidden="true"
-        >
-          <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
-          <line x1="1" y1="1" x2="23" y2="23" />
-        </svg>
-      ) : (
-        <svg
-          className="h-4 w-4"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          aria-hidden="true"
-        >
-          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-          <circle cx="12" cy="12" r="3" />
-        </svg>
+          <Button
+            type="submit"
+            className="w-full"
+            loading={isSubmitting}
+            loadingText="Memeriksa…"
+          >
+            Mulai Menggunakan
+          </Button>
+        </form>
       )}
-    </button>
+    </AuthLayout>
   );
 }
