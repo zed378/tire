@@ -50,24 +50,35 @@ This will:
 
 For production deployment, you must:
 
-1. **Manually create the first admin** through a reviewed migration or operator action
-2. **Run CSV data seeding only** using a custom script:
+1. **Create the first admin** using the dedicated production script:
 
 ```bash
-# Create a production-safe seeding script
+node dist/scripts/seed-prod-admin.js "YourSecurePassword123"
+# Or with specific username:
+node dist/scripts/seed-prod-admin.js "YourSecurePassword123" --username=admin
+```
+
+2. **Seed CSV data** (tire brands & patterns) using:
+
+```bash
 node dist/scripts/seed-csv-prod.js
 ```
 
-The seed file will:
-- Parse CSV files from `requirements/` directory
-- Upsert tire brands (no duplicates, safe to rerun)
-- Not modify existing data beyond updating brand records
+Both scripts enforce two strict security gates:
+- ✅ Must run ONLY when `APP_ENV=production`
+- ✅ Must run ONLY inside a Docker/Podman container
+
+The CSV seed script:
+- Parses CSV files from `requirements/` directory
+- Upserts tire brands (no duplicates, safe to rerun)
+- Does not modify user accounts or other data
 
 ## CSV Seeding Implementation
 
 The seeding logic is implemented in:
-- `apps/api/prisma/seed/csv-data.ts` - CSV parsing and database operations
-- `apps/api/prisma/seed.ts` - Main seed orchestration
+- `apps/api/prisma/seed/csv-data.ts` - CSV parsing (used in development/staging)
+- `apps/api/src/scripts/seed-csv-prod.ts` - Production CSV seeding (compiled to `dist/scripts/seed-csv-prod.js`)
+- `apps/api/prisma/seed.ts` - Main seed orchestration for dev/staging
 
 ### How It Works
 
@@ -92,8 +103,10 @@ The seeding logic is implemented in:
   - `req-LT Brand Pattern.csv`
   - `req-Size.csv`
 - [ ] Database is initialized (migrations run)
-- [ ] First admin created (via manual migration or operator action)
-- [ ] Run CSV seeding script
+- [ ] Application is running in Docker/Podman container
+- [ ] `APP_ENV=production` is set
+- [ ] Create first admin: `node dist/scripts/seed-prod-admin.js "password"`
+- [ ] Seed CSV data: `node dist/scripts/seed-csv-prod.js`
 - [ ] Verify tire brands appear in admin UI
 - [ ] Verify tire sizes are available in inspection forms
 
@@ -122,12 +135,27 @@ GROUP BY name HAVING COUNT(*) > 1;
 ```
 
 ### Seed script fails on production
-**Error**: "Refusing to seed a production database"
+**Error**: "Gagal: script ini HANYA dapat dijalankan pada lingkungan produksi"
 
-**Solution**: This is intentional for safety. Create admin accounts through:
-1. Reviewed database migrations
-2. Operator manual actions via API
-3. Custom seed scripts that don't modify accounts
+**Solution**: Ensure you're running inside Docker/Podman container AND `APP_ENV=production` is set:
+```bash
+# Check environment
+echo $APP_ENV
+echo $IS_CONTAINER
+
+# Run inside container
+docker exec <container-name> node dist/scripts/seed-csv-prod.js
+```
+
+### Script not found
+**Error**: `Cannot find module '/app/dist/scripts/seed-csv-prod.js'`
+
+**Solution**: Build the API first:
+```bash
+pnpm build --filter=api
+# Then run the script
+node apps/api/dist/scripts/seed-csv-prod.js
+```
 
 ## Data Integrity
 
