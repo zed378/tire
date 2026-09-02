@@ -35,7 +35,7 @@ describe('buildOtpauthUri', () => {
 });
 
 describe('verifyTotp', () => {
-  it('returns true for a valid code generated from the same secret', () => {
+  it('returns true for a valid code generated from the same secret', async () => {
     const secret = generateTotpSecret();
     const { authenticator } = await import('otplib');
     const code = authenticator.generate(secret);

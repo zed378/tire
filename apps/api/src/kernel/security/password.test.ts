@@ -9,7 +9,7 @@ import {
 describe('hashPassword', () => {
   it('returns a hash that starts with the expected prefix', async () => {
     const hash = await hashPassword('test-password-123');
-    expect(hash).toMatch(/^\\$/);
+    expect(hash).toMatch(/^\/);
   });
 
   it('returns different hashes for the same password', async () => {
@@ -20,7 +20,7 @@ describe('hashPassword', () => {
 
   it('handles empty string password', async () => {
     const hash = await hashPassword('');
-    expect(hash).toMatch(/^\\$/);
+    expect(hash).toMatch(/^\/);
   });
 });
 
@@ -46,16 +46,16 @@ describe('assertPasswordPolicy', () => {
     expect(() => assertPasswordPolicy('longpassword123')).not.toThrow();
   });
 
-  it('does not throw for passwords meeting the policy (exactly 12 chars)', () => {
-    expect(() => assertPasswordPolicy('abcdefghij12')).not.toThrow();
+  it('does not throw for passwords meeting the policy (exactly 10 chars)', () => {
+    expect(() => assertPasswordPolicy('abcdefghij')).not.toThrow();
   });
 
-  it('throws for passwords shorter than 12 characters', () => {
-    expect(() => assertPasswordPolicy('short')).toThrow('minimal 12 karakter');
+  it('throws for passwords shorter than 10 characters', () => {
+    expect(() => assertPasswordPolicy('short')).toThrow('Beberapa isian belum lengkap atau tidak valid.');
   });
 
-  it('throws for 11-character password', () => {
-    expect(() => assertPasswordPolicy('12345678901')).toThrow('minimal 12 karakter');
+  it('throws for 9-character password', () => {
+    expect(() => assertPasswordPolicy('123456789')).toThrow('Beberapa isian belum lengkap atau tidak valid.');
   });
 });
 

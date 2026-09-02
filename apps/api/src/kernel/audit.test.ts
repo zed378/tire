@@ -1,13 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import {
-  changedFields,
-} from './audit.ts';
+import { changedFields } from './audit.ts';
 
 describe('changedFields', () => {
-  it('returns unchanged keys as empty objects', () => {
+  it('returns only changed fields', () => {
     const result = changedFields({ a: 1, b: 2 }, { a: 1, b: 3 });
-    expect(result.before).toEqual({ a: 1 });
-    expect(result.after).toEqual({ a: 1 });
+    expect(result.before).toEqual({ b: 2 });
+    expect(result.after).toEqual({ b: 3 });
   });
 
   it('returns the changed field in before and after', () => {

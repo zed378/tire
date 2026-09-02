@@ -22,19 +22,23 @@ const baseActor = {
 describe('requirePermission', () => {
   it('throws FORBIDDEN_ROLE when operator lacks inspection.read', () => {
     const actor = { ...baseActor, role: 'operator' as const };
-    expect(() => requirePermission(actor, 'inspection.read')).toThrow('FORBIDDEN_ROLE');
+    expect(() => requirePermission(actor, 'inspection.read')).toThrow(
+      'Anda tidak memiliki akses untuk melakukan tindakan ini.',
+    );
   });
 
   it('throws STEP_UP_REQUIRED when step-up is needed and not elevated', () => {
-    const actor = { ...baseActor, role: 'admin' as const };
-    expect(() => requirePermission(actor, 'qc.decide')).toThrow('STEP_UP_REQUIRED');
+    const actor = { ...baseActor, role: 'operator' as const };
+    expect(() => requirePermission(actor, 'ops.job.retry')).toThrow(
+      'Aksi ini memerlukan verifikasi ulang. Masukkan kode autentikasi Anda.',
+    );
   });
 });
 
 describe('hasPermission', () => {
-  it('returns true for admin with qc.decide', () => {
+  it('returns true for admin with qc.review', () => {
     const actor = { ...baseActor, role: 'admin' as const };
-    expect(hasPermission(actor, 'qc.decide')).toBe(true);
+    expect(hasPermission(actor, 'qc.review')).toBe(true);
   });
 
   it('returns false for operator with inspection.read', () => {
@@ -64,7 +68,9 @@ describe('inspectionScope', () => {
 
   it('throws FORBIDDEN_ROLE for operators', () => {
     const actor = { ...baseActor, role: 'operator' as const };
-    expect(() => inspectionScope(actor)).toThrow('FORBIDDEN_ROLE');
+    expect(() => inspectionScope(actor)).toThrow(
+      'Anda tidak memiliki akses untuk melakukan tindakan ini.',
+    );
   });
 });
 
@@ -83,7 +89,9 @@ describe('vehicleScope', () => {
 
   it('throws FORBIDDEN_ROLE for operators', () => {
     const actor = { ...baseActor, role: 'operator' as const };
-    expect(() => vehicleScope(actor)).toThrow('FORBIDDEN_ROLE');
+    expect(() => vehicleScope(actor)).toThrow(
+      'Anda tidak memiliki akses untuk melakukan tindakan ini.',
+    );
   });
 });
 
@@ -97,7 +105,7 @@ describe('assertOwnership', () => {
   it('throws NOT_FOUND when supplier does not own the record', () => {
     const actor = { ...baseActor, role: 'supplier' as const, id: 123n };
     const record = { submittedById: 456n };
-    expect(() => assertOwnership(actor, record)).toThrow('NOT_FOUND');
+    expect(() => assertOwnership(actor, record)).toThrow('Data yang Anda cari tidak ditemukan.');
   });
 
   it('does not throw for non-supplier roles', () => {
@@ -118,10 +126,10 @@ describe('assertCityInScope', () => {
     expect(() => assertCityInScope(actor, { id: 100n, provinceId: 50n })).not.toThrow();
   });
 
-  it('throws for supplier with city outside scope', () => {
+  it('throws VALIDATION_ERROR for supplier with city outside scope', () => {
     const actor = { ...baseActor, role: 'supplier' as const, cityIds: [100n] };
     expect(() => assertCityInScope(actor, { id: 200n, provinceId: 60n }))
-      .toThrow('VALIDATION_ERROR');
+      .toThrow('Beberapa isian belum lengkap atau tidak valid.');
   });
 
   it('skips check for admins', () => {

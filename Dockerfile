@@ -10,7 +10,7 @@
 # production deployment. CSV data is optional but included if available.
 
 FROM node:24-alpine AS base
-RUN corepack enable && apk add --no-cache openssl
+RUN corepack enable && apk add --no-cache openssl && npm install -g tsx
 WORKDIR /app
 
 FROM base AS deps
@@ -30,7 +30,7 @@ RUN pnpm --filter @c26/api prisma generate \
 # ── API + worker ────────────────────────────────────────────────────────────
 FROM base AS api
 ENV NODE_ENV=production
-RUN corepack enable && apk add --no-cache openssl
+RUN corepack enable && apk add --no-cache openssl && npm install -g tsx
 COPY pnpm-workspace.yaml package.json pnpm-lock.yaml* .npmrc ./
 COPY packages/contracts/package.json packages/contracts/
 COPY apps/api/package.json apps/api/
@@ -47,13 +47,8 @@ COPY --from=build /app/apps/api/src/generated/prisma ./dist/generated/prisma
 COPY --from=build /app/apps/api/prisma ./apps/api/prisma
 COPY --from=build /app/apps/api/prisma.config.ts ./apps/api/prisma.config.ts
 
-# Also copy seed files to dist/ for node direct execution
-COPY --from=build /app/apps/api/prisma/seed.ts ./dist/prisma/seed.ts
-COPY --from=build /app/apps/api/prisma/seed-prod.ts ./dist/prisma/seed-prod.ts
-COPY --from=build /app/apps/api/prisma/queue-setup.ts ./dist/prisma/queue-setup.ts
-
 # Copy seed subdirectory (master-data, csv-data, demo-data, sample-photos)
-COPY --from=build /app/apps/api/prisma/seed ./dist/prisma/seed
+COPY --from=build /app/apps/api/prisma/seed ./apps/api/prisma/seed
 
 # Copy package.json files needed for seed scripts and pnpm db:migrate
 COPY --from=build /app/apps/api/package.json ./apps/api/package.json
@@ -68,7 +63,7 @@ COPY --from=build /app/apps/web/dist ./web
 # Place CSV files in requirements/ directory for tire brands and patterns
 # Files: req-TB Brand Pattern.csv, req-LT Brand Pattern.csv, req-Size.csv, req-Vehicle Brand.csv
 # These are optional - seeding will work without them
-RUN mkdir -p /app/requirements
+COPY requirements/ ./requirements/
 
 # ── Storage directory ────────────────────────────────────────────────────────
 # Photos land here when STORAGE_DRIVER=local; the compose file mounts a volume
@@ -82,5 +77,7 @@ EXPOSE 3000
 # For seeding, use docker exec to run scripts:
 #   docker exec <container> pnpm db:migrate
 #   docker exec <container> node dist/scripts/seed-prod-admin.js "password"
+#   docker exec <container> tsx apps/api/prisma/seed.ts
+#   docker exec <container> tsx apps/api/prisma/seed-prod.ts
 #   docker exec <container> node dist/scripts/seed-csv-prod.js
 CMD ["node", "dist/server.js"]

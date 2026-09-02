@@ -142,19 +142,46 @@ describe('unavailableWhatsappSender', () => {
 
 describe('buildSenders', () => {
   it('returns a Map with all channels', () => {
-    const senders = buildSenders();
-    expect(senders.has('in_app')).toBe(true);
-    expect(senders.has('email')).toBe(true);
-    expect(senders.has('whatsapp')).toBe(true);
+    process.env.DATABASE_URL = 'postgresql://localhost:5432/tire';
+    process.env.STORAGE_SIGNING_KEY = 'test-signing-key';
+    process.env.MFA_ENCRYPTION_KEY = 'test-mfa-key-32chars!!!!!';
+    try {
+      const senders = buildSenders();
+      expect(senders.has('in_app')).toBe(true);
+      expect(senders.has('email')).toBe(true);
+      expect(senders.has('whatsapp')).toBe(true);
+    } finally {
+      delete process.env.DATABASE_URL;
+      delete process.env.STORAGE_SIGNING_KEY;
+      delete process.env.MFA_ENCRYPTION_KEY;
+    }
   });
 
   it('returns in_appSender for in_app channel', () => {
-    const senders = buildSenders();
-    expect(senders.get('in_app')).toBe(inAppSender);
+    process.env.DATABASE_URL = 'postgresql://localhost:5432/tire';
+    process.env.STORAGE_SIGNING_KEY = 'test-signing-key';
+    process.env.MFA_ENCRYPTION_KEY = 'test-mfa-key-32chars!!!!!';
+    try {
+      const senders = buildSenders();
+      expect(senders.get('in_app')).toBe(inAppSender);
+    } finally {
+      delete process.env.DATABASE_URL;
+      delete process.env.STORAGE_SIGNING_KEY;
+      delete process.env.MFA_ENCRYPTION_KEY;
+    }
   });
 
   it('returns whatsapp sender for whatsapp channel', () => {
-    const senders = buildSenders();
-    expect(senders.get('whatsapp')).toBe(unavailableWhatsappSender);
+    process.env.DATABASE_URL = 'postgresql://localhost:5432/tire';
+    process.env.STORAGE_SIGNING_KEY = 'test-signing-key';
+    process.env.MFA_ENCRYPTION_KEY = 'test-mfa-key-32chars!!!!!';
+    try {
+      const senders = buildSenders();
+      expect(senders.get('whatsapp')).toBe(unavailableWhatsappSender);
+    } finally {
+      delete process.env.DATABASE_URL;
+      delete process.env.STORAGE_SIGNING_KEY;
+      delete process.env.MFA_ENCRYPTION_KEY;
+    }
   });
 });
