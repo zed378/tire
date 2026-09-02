@@ -16,6 +16,7 @@ import { enqueuePhoto, subscribeToQueue } from "../../lib/photo/upload-queue.ts"
 import type { QueueItem } from "../../lib/photo/queue-store.ts";
 import { Banner, ErrorBanner, StatusBadge, useToast } from "../../components/ui/feedback.tsx";
 import { Button, Card, PageHeader, Spinner } from "../../components/ui/primitives.tsx";
+import { ChangeHistory } from "./change-history.tsx";
 
 /**
  * One inspection: its data, its photo slots, and its QC history.
@@ -240,6 +241,8 @@ export function InspectionDetailPage(): ReactNode {
           </ol>
         )}
       </Card>
+
+      <ChangeHistory inspectionId={inspection.id} />
     </div>
   );
 }
