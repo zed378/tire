@@ -94,7 +94,7 @@ export function AppShell({ children }: { children: ReactNode }): ReactNode {
         </header>
 
         <main className="flex-1 overflow-y-auto">
-          <div className="mx-auto max-w-6xl space-y-4 p-4">
+          <div className="mx-auto max-w-7xl space-y-4 p-3 sm:p-6">
             {children}
           </div>
         </main>
@@ -102,14 +102,14 @@ export function AppShell({ children }: { children: ReactNode }): ReactNode {
 
       {sidebarOpen ? (
         <div
-          className="fixed inset-0 z-40 bg-black/50 md:hidden"
+          className="fixed inset-0 z-40 bg-slate-950/60 backdrop-blur-sm transition-opacity md:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       ) : null}
 
       {sidebarOpen ? (
-        <div className="fixed inset-0 z-50 md:hidden">
-          <Sidebar onNavigate={() => setSidebarOpen(false)} />
+        <div className="fixed inset-y-0 left-0 z-50 w-72 max-w-[85vw] shadow-2xl transition-transform md:hidden">
+          <Sidebar onNavigate={() => setSidebarOpen(false)} isMobile />
         </div>
       ) : null}
     </div>

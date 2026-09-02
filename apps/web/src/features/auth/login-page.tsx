@@ -87,7 +87,7 @@ export function LoginPage(): ReactNode {
       <div className="pointer-events-none absolute -bottom-40 -right-40 h-96 w-96 rounded-full bg-cyan-400/10 dark:bg-cyan-500/20 blur-[120px] animate-glow-pulse" />
 
       {/* Top Navigation Header */}
-      <header className="relative z-10 flex items-center justify-between border-b border-slate-200/80 bg-white/70 dark:border-slate-800/80 dark:bg-slate-950/60 px-6 py-4 backdrop-blur-md transition-colors duration-200">
+      <header className="relative z-10 flex items-center justify-between border-b border-slate-200/80 bg-white/70 dark:border-slate-800/80 dark:bg-slate-950/60 px-4 sm:px-6 py-3.5 sm:py-4 backdrop-blur-md transition-colors duration-200">
         <div className="flex items-center gap-3">
           <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-tr from-brand-600 via-cyan-500 to-indigo-500 p-0.5 shadow-lg shadow-brand-500/20">
             <div className="flex h-full w-full items-center justify-center rounded-[10px] bg-white dark:bg-slate-950">
@@ -103,10 +103,10 @@ export function LoginPage(): ReactNode {
           </span>
         </div>
 
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-xs font-medium text-emerald-600 dark:text-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.15)]">
+        <div className="flex items-center gap-2 sm:gap-3">
+          <div className="flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2.5 sm:px-3 py-1 text-[11px] sm:text-xs font-medium text-emerald-600 dark:text-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.15)]">
             <span className="h-2 w-2 rounded-full bg-emerald-500 dark:bg-emerald-400 animate-pulse" />
-            <span>SYSTEM ONLINE</span>
+            <span className="hidden xs:inline sm:inline">SYSTEM ONLINE</span>
           </div>
 
           <ThemeToggle />
@@ -114,10 +114,10 @@ export function LoginPage(): ReactNode {
       </header>
 
       {/* Main Container */}
-      <main className="relative z-10 mx-auto flex w-full max-w-6xl flex-1 flex-col items-center justify-center px-4 py-8 lg:flex-row lg:gap-16">
+      <main className="relative z-10 mx-auto flex w-full max-w-6xl flex-1 flex-col items-center justify-center px-4 sm:px-6 py-6 sm:py-12 lg:flex-row lg:gap-16">
         
         {/* Left Hero & Telemetry Info */}
-        <div className="mb-10 w-full max-w-lg lg:mb-0 lg:w-1/2">
+        <div className="mb-8 w-full max-w-lg lg:mb-0 lg:w-1/2">
           <div className="inline-flex items-center gap-2 rounded-full border border-brand-500/20 bg-brand-500/10 dark:border-cyan-500/30 dark:bg-cyan-500/10 px-3.5 py-1 text-xs font-semibold tracking-wider text-brand-700 dark:text-cyan-300 uppercase backdrop-blur-md">
             <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
@@ -125,19 +125,19 @@ export function LoginPage(): ReactNode {
             Next-Gen Fleet Telemetry
           </div>
 
-          <h1 className="mt-4 text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white sm:text-4xl lg:text-5xl">
-            Sistem Pengolahan <br />
+          <h1 className="mt-4 text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white sm:text-4xl lg:text-5xl">
+            Sistem Pengolahan <br className="hidden sm:inline" />
             <span className="bg-gradient-to-r from-brand-600 via-cyan-600 to-indigo-600 dark:from-cyan-400 dark:via-blue-400 dark:to-indigo-400 bg-clip-text text-transparent">
               Data Ban Bus &amp; Truk
             </span>
           </h1>
 
-          <p className="mt-4 text-sm text-slate-600 dark:text-slate-400 leading-relaxed sm:text-base">
+          <p className="mt-3 sm:mt-4 text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed sm:text-base">
             Platform inspeksi armada terintegrasi dengan pemantauan tekanan, kedalaman alur, dan analisis kondisi ban secara presisi tinggi.
           </p>
 
           {/* Feature Badges */}
-          <div className="mt-8 grid grid-cols-1 gap-3 sm:grid-cols-3">
+          <div className="mt-6 sm:mt-8 grid grid-cols-1 gap-2.5 sm:gap-3 sm:grid-cols-3">
             <div className="rounded-xl border border-slate-200/80 bg-white/80 dark:border-slate-800/80 dark:bg-slate-900/60 p-3.5 backdrop-blur-md shadow-sm transition-all hover:border-brand-500/40 dark:hover:border-cyan-500/40">
               <div className="mb-1 text-brand-600 dark:text-cyan-400">
                 <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -173,7 +173,7 @@ export function LoginPage(): ReactNode {
 
         {/* Right Glassmorphism Form Card */}
         <div className="w-full max-w-md">
-          <div className="relative rounded-2xl border border-slate-200/90 bg-white/90 dark:border-slate-800/90 dark:bg-slate-900/80 p-7 shadow-xl dark:shadow-[0_0_60px_rgba(37,99,235,0.12)] backdrop-blur-2xl transition-all duration-300">
+          <div className="relative rounded-2xl border border-slate-200/90 bg-white/90 dark:border-slate-800/90 dark:bg-slate-900/80 p-5 sm:p-7 shadow-xl dark:shadow-[0_0_60px_rgba(37,99,235,0.12)] backdrop-blur-2xl transition-all duration-300">
             
             {/* Top Accent Glow */}
             <div className="absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-brand-500 dark:via-cyan-500 to-transparent opacity-80" />
