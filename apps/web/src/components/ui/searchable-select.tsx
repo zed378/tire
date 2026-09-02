@@ -5,6 +5,8 @@ import {
   useRef,
   useState,
   type KeyboardEvent,
+  type ReactElement,
+  type Ref,
 } from "react";
 import { cn } from "../../lib/cn.ts";
 import { useFieldWiring, controlTone } from "./primitives.tsx";
@@ -42,8 +44,15 @@ export interface SearchableSelectProps<T extends string | number = string | numb
  * - Integration with Field error / invalid state.
  * - Clean dark & light mode styling matching the design system.
  */
-export const SearchableSelect = forwardRef<HTMLButtonElement, SearchableSelectProps<any>>(
-  function SearchableSelect(
+/**
+ * `forwardRef` erases generics: its own signature is not generic, so the type
+ * parameter has nowhere to live and the usual workaround is to reach for
+ * `any` — which then leaks out to every call site. `SearchableSelectProps<T>`
+ * is declared once on the inner function and re-attached below by asserting
+ * the wrapper's type, so `T` survives and callers keep theirs.
+ */
+const SearchableSelectInner = forwardRef(
+  function SearchableSelect<T extends string | number>(
     {
       id,
       name,
@@ -58,8 +67,8 @@ export const SearchableSelect = forwardRef<HTMLButtonElement, SearchableSelectPr
       clearable = false,
       className,
       "aria-describedby": ariaDescribedBy,
-    },
-    ref,
+    }: SearchableSelectProps<T>,
+    ref: Ref<HTMLButtonElement>,
   ) {
     const generatedId = useId();
     const triggerId = id || generatedId;
@@ -122,7 +131,7 @@ export const SearchableSelect = forwardRef<HTMLButtonElement, SearchableSelectPr
       }
     }, [highlightedIndex, isOpen]);
 
-    const handleSelect = (option: SearchableOption<any>) => {
+    const handleSelect = (option: SearchableOption<T>): void => {
       if (option.disabled) return;
       onChange?.(option.value);
       setIsOpen(false);
@@ -373,3 +382,7 @@ export const SearchableSelect = forwardRef<HTMLButtonElement, SearchableSelectPr
     );
   },
 );
+
+export const SearchableSelect = SearchableSelectInner as <T extends string | number>(
+  props: SearchableSelectProps<T> & { ref?: Ref<HTMLButtonElement> },
+) => ReactElement;
