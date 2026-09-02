@@ -143,8 +143,8 @@ export function ReportsPage(): ReactNode {
             series={[
               // TB versus LT is the axis the whole management dashboard sits on
               // (K-04), so the two lines are the chart.
-              { key: "TB", label: "TB (Truck & Bus)", color: "#2563eb" },
-              { key: "LT", label: "LT (Light Truck)", color: "#f59e0b" },
+              { key: "TB", label: "TB (Truck & Bus)", tone: "primary" },
+              { key: "LT", label: "LT (Light Truck)", tone: "secondary" },
             ]}
           />
         )}

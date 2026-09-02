@@ -19,11 +19,22 @@ import { useId, useMemo, useState, type ReactNode } from "react";
  * so nothing here needs a style attribute at all.
  */
 
+const SERIES_STROKE = {
+  primary: "stroke-accent",
+  secondary: "stroke-warning",
+} as const;
+
+const SERIES_FILL = {
+  primary: "fill-accent",
+  secondary: "fill-warning",
+} as const;
+
 export interface LineChartSeries {
   key: string;
   label: string;
   /** A concrete colour rather than a token: it becomes an SVG attribute. */
-  color: string;
+  /** Which of the two chart tones to draw this series in. */
+  tone: "primary" | "secondary";
 }
 
 export interface LineChartProps {
@@ -106,7 +117,7 @@ export function LineChart({
               x2={VIEWBOX_WIDTH - PADDING.right}
               y1={geometry.yFor(tick)}
               y2={geometry.yFor(tick)}
-              stroke="#e2e8f0"
+              className="stroke-line"
               strokeWidth={1}
             />
             <text
@@ -114,7 +125,7 @@ export function LineChart({
               y={geometry.yFor(tick) + 4}
               textAnchor="end"
               fontSize={11}
-              fill="#64748b"
+              className="fill-subtle"
             >
               {tick}
             </text>
@@ -129,7 +140,7 @@ export function LineChart({
               y={height - 10}
               textAnchor="middle"
               fontSize={11}
-              fill="#64748b"
+              className="fill-subtle"
             >
               {String(row[categoryKey] ?? "")}
             </text>
@@ -146,14 +157,20 @@ export function LineChart({
 
           return (
             <g key={line.key}>
-              <path d={path} fill="none" stroke={line.color} strokeWidth={2} strokeLinejoin="round" />
+              <path
+                d={path}
+                fill="none"
+                strokeWidth={2}
+                strokeLinejoin="round"
+                className={SERIES_STROKE[line.tone]}
+              />
               {data.map((row, index) => (
                 <circle
                   key={`${line.key}-${String(index)}`}
                   cx={geometry.xFor(index)}
                   cy={geometry.yFor(Number(row[line.key] ?? 0))}
                   r={hoverIndex === index ? 5 : 3}
-                  fill={line.color}
+                  className={SERIES_FILL[line.tone]}
                 />
               ))}
             </g>
@@ -185,7 +202,7 @@ export function LineChart({
         {series.map((line) => (
           <span key={line.key} className="flex items-center gap-1.5">
             <svg width="12" height="12" aria-hidden="true">
-              <circle cx="6" cy="6" r="5" fill={line.color} />
+              <circle cx="6" cy="6" r="5" className={SERIES_FILL[line.tone]} />
             </svg>
             {line.label}
           </span>
