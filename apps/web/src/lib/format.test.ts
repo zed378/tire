@@ -81,7 +81,6 @@ describe('formatRelative', () => {
   });
 
   it('returns formatted date for 30+ days ago', () => {
-    const now = new Date('2026-02-15T00:00:00Z');
     const past = new Date('2025-12-01T00:00:00Z'); // ~45 days
     const result = formatRelative(past);
     expect(result).toBe('01/12/2025');

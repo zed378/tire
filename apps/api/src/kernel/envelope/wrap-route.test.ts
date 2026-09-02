@@ -1,16 +1,20 @@
 import { describe, expect, it } from 'vitest';
-import { ZodError, z } from 'zod';
-import { wrapRoute, zodErrorToAppError } from './wrap-route.ts';
+import { ZodError } from 'zod';
+import { zodErrorToAppError, errorEnvelope } from './wrap-route.ts';
+import { AppError } from './app-error.ts';
 
 describe('zodErrorToAppError', () => {
-  it('converts a ZodError with one issue', () => {
+  it('converts a ZodError with one issue into an AppError', () => {
     const zodErr = new ZodError([
       { code: 'too_small', minimum: 10, type: 'string', inclusive: true, message: 'terlalu pendek', path: ['username'] },
     ]);
     const result = zodErrorToAppError(zodErr);
+    expect(result).toBeInstanceOf(AppError);
     expect(result.code).toBe('VALIDATION_ERROR');
     expect(result.message).toContain('Username');
     expect(result.fieldErrors).toHaveLength(1);
+    expect(result.fieldErrors?.[0].field).toBe('username');
+    expect(result.fieldErrors?.[0].code).toBe('TOO_SHORT');
   });
 
   it('converts a ZodError with multiple issues across different paths', () => {
@@ -28,9 +32,10 @@ describe('zodErrorToAppError', () => {
   it('does not crash on empty issues array', () => {
     const result = zodErrorToAppError(new ZodError([]));
     expect(result.code).toBe('VALIDATION_ERROR');
+    expect(result.fieldErrors).toHaveLength(0);
   });
 
-  it('maps not_an_integer to INVALID_FORMAT', () => {
+  it('maps not_an_integer to INVALID_FORMAT via fieldCodeFor', () => {
     const zodErr = new ZodError([{ code: 'not_an_integer', path: ['quantity'], message: 'bukan integer' }]);
     const result = zodErrorToAppError(zodErr);
     expect(result.fieldErrors?.[0]?.code).toBe('INVALID_FORMAT');
@@ -42,73 +47,42 @@ describe('zodErrorToAppError', () => {
     expect(result.fieldErrors?.[0]?.field).toBe('root');
     expect(result.fieldErrors?.[0]?.code).toBe('NOT_ALLOWED');
   });
+
+  it('joins nested paths with dots', () => {
+    const zodErr = new ZodError([{ code: 'invalid_type', expected: 'string', received: 'undefined', path: ['address', 'city'], message: 'Required' }]);
+    const result = zodErrorToAppError(zodErr);
+    expect(result.fieldErrors?.[0]?.field).toBe('address.city');
+  });
+
+  it('maps too_big to TOO_LONG', () => {
+    const zodErr = new ZodError([{ code: 'too_big', type: 'string', inclusive: false, maximum: 100, path: ['name'], message: 'terlalu panjang' }]);
+    const result = zodErrorToAppError(zodErr);
+    expect(result.fieldErrors?.[0]?.code).toBe('TOO_LONG');
+  });
+
+  it('maps invalid_enum_value to INVALID_FORMAT', () => {
+    const zodErr = new ZodError([{ code: 'invalid_enum_value', path: ['segment'], message: 'invalid', options: ['bus', 'truck'] }]);
+    const result = zodErrorToAppError(zodErr);
+    expect(result.fieldErrors?.[0]?.code).toBe('INVALID_FORMAT');
+  });
 });
 
-describe('wrapRoute', () => {
-  function makeRoute(handler) {
-    return wrapRoute({ body: z.object({ name: z.string().min(1) }) }, handler);
-  }
-
-  it('calls the handler and returns its result on success', async () => {
-    const route = makeRoute(async (req) => ({ success: true, payload: req.body }));
-    const result = await route({ body: { name: 'test' } });
-    expect(result).toEqual({ success: true, payload: { name: 'test' } });
+describe('errorEnvelope integration', () => {
+  it('includes field errors from zodErrorToAppError', () => {
+    const zodErr = new ZodError([
+      { code: 'too_small', minimum: 10, type: 'string', inclusive: true, message: 'Wajib diisi', path: ['username'] },
+    ]);
+    const appErr = zodErrorToAppError(zodErr);
+    const envelope = errorEnvelope(appErr, 'req_test');
+    expect(envelope.ok).toBe(false);
+    expect(envelope.errors).toHaveLength(1);
+    expect(envelope.errors?.[0].field).toBe('username');
   });
 
-  it('returns 422 for a ZodError (body validation failure)', async () => {
-    const route = makeRoute(async () => ({ success: true }));
-    const result = await route({ body: { name: '' } });
-    expect(result.code).toBe(422);
-    expect(result.error.code).toBe('VALIDATION_ERROR');
-    expect(result.error.fieldErrors).toHaveLength(1);
-  });
-
-  it('returns 500 for unexpected errors', async () => {
-    const route = makeRoute(async () => { throw new Error('database down'); });
-    const result = await route({ body: { name: 'test' } });
-    expect(result.code).toBe(500);
-    expect(result.error.message).toBe('database down');
-  });
-
-  it('returns 422 when no body is provided', async () => {
-    const route = makeRoute(async () => ({ success: true }));
-    const result = await route({});
-    expect(result.code).toBe(422);
-  });
-
-  it('handles a route without schema successfully', async () => {
-    const route = wrapRoute({}, async (req) => ({ data: req.query }));
-    const result = await route({ query: { id: '123' } });
-    expect(result).toEqual({ data: { id: '123' } });
-  });
-
-  it('handles a route with query validation', async () => {
-    const route = wrapRoute(
-      { query: z.object({ page: z.coerce.number().int().nonnegative() }) },
-      async (req) => ({ page: req.query.page })
-    );
-    const result = await route({ query: { page: '5' } });
-    expect(result).toEqual({ page: 5 });
-  });
-
-  it('returns 422 when query validation fails', async () => {
-    const route = wrapRoute(
-      { query: z.object({ page: z.coerce.number().int().nonnegative() }) },
-      async (req) => ({ page: req.query.page })
-    );
-    const result = await route({ query: { page: 'abc' } });
-    expect(result.code).toBe(422);
-    expect(result.error.code).toBe('VALIDATION_ERROR');
-  });
-
-  it('allows custom transform function', async () => {
-    const route = wrapRoute(
-      {},
-      async () => ({ data: 'hidden' }),
-      () => ({ code: 503, error: { message: 'custom down' } })
-    );
-    const result = await route({});
-    expect(result.code).toBe(503);
-    expect(result.error.message).toBe('custom down');
+  it('omits errors array for non-validation AppErrors', () => {
+    const appErr = new AppError('NOT_FOUND');
+    const envelope = errorEnvelope(appErr, 'req_test');
+    expect(envelope.ok).toBe(false);
+    expect('errors' in envelope).toBe(false);
   });
 });

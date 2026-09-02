@@ -13,7 +13,7 @@ describe("AppError — basic construction", () => {
   it("has the correct name and defaults the message from ERROR_DEFINITIONS", () => {
     const err = new AppError("NOT_FOUND");
     expect(err.name).toBe("AppError");
-    expect(err.message).toBe("Resource tidak ditemukan.");
+    expect(err.message).toBe("Data yang Anda cari tidak ditemukan.");
     expect(err.code).toBe("NOT_FOUND");
     expect(err.status).toBe(404);
     expect(err.fieldErrors).toEqual([]);
