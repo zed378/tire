@@ -9,7 +9,7 @@ import {
 describe('hashPassword', () => {
   it('returns a hash that starts with the expected prefix', async () => {
     const hash = await hashPassword('test-password-123');
-    expect(hash).toMatch(/^\/);
+    expect(hash).toMatch(/\$argon2id/);
   });
 
   it('returns different hashes for the same password', async () => {
@@ -20,7 +20,7 @@ describe('hashPassword', () => {
 
   it('handles empty string password', async () => {
     const hash = await hashPassword('');
-    expect(hash).toMatch(/^\/);
+    expect(hash).toMatch(/\$argon2id/);
   });
 });
 
@@ -78,6 +78,6 @@ describe('safeEqual', () => {
 
   it('handles different byte patterns', () => {
     expect(safeEqual('AA', 'AB')).toBe(false);
-    expect(safeEqual('\x00', '\x00')).toBe(true);
+    expect(safeEqual(String.fromCharCode(0), String.fromCharCode(0))).toBe(true);
   });
 });

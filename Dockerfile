@@ -40,6 +40,7 @@ COPY --from=build /app/packages/contracts/dist ./node_modules/@c26/contracts
 COPY --from=build /app/packages/contracts/dist ./packages/contracts/dist
 COPY --from=build /app/apps/api/dist ./dist
 COPY --from=build /app/apps/api/src/generated/prisma ./dist/generated/prisma
+COPY --from=build /app/apps/api/src ./apps/api/src
 
 # ── Prisma files for seeding ─────────────────────────────────────────────────
 # Include schema, migrations, and seed scripts for production database setup
@@ -77,7 +78,6 @@ EXPOSE 3000
 # For seeding, use docker exec to run scripts:
 #   docker exec <container> pnpm db:migrate
 #   docker exec <container> node dist/scripts/seed-prod-admin.js "password"
-#   docker exec <container> tsx apps/api/prisma/seed.ts
-#   docker exec <container> tsx apps/api/prisma/seed-prod.ts
 #   docker exec <container> node dist/scripts/seed-csv-prod.js
+#   docker exec <container> tsx apps/api/prisma/seed.ts
 CMD ["node", "dist/server.js"]
