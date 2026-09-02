@@ -259,22 +259,6 @@ export function Sidebar({
           </ul>
         </nav>
 
-        {/* Sidebar Footer Info */}
-        <div className="flex-shrink-0 border-t border-line p-3">
-          <div className="rounded-lg bg-surface-sunken/80 border border-line p-2.5">
-            <div className="flex items-center gap-2">
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
-              </span>
-              <span className="text-[11px] font-semibold text-body">SYSTEM ONLINE</span>
-              <span className="ml-auto text-[10px] font-mono text-muted">TLS 1.3</span>
-            </div>
-            <p className="mt-1 text-[10px] text-muted truncate">
-              Fleet Telemetry &amp; QC Gate
-            </p>
-          </div>
-        </div>
       </div>
     </aside>
   );
