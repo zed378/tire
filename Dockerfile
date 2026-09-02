@@ -43,12 +43,23 @@ COPY --from=build /app/apps/api/src/generated/prisma ./dist/generated/prisma
 
 # ── Prisma files for seeding ─────────────────────────────────────────────────
 # Include schema, migrations, and seed scripts for production database setup
-COPY --from=build /app/apps/api/prisma ./prisma
-COPY --from=build /app/apps/api/prisma.config.ts ./prisma.config.ts
+# Must be at apps/api/prisma so pnpm db:migrate can find it
+COPY --from=build /app/apps/api/prisma ./apps/api/prisma
+COPY --from=build /app/apps/api/prisma.config.ts ./apps/api/prisma.config.ts
 
-# Copy package.json files needed for seed scripts
+# Also copy seed files to dist/ for node direct execution
+COPY --from=build /app/apps/api/prisma/seed.ts ./dist/prisma/seed.ts
+COPY --from=build /app/apps/api/prisma/seed-prod.ts ./dist/prisma/seed-prod.ts
+COPY --from=build /app/apps/api/prisma/queue-setup.ts ./dist/prisma/queue-setup.ts
+
+# Copy seed subdirectory (master-data, csv-data, demo-data, sample-photos)
+COPY --from=build /app/apps/api/prisma/seed ./dist/prisma/seed
+
+# Copy package.json files needed for seed scripts and pnpm db:migrate
 COPY --from=build /app/apps/api/package.json ./apps/api/package.json
 COPY --from=build /app/packages/contracts/package.json ./packages/contracts/package.json
+COPY --from=build /app/package.json ./package.json
+COPY --from=build /app/pnpm-workspace.yaml ./pnpm-workspace.yaml
 
 # The client, served by this same process (see kernel/http/static-spa.ts).
 COPY --from=build /app/apps/web/dist ./web
@@ -57,7 +68,8 @@ COPY --from=build /app/apps/web/dist ./web
 # Place CSV files in requirements/ directory for tire brands and patterns
 # Files: req-TB Brand Pattern.csv, req-LT Brand Pattern.csv, req-Size.csv, req-Vehicle Brand.csv
 # These are optional - seeding will work without them
-RUN mkdir -p /app/requirements
+COPY --from=build /app/requirements ./requirements 2>/dev/null || true
+RUN mkdir -p /app/requirements 2>/dev/null || true
 
 # ── Storage directory ────────────────────────────────────────────────────────
 # Photos land here when STORAGE_DRIVER=local; the compose file mounts a volume
