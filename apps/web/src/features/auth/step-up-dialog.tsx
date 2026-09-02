@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { api, isApiError, setStepUpHandler } from "../../lib/api-client.ts";
-import { CancelButton, Dialog, DialogFooter } from "../../components/ui/feedback.tsx";
+import { CancelButton, DialogFooter } from "../../components/ui/feedback.tsx";
 import { Button, Field, Input } from "../../components/ui/primitives.tsx";
 
 /**
@@ -29,6 +29,13 @@ export function StepUpDialog(): ReactNode {
   // Resolves the promise the API client is awaiting while the dialog is open.
   const resolver = useRef<((elevated: boolean) => void) | null>(null);
 
+  const finish = useCallback((elevated: boolean) => {
+    setOpen(false);
+    setSubmitting(false);
+    resolver.current?.(elevated);
+    resolver.current = null;
+  }, []);
+
   // Install the handler immediately on mount, before any async code runs.
   // This ensures STEP_UP_REQUIRED errors can be intercepted immediately.
   useEffect(() => {
@@ -49,12 +56,16 @@ export function StepUpDialog(): ReactNode {
     };
   }, []);
 
-  const finish = useCallback((elevated: boolean) => {
-    setOpen(false);
-    setSubmitting(false);
-    resolver.current?.(elevated);
-    resolver.current = null;
-  }, []);
+  // Handle Escape key to close the dialog
+  useEffect(() => {
+    if (!open) return;
+
+    const onKeyDown = (event: KeyboardEvent): void => {
+      if (event.key === "Escape") finish(false);
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [open, finish]);
 
   const submit = useCallback(async () => {
     setSubmitting(true);
@@ -74,50 +85,59 @@ export function StepUpDialog(): ReactNode {
   }, [code, finish]);
 
   return (
-    <Dialog
-      open={open}
-      title="Verifikasi ulang diperlukan"
-      description="Tindakan ini menyentuh akun atau sistem, sehingga memerlukan kode autentikasi terbaru. Verifikasi berlaku 15 menit."
-      onClose={() => finish(false)}
-    >
-      <form
-        noValidate
-        onSubmit={(event) => {
-          event.preventDefault();
-          void submit();
-        }}
+    <div className={open ? "fixed inset-0 z-[9999] flex items-end justify-center bg-black/50 p-4 sm:items-center" : "hidden"}>
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label="Verifikasi ulang diperlukan"
+        className="w-full max-w-lg rounded-lg bg-white shadow-xl"
       >
-        <Field
-          label="Kode autentikasi"
-          htmlFor="step-up-code"
-          error={error}
-          hint="Enam angka dari aplikasi authenticator Anda."
-          required
-        >
-          <Input
-            id="step-up-code"
-            inputMode="numeric"
-            autoComplete="one-time-code"
-            maxLength={6}
-            autoFocus
-            value={code}
-            invalid={error !== undefined}
-            onChange={(event) => {
-              setCode(event.target.value.replace(/\D/g, ""));
-              setError(undefined);
+        <header className="border-b border-slate-200 px-4 py-3">
+          <h2 className="text-base font-semibold text-slate-900">Verifikasi ulang diperlukan</h2>
+          <p className="mt-0.5 text-sm text-slate-500">Tindakan ini menyentuh akun atau sistem, sehingga memerlukan kode autentikasi terbaru. Verifikasi berlaku 15 menit.</p>
+        </header>
+        <div className="p-4">
+          <form
+            noValidate
+            onSubmit={(event) => {
+              event.preventDefault();
+              void submit();
             }}
-          />
-        </Field>
+            className="space-y-3"
+          >
+            <Field
+              label="Kode autentikasi"
+              htmlFor="step-up-code"
+              error={error}
+              hint="Enam angka dari aplikasi authenticator Anda."
+              required
+            >
+              <Input
+                id="step-up-code"
+                inputMode="numeric"
+                autoComplete="one-time-code"
+                maxLength={6}
+                autoFocus
+                value={code}
+                invalid={error !== undefined}
+                onChange={(event) => {
+                  setCode(event.target.value.replace(/\D/g, ""));
+                  setError(undefined);
+                }}
+              />
+            </Field>
 
-        <DialogFooter>
-          {/* Cancelling resolves the promise as "not elevated", so the original
-              request fails with its own error rather than hanging forever. */}
-          <CancelButton onClick={() => finish(false)} />
-          <Button type="submit" loading={submitting} loadingText="Memverifikasi…" disabled={code.length !== 6}>
-            Verifikasi
-          </Button>
-        </DialogFooter>
-      </form>
-    </Dialog>
+            <DialogFooter>
+              {/* Cancelling resolves the promise as "not elevated", so the original
+                  request fails with its own error rather than hanging forever. */}
+              <CancelButton onClick={() => finish(false)} />
+              <Button type="submit" loading={submitting} loadingText="Memverifikasi…" disabled={code.length !== 6}>
+                Verifikasi
+              </Button>
+            </DialogFooter>
+          </form>
+        </div>
+      </div>
+    </div>
   );
 }
