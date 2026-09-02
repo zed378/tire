@@ -53,6 +53,13 @@ export function OpsPage(): ReactNode {
     queryFn: () => api.get<OrphanUpload[]>("/api/ops/orphans"),
   });
 
+  const allOrphans = orphans.data ?? [];
+  const orphanTotalPages = Math.max(1, Math.ceil(allOrphans.length / ORPHANS_PER_PAGE));
+  const pagedOrphans = allOrphans.slice(
+    (orphanPage - 1) * ORPHANS_PER_PAGE,
+    orphanPage * ORPHANS_PER_PAGE,
+  );
+
   const logs = useQuery({
     queryKey: ["ops-logs", searchedRequestId],
     queryFn: () => api.get<LogEntry[]>("/api/ops/logs", { requestId: searchedRequestId }),
@@ -291,16 +298,31 @@ export function OpsPage(): ReactNode {
               Pembersihan ini hanya menyentuh objek yang tidak pernah punya baris foto yang selesai.
               Foto yang sudah tercatat tidak akan terpengaruh.
             </Banner>
-             <ul className="mt-3 divide-y divide-line">
-               {orphans.data.slice(0, 20).map((orphan) => (
-                 <li key={orphan.storageKey} className="py-2 text-sm">
-                   <p className="break-all font-mono text-xs text-body">{orphan.storageKey}</p>
-                   <p className="text-xs text-muted">
+            {/*
+              Every orphan is reachable, not just the first twenty.
+              "Bersihkan Semua" deletes the whole set permanently, so an
+              operator who can only see a slice of it is being asked to confirm
+              a destruction they cannot inspect. The cap that used to be here
+              said nothing about itself either — twenty rows and no hint there
+              were more.
+            */}
+            <ul className="mt-3 divide-y divide-line">
+              {pagedOrphans.map((orphan) => (
+                <li key={orphan.storageKey} className="py-2 text-sm">
+                  <p className="break-all font-mono text-xs text-body">{orphan.storageKey}</p>
+                  <p className="text-xs text-muted">
                     {formatBytes(orphan.byteSize)} · {orphan.ageHours} jam
                   </p>
                 </li>
               ))}
             </ul>
+
+            <Pagination
+              page={orphanPage}
+              totalPages={orphanTotalPages}
+              totalItems={orphans.data.length}
+              onPageChange={setOrphanPage}
+            />
           </>
         )}
       </Card>

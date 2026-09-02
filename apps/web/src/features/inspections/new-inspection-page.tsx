@@ -89,9 +89,24 @@ export function NewInspectionPage(): ReactNode {
     onError: setError,
   });
 
+  const resetSearch = (): void => {
+    setStep("search");
+    setPlateInput("");
+    setMatches([]);
+    setSelectedVehicle(null);
+    setError(null);
+  };
+
   return (
-     <div className="mx-auto max-w-2xl space-y-4">
-       <h1 className="text-lg font-semibold text-body">Pemeriksaan Baru</h1>
+    <div className="mx-auto max-w-2xl space-y-4">
+      <div className="flex items-center justify-between">
+        <h1 className="text-lg font-semibold text-body">Pemeriksaan Baru</h1>
+        {step !== "search" ? (
+          <Button variant="ghost" size="sm" onClick={resetSearch}>
+            ← Cari Ulang
+          </Button>
+        ) : null}
+      </div>
 
       {error !== null ? <ErrorBanner error={error} onDismiss={() => setError(null)} /> : null}
 
@@ -137,19 +152,19 @@ export function NewInspectionPage(): ReactNode {
           title="Kendaraan ditemukan"
           description="Pastikan ini kendaraan yang benar sebelum melanjutkan."
         >
-           <div className="space-y-3">
-             {matches.map((vehicle) => (
-               <div key={vehicle.id} className="rounded-md border border-line p-3">
-                 <p className="font-medium text-body">
-                   {vehicle.plateDisplay} · {vehicle.vehicleBrandName ?? "Merk lain"} ·{" "}
-                   {vehicle.category}-{VEHICLE_SEGMENT_LABELS[vehicle.segment]} ·{" "}
-                   {vehicle.totalTires} Ban
-                 </p>
-                 <p className="mt-0.5 text-sm text-muted">
-                   {vehicle.cityName}, {vehicle.provinceName} · {vehicle.axleCount} poros ·{" "}
-                   {vehicle.subSegment}
-                 </p>
-                 <p className="mt-1 text-sm text-muted">
+          <div className="space-y-3">
+            {matches.map((vehicle) => (
+              <div key={vehicle.id} className="rounded-md border border-line p-3">
+                <p className="font-medium text-body">
+                  {vehicle.plateDisplay} · {vehicle.vehicleBrandName ?? "Merk lain"} ·{" "}
+                  {vehicle.category}-{VEHICLE_SEGMENT_LABELS[vehicle.segment]} ·{" "}
+                  {vehicle.totalTires} Ban
+                </p>
+                <p className="mt-0.5 text-sm text-muted">
+                  {vehicle.cityName}, {vehicle.provinceName} · {vehicle.axleCount} poros ·{" "}
+                  {vehicle.subSegment}
+                </p>
+                <p className="mt-1 text-sm text-muted">
                   {vehicle.lastInspectedAt === null
                     ? "Belum pernah diperiksa."
                     : `Terakhir diperiksa: ${formatDate(vehicle.lastInspectedAt)} (${vehicle.lastInspectionStatus ?? "-"})`}
@@ -171,6 +186,9 @@ export function NewInspectionPage(): ReactNode {
                   <Button variant="secondary" onClick={() => setStep("form")}>
                     Bukan / data berubah
                   </Button>
+                  <Button variant="ghost" onClick={resetSearch}>
+                    Batal
+                  </Button>
                 </div>
               </div>
             ))}
@@ -183,6 +201,7 @@ export function NewInspectionPage(): ReactNode {
           master={master.data}
           initialPlate={normalizePlateDisplay(plateInput)}
           submitting={create.isPending}
+          onCancel={resetSearch}
           onSubmit={(vehicle) => {
             setError(null);
             create.mutate({ newVehicle: vehicle });
@@ -197,6 +216,7 @@ interface NewVehicleFormProps {
   master: MasterDataBundle;
   initialPlate: string;
   submitting: boolean;
+  onCancel?: () => void;
   onSubmit: (vehicle: CreateVehicleInput) => void;
 }
 
@@ -204,6 +224,7 @@ function NewVehicleForm({
   master,
   initialPlate,
   submitting,
+  onCancel,
   onSubmit,
 }: NewVehicleFormProps): ReactNode {
   const [plateDisplay, setPlateDisplay] = useState(initialPlate);
@@ -477,9 +498,16 @@ function NewVehicleForm({
           }}
         />
 
-        <Button type="submit" loading={submitting} loadingText="Membuat…" className="w-full">
-          Buat Pemeriksaan
-        </Button>
+        <div className="flex flex-wrap items-center gap-2">
+          <Button type="submit" loading={submitting} loadingText="Membuat…" className="flex-1">
+            Buat Pemeriksaan
+          </Button>
+          {onCancel ? (
+            <Button variant="secondary" type="button" onClick={onCancel}>
+              Batal
+            </Button>
+          ) : null}
+        </div>
       </form>
     </Card>
   );

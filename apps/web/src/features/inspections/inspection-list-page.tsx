@@ -35,6 +35,8 @@ import { Pagination } from "../../components/ui/pagination.tsx";
  * The filters are real filters. D-01 found the legacy ones rendered but never
  * wired to the query — a 2020 date range still returned a 2026 record.
  */
+import { useDebounce } from "../../lib/use-debounce.ts";
+
 export function InspectionListPage(): ReactNode {
   const { can } = useSession();
 
@@ -50,14 +52,17 @@ export function InspectionListPage(): ReactNode {
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
 
+  // Debounce search string before hitting the database endpoint
+  const debouncedSearch = useDebounce(search.trim(), 350);
+
   const query = useQuery({
-    queryKey: ["inspections", { status, from, to, search, page }],
+    queryKey: ["inspections", { status, from, to, search: debouncedSearch, page }],
     queryFn: () =>
       api.get<Paginated<InspectionListItem>>("/api/inspections", {
         status: status === "" ? undefined : status,
         submittedFrom: from === "" ? undefined : startOfDayIso(from),
         submittedTo: to === "" ? undefined : endOfDayIso(to),
-        q: search === "" ? undefined : search,
+        q: debouncedSearch === "" ? undefined : debouncedSearch,
         page,
       }),
   });

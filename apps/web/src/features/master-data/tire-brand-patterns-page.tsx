@@ -255,16 +255,23 @@ function CreatePatternDialog({
   const [pattern, setPattern] = useState("");
   const [brand, setBrand] = useState("");
 
+  const handleClose = (): void => {
+    setPattern("");
+    setBrand("");
+    onClose();
+  };
+
   const submit = (): void => {
     if (pattern.trim() === "" || brand.trim() === "") return;
-    onSubmit({ pattern: pattern.trim(), brand: brand.trim(), type });
+    const pat = pattern.trim();
+    const br = brand.trim();
+    setPattern("");
+    setBrand("");
+    onSubmit({ pattern: pat, brand: br, type });
   };
 
   return (
-    <Dialog open title={`Tambah Pattern Ban (${type})`} onClose={onClose}>
-      {/* A real <form>. There was none here at all, so pressing Enter after
-          typing a pattern did nothing whatsoever — the only way to submit was
-          to reach for the mouse. */}
+    <Dialog open title={`Tambah Pattern Ban (${type})`} onClose={handleClose}>
       <form
         noValidate
         onSubmit={(event) => {
@@ -292,7 +299,7 @@ function CreatePatternDialog({
         </Field>
 
         <DialogFooter>
-          <CancelButton onClick={onClose} />
+          <CancelButton onClick={handleClose} />
           <Button type="submit" loading={submitting} loadingText="Menyimpan…">
             Tambah
           </Button>

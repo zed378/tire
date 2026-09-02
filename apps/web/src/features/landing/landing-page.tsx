@@ -2,21 +2,32 @@ import { type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { USER_ROLE_LABELS } from "@c26/contracts";
 import { useSession } from "../../lib/session.tsx";
-import { ThemeToggle } from "../../components/ui/theme-toggle.tsx";
 import { HERO_IMAGE, IMAGE_CREDITS, TREAD_IMAGE, WHEEL_IMAGE } from "./image-credits.ts";
 
 /**
  * The public page.
  *
- * What the system does, in the words the people who use it already use —
- * Pengajuan, Pass QC, Perlu Revisi — and shows real fleet imagery.
+ * Committed to a dark treatment rather than following the viewer's theme: it is
+ * one marketing surface, and the reference the owner chose is dark throughout.
+ * The application behind the login stays theme-aware, so the raw palette
+ * classes in this file are the documented exception to the token rule — they
+ * describe one fixed design, not a theme. There is no theme switch here for the
+ * same reason: it would offer a choice the page does not honour.
+ *
+ * TWO THINGS FROM THE REFERENCE ARE DELIBERATELY ABSENT. It opens with a
+ * "SOC 2 TYPE II CERTIFIED" chip and closes its hero with a row of client logos
+ * — Vercel, Cursor, Coinbase. Both are claims. This system holds no such
+ * certification and has no such customers, and either one would be a lie told
+ * in a confident typeface. The chips carry properties the system actually has,
+ * and the row beneath carries figures that are true.
  */
 export function LandingPage(): ReactNode {
   return (
-    <div className="min-h-dvh bg-canvas text-body">
+    <div className="min-h-dvh bg-slate-950 text-slate-100">
       <SiteHeader />
       <main>
         <Hero />
+        <Numbers />
         <TheProblem />
         <HowItWorks />
         <WhatItRefuses />
@@ -31,108 +42,57 @@ function SiteHeader(): ReactNode {
   const { user } = useSession();
 
   return (
-    <header className="sticky top-0 z-30 border-b border-line bg-surface/95 backdrop-blur-md transition-colors">
-      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
-        {/* Brand Logo & Name */}
-        <Link to="/" className="flex items-center gap-2.5 group">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent text-on-accent shadow-sm transition-transform group-hover:scale-105">
-            <svg
-              width="18"
-              height="18"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              aria-hidden="true"
-            >
-              <circle cx="12" cy="12" r="9" strokeDasharray="3 3" />
-              <circle cx="12" cy="12" r="3" />
-              <path d="M12 3v3M12 18v3M3 12h3M18 12h3" />
-            </svg>
-          </div>
-          <div className="flex items-baseline gap-2">
-            <span className="text-sm sm:text-base font-bold tracking-tight text-body group-hover:text-accent-text transition-colors">
-              Commercial 2026
-            </span>
-            <span className="hidden text-xs text-muted sm:inline border-l border-line pl-2">
-              Data Ban Bus &amp; Truk
-            </span>
-          </div>
+    <header className="sticky top-0 z-40 border-b border-white/10 bg-slate-950/80 backdrop-blur">
+      <div className="mx-auto flex max-w-6xl items-center gap-6 px-5 py-3.5 sm:px-8">
+        <Link to="/" className="text-sm font-semibold tracking-tight text-white">
+          Commercial 2026
         </Link>
 
-        {/* Right Actions & Auth State */}
-        <div className="flex items-center gap-2 sm:gap-2.5">
-          <ThemeToggle />
+        <nav aria-label="Navigasi halaman" className="hidden flex-1 justify-center gap-7 md:flex">
+          <a href="#masalah" className="text-sm text-slate-400 transition-colors hover:text-white">
+            Latar belakang
+          </a>
+          <a href="#alur" className="text-sm text-slate-400 transition-colors hover:text-white">
+            Alur kerja
+          </a>
+          <a href="#batasan" className="text-sm text-slate-400 transition-colors hover:text-white">
+            Batasan
+          </a>
+        </nav>
 
+        {/*
+          Somebody already signed in does not need to be asked to sign in. This
+          sends them straight on instead, which is the one thing they came for.
+        */}
+        <div className="ml-auto flex items-center gap-2.5 md:ml-0">
           {user !== null ? (
-            <div className="flex items-center gap-2 sm:gap-2.5">
-              {/* User Identity Chip */}
-              <div className="hidden sm:flex items-center gap-2 h-9 px-2.5 rounded-lg border border-line bg-surface-sunken/70 text-left">
-                <div className="flex h-6 w-6 items-center justify-center rounded-md bg-accent text-on-accent font-bold text-[11px]">
-                  {user.displayName.charAt(0).toUpperCase()}
-                </div>
-                <div className="flex flex-col pr-1">
-                  <span className="text-xs font-semibold text-body leading-tight truncate max-w-[130px]">
-                    {user.displayName}
-                  </span>
-                  <span className="text-[10px] text-muted leading-tight">
-                    {USER_ROLE_LABELS[user.role]}
-                  </span>
-                </div>
-              </div>
-
-              {/* Direct Dashboard Action */}
+            <>
+              <span className="hidden text-right text-xs leading-tight text-slate-400 sm:block">
+                <span className="block font-medium text-slate-200">{user.displayName}</span>
+                {USER_ROLE_LABELS[user.role]}
+              </span>
               <Link
                 to="/welcome"
-                className="inline-flex h-9 items-center justify-center gap-1.5 rounded-lg bg-accent px-3.5 sm:px-4 text-xs sm:text-sm font-medium text-on-accent shadow-sm transition-all hover:bg-accent-hover active:scale-[0.98]"
+                className="inline-flex min-h-9 items-center rounded-md bg-white px-3.5 text-sm font-semibold text-slate-950 transition-colors hover:bg-slate-200"
               >
-                <span>Dashboard</span>
-                <svg
-                  width="14"
-                  height="14"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2.2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  aria-hidden="true"
-                >
-                  <polyline points="9 18 15 12 9 6" />
-                </svg>
+                Buka Beranda
               </Link>
-            </div>
+            </>
           ) : (
-            <div className="flex items-center gap-2">
+            <>
+              <Link
+                to="/login"
+                className="inline-flex min-h-9 items-center rounded-md px-3 text-sm font-medium text-slate-300 transition-colors hover:text-white"
+              >
+                Masuk
+              </Link>
               <Link
                 to="/register"
-                className="hidden sm:inline-flex h-9 items-center justify-center rounded-lg border border-line bg-surface px-3.5 text-xs sm:text-sm font-medium text-body transition-colors hover:bg-surface-sunken"
+                className="inline-flex min-h-9 items-center rounded-md bg-white px-3.5 text-sm font-semibold text-slate-950 transition-colors hover:bg-slate-200"
               >
                 Daftar
               </Link>
-              <Link
-                to="/login"
-                className="inline-flex h-9 items-center justify-center gap-1.5 rounded-lg bg-accent px-4 text-xs sm:text-sm font-medium text-on-accent shadow-sm transition-all hover:bg-accent-hover active:scale-[0.98]"
-              >
-                <span>Masuk</span>
-                <svg
-                  width="14"
-                  height="14"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2.2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  aria-hidden="true"
-                >
-                  <line x1="5" y1="12" x2="19" y2="12" />
-                  <polyline points="12 5 19 12 12 19" />
-                </svg>
-              </Link>
-            </div>
+            </>
           )}
         </div>
       </div>
@@ -141,83 +101,101 @@ function SiteHeader(): ReactNode {
 }
 
 function Hero(): ReactNode {
-  const { user } = useSession();
-
   return (
-    <section className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 pb-16 pt-10 sm:pb-24 sm:pt-16">
-      <div className="grid items-center gap-10 lg:grid-cols-[1.05fr_1fr] lg:gap-14">
-        <div>
-          <p className="text-sm font-medium text-accent-text">
-            Untuk supplier data, admin QC, dan PM di lapangan
-          </p>
+    <section className="relative overflow-hidden bg-gradient-to-b from-slate-950 via-blue-950 to-blue-800">
+      {/* The tread photograph at very low opacity, giving the gradient a grain
+          rather than reading as a picture. */}
+      <img
+        src={TREAD_IMAGE.src}
+        alt=""
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 h-full w-full object-cover opacity-[0.07] mix-blend-luminosity"
+        loading="lazy"
+      />
 
-          <h1 className="mt-3 text-3xl font-semibold leading-[1.15] tracking-tight text-body sm:text-4xl lg:text-5xl">
-            Data ban yang bisa dipertanggungjawabkan, sampai ke posisi bannya.
+      <div className="relative mx-auto grid max-w-6xl items-center gap-12 px-5 py-16 sm:px-8 sm:py-24 lg:grid-cols-[1.1fr_1fr]">
+        <div>
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="rounded border border-white/20 px-2 py-1 text-[11px] font-medium uppercase tracking-wider text-slate-300">
+              Audit append-only
+            </span>
+            <span className="flex items-center gap-1.5 rounded border border-white/10 px-2 py-1 text-[11px] font-medium uppercase tracking-wider text-slate-400">
+              <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+              34 konfigurasi poros
+            </span>
+          </div>
+
+          {/* Two-tone headline, as in the reference: the setup recedes, the
+              claim lands. */}
+          <h1 className="mt-6 text-4xl font-semibold leading-[1.05] tracking-tight sm:text-5xl lg:text-6xl">
+            <span className="block text-slate-400">Ketahuan sebelum</span>
+            <span className="block text-white">jadi masalah.</span>
           </h1>
 
-          <p className="mt-5 max-w-xl text-base leading-relaxed text-muted">
-            Setiap pemeriksaan punya nomor seri, foto per posisi ban, dan riwayat keputusan QC
-            yang tidak bisa dihapus. Petugas mengisi dari HP di garasi — termasuk saat sinyal
-            hilang — dan fotonya menyusul begitu ada jaringan.
+          <p className="mt-5 max-w-lg text-base leading-relaxed text-slate-300">
+            Data ban bus dan truk yang bisa dipertanggungjawabkan sampai ke posisi bannya. Nomor
+            seri per pemeriksaan, foto per posisi ban, dan riwayat keputusan QC yang tidak bisa
+            dihapus siapa pun.
           </p>
 
           <div className="mt-8 flex flex-wrap items-center gap-3">
-            {user !== null ? (
+            {/* Split button, following the reference. The arrow half is marked
+                decorative and taken out of the tab order — it goes exactly where
+                the label beside it already goes, and a keyboard user should not
+                have to pass the same destination twice. */}
+            <div className="flex overflow-hidden rounded-md">
               <Link
-                to="/welcome"
-                className="inline-flex min-h-11 items-center gap-2 rounded-lg bg-accent px-5 text-sm font-medium text-on-accent transition-colors hover:bg-accent-hover shadow-sm"
+                to="/login"
+                className="inline-flex min-h-11 items-center bg-blue-600 px-5 text-sm font-semibold text-white transition-colors hover:bg-blue-500"
               >
-                <span>Buka Dashboard ({user.displayName})</span>
+                Masuk ke sistem
+              </Link>
+              <span
+                aria-hidden="true"
+                className="inline-flex min-h-11 w-11 items-center justify-center border-l border-white/20 bg-blue-600 text-white"
+              >
                 <svg
-                  width="16"
-                  height="16"
+                  className="h-4 w-4"
                   viewBox="0 0 24 24"
                   fill="none"
                   stroke="currentColor"
-                  strokeWidth="2.5"
+                  strokeWidth="2"
                   strokeLinecap="round"
                   strokeLinejoin="round"
-                  aria-hidden="true"
                 >
-                  <polyline points="9 18 15 12 9 6" />
+                  <line x1="5" y1="12" x2="19" y2="12" />
+                  <polyline points="12 5 19 12 12 19" />
                 </svg>
-              </Link>
-            ) : (
-              <>
-                <Link
-                  to="/login"
-                  className="inline-flex min-h-11 items-center rounded-lg bg-accent px-5 text-sm font-medium text-on-accent transition-colors hover:bg-accent-hover shadow-sm"
-                >
-                  Masuk ke sistem
-                </Link>
-                <Link
-                  to="/register"
-                  className="inline-flex min-h-11 items-center rounded-lg border border-line-strong bg-surface px-5 text-sm font-medium text-body transition-colors hover:bg-surface-sunken"
-                >
-                  Daftar akun
-                </Link>
-              </>
-            )}
-          </div>
+              </span>
+            </div>
 
-          <p className="mt-4 text-xs text-subtle">
-            Akun dibuat oleh admin. Pendaftaran mandiri menunggu persetujuan sebelum aktif.
-          </p>
+            <Link
+              to="/register"
+              className="inline-flex min-h-11 items-center rounded-md border border-white/20 px-5 text-sm font-medium text-slate-200 transition-colors hover:bg-white/10"
+            >
+              Daftar akun
+            </Link>
+          </div>
         </div>
 
-        <figure className="lg:justify-self-end">
-          <img
-            src={HERO_IMAGE.src}
-            alt={HERO_IMAGE.alt}
-            width={1280}
-            height={960}
-            loading="eager"
-            fetchPriority="high"
-            className="w-full rounded-xl border border-line object-cover shadow-sm"
-          />
-          <figcaption className="mt-2 text-xs text-subtle">
-            Bus AKDP di Probolinggo, Jawa Timur — jenis armada yang datanya dicatat sistem ini.
-          </figcaption>
+        <figure className="relative">
+          <div className="overflow-hidden rounded-2xl border border-white/10">
+            <img
+              src={WHEEL_IMAGE.src}
+              alt={WHEEL_IMAGE.alt}
+              width={1000}
+              height={666}
+              loading="eager"
+              fetchPriority="high"
+              className="w-full object-cover"
+            />
+          </div>
+
+          {/* One real record, floating over the image. */}
+          <div className="absolute -bottom-4 left-4 rounded-xl border border-white/10 bg-slate-950/85 px-4 py-3 backdrop-blur">
+            <p className="font-mono text-xs text-slate-400">SN2026-00001</p>
+            <p className="mt-0.5 text-sm font-medium text-white">Drive 1 Kiri Dalam · Pass QC</p>
+          </div>
         </figure>
       </div>
     </section>
@@ -225,12 +203,43 @@ function Hero(): ReactNode {
 }
 
 /**
- * The reason the rewrite exists, said plainly.
- *
- * These are the real defects from the legacy system (PLAN/00 §2.2), not
- * invented pain points — which is why they are specific enough to be
- * uncomfortable.
+ * The reference puts a row of client logos here. There are no clients to name,
+ * so this row carries limits the system actually enforces instead.
  */
+const NUMBERS: { value: string; label: string }[] = [
+  { value: "34", label: "Konfigurasi poros yang sah" },
+  { value: "22", label: "Ban maksimum per kendaraan" },
+  { value: "30", label: "Foto maksimum per pemeriksaan" },
+  { value: "24", label: "Bulan masa simpan data" },
+];
+
+function Numbers(): ReactNode {
+  return (
+    <section className="border-b border-white/10 bg-slate-950">
+      <div className="mx-auto max-w-6xl px-5 py-10 sm:px-8">
+        <p className="text-[11px] font-medium uppercase tracking-wider text-slate-500">
+          Aturan yang ditegakkan sistem
+        </p>
+        <dl className="mt-5 grid grid-cols-2 gap-6 sm:grid-cols-4">
+          {NUMBERS.map((item) => (
+            <div key={item.label}>
+              <dt className="sr-only">{item.label}</dt>
+              <dd>
+                <span className="block text-3xl font-semibold tabular-nums text-white">
+                  {item.value}
+                </span>
+                <span className="mt-1 block text-xs leading-relaxed text-slate-400">
+                  {item.label}
+                </span>
+              </dd>
+            </div>
+          ))}
+        </dl>
+      </div>
+    </section>
+  );
+}
+
 const PROBLEMS: { before: string; after: string }[] = [
   {
     before: "Rincian poros bisa berjumlah 3 sementara Jumlah Poros dipilih 6, dan tetap tersimpan.",
@@ -239,8 +248,7 @@ const PROBLEMS: { before: string; after: string }[] = [
   },
   {
     before: "Supplier mengirim data lalu tidak tahu apa-apa. Hasil QC dikejar lewat WhatsApp.",
-    after:
-      "Daftar pengajuan dengan status dan alasan revisi menempel di barisnya, plus notifikasi.",
+    after: "Daftar pengajuan dengan status dan alasan revisi menempel di barisnya, plus notifikasi.",
   },
   {
     before: "Filter tanggal dan status di layar QC tidak mengubah hasil sama sekali.",
@@ -254,25 +262,25 @@ const PROBLEMS: { before: string; after: string }[] = [
 
 function TheProblem(): ReactNode {
   return (
-    <section className="border-y border-line bg-surface">
-      <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-16 sm:py-20">
+    <section id="masalah" className="border-b border-white/10 bg-slate-950">
+      <div className="mx-auto max-w-6xl px-5 py-16 sm:px-8 sm:py-20">
         <div className="max-w-2xl">
-          <h2 className="text-2xl font-semibold tracking-tight text-body sm:text-3xl">
+          <h2 className="text-2xl font-semibold tracking-tight text-white sm:text-3xl">
             Dibangun dari daftar hal yang dulu rusak
           </h2>
-          <p className="mt-3 text-base leading-relaxed text-muted">
+          <p className="mt-3 text-base leading-relaxed text-slate-400">
             Sistem sebelumnya berjalan di atas spreadsheet dan formulir. Ia bekerja, sampai
             volumenya naik. Empat di antaranya yang paling sering menggigit:
           </p>
         </div>
 
-        <ul className="mt-10 grid gap-px overflow-hidden rounded-xl border border-line bg-line sm:grid-cols-2">
+        <ul className="mt-10 grid gap-px overflow-hidden rounded-xl border border-white/10 bg-white/10 sm:grid-cols-2">
           {PROBLEMS.map((item) => (
-            <li key={item.before} className="bg-surface p-5 sm:p-6">
-              <p className="text-sm leading-relaxed text-muted line-through decoration-danger/60">
+            <li key={item.before} className="bg-slate-950 p-5 sm:p-6">
+              <p className="text-sm leading-relaxed text-slate-500 line-through decoration-red-500/60">
                 {item.before}
               </p>
-              <p className="mt-3 text-sm font-medium leading-relaxed text-body">{item.after}</p>
+              <p className="mt-3 text-sm font-medium leading-relaxed text-slate-100">{item.after}</p>
             </li>
           ))}
         </ul>
@@ -302,29 +310,26 @@ const STEPS: { title: string; body: string }[] = [
 
 function HowItWorks(): ReactNode {
   return (
-    <section className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-16 sm:py-24">
-      <div className="grid gap-10 lg:grid-cols-[1fr_1.15fr] lg:gap-16">
+    <section id="alur" className="border-b border-white/10 bg-slate-950">
+      <div className="mx-auto grid max-w-6xl gap-12 px-5 py-16 sm:px-8 sm:py-20 lg:grid-cols-[1fr_1.15fr] lg:gap-16">
         <div>
-          <h2 className="text-2xl font-semibold tracking-tight text-body sm:text-3xl">
+          <h2 className="text-2xl font-semibold tracking-tight text-white sm:text-3xl">
             Empat langkah, dari plat nomor sampai keputusan
           </h2>
-          <p className="mt-3 text-base leading-relaxed text-muted">
-            Alurnya sama untuk truk dan bus, TB maupun LT. Yang berbeda hanya jumlah ban — dan
-            itu dihitung, bukan diketik.
+          <p className="mt-3 text-base leading-relaxed text-slate-400">
+            Alurnya sama untuk truk dan bus, TB maupun LT. Yang berbeda hanya jumlah ban — dan itu
+            dihitung, bukan diketik.
           </p>
 
-          <figure className="mt-8">
+          <figure className="mt-8 overflow-hidden rounded-xl border border-white/10">
             <img
-              src={WHEEL_IMAGE.src}
-              alt={WHEEL_IMAGE.alt}
-              width={1000}
-              height={666}
+              src={HERO_IMAGE.src}
+              alt={HERO_IMAGE.alt}
+              width={1280}
+              height={960}
               loading="lazy"
-              className="w-full rounded-xl border border-line object-cover shadow-sm"
+              className="w-full object-cover"
             />
-            <figcaption className="mt-2 text-xs text-subtle">
-              Satu posisi ban, satu slot foto, satu kartu spesifikasi.
-            </figcaption>
           </figure>
         </div>
 
@@ -333,13 +338,13 @@ function HowItWorks(): ReactNode {
             <li key={step.title} className="flex gap-4">
               <span
                 aria-hidden="true"
-                className="mt-0.5 flex h-8 w-8 flex-none items-center justify-center rounded-full border border-line-strong text-sm font-semibold text-accent-text"
+                className="mt-0.5 flex h-8 w-8 flex-none items-center justify-center rounded-full border border-white/20 text-sm font-semibold text-blue-300"
               >
                 {index + 1}
               </span>
               <div>
-                <h3 className="text-base font-semibold text-body">{step.title}</h3>
-                <p className="mt-1.5 text-sm leading-relaxed text-muted">{step.body}</p>
+                <h3 className="text-base font-semibold text-white">{step.title}</h3>
+                <p className="mt-1.5 text-sm leading-relaxed text-slate-400">{step.body}</p>
               </div>
             </li>
           ))}
@@ -359,24 +364,12 @@ const REFUSALS: string[] = [
 
 function WhatItRefuses(): ReactNode {
   return (
-    <section className="relative border-y border-line">
-      {/* Texture, not illustration: it sits behind the text at low opacity and
-          carries no information, so it is marked decorative for screen readers. */}
-      <img
-        src={TREAD_IMAGE.src}
-        alt=""
-        aria-hidden="true"
-        width={1000}
-        height={714}
-        loading="lazy"
-        className="absolute inset-0 h-full w-full object-cover opacity-[0.06]"
-      />
-
-      <div className="relative mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-16 sm:py-20">
-        <h2 className="max-w-2xl text-2xl font-semibold tracking-tight text-body sm:text-3xl">
+    <section id="batasan" className="border-b border-white/10 bg-slate-950">
+      <div className="mx-auto max-w-6xl px-5 py-16 sm:px-8 sm:py-20">
+        <h2 className="max-w-2xl text-2xl font-semibold tracking-tight text-white sm:text-3xl">
           Hal-hal yang sistem ini tolak lakukan
         </h2>
-        <p className="mt-3 max-w-2xl text-base leading-relaxed text-muted">
+        <p className="mt-3 max-w-2xl text-base leading-relaxed text-slate-400">
           Aturan yang bisa ditegakkan basis data, ditegakkan basis data — bukan diserahkan pada
           kedisiplinan pengisi formulir.
         </p>
@@ -385,7 +378,7 @@ function WhatItRefuses(): ReactNode {
           {REFUSALS.map((item) => (
             <li
               key={item}
-              className="rounded-lg border border-line bg-surface p-4 text-sm leading-relaxed text-muted shadow-sm"
+              className="rounded-lg border border-white/10 bg-white/5 p-4 text-sm leading-relaxed text-slate-300"
             >
               {item}
             </li>
@@ -400,88 +393,62 @@ function ClosingCta(): ReactNode {
   const { user } = useSession();
 
   return (
-    <section className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-16 sm:py-20">
-      <div className="flex flex-col items-start justify-between gap-6 rounded-xl border border-line bg-surface p-6 sm:flex-row sm:items-center sm:p-8 shadow-sm">
-        <div>
-          <h2 className="text-xl font-semibold tracking-tight text-body">
-            {user !== null ? `Masuk sebagai ${user.displayName}` : "Sudah punya akun?"}
-          </h2>
-          <p className="mt-1.5 text-sm text-muted">
-            {user !== null
-              ? `Anda saat ini terotentikasi sebagai ${USER_ROLE_LABELS[user.role]}. Klik tombol di sebelah kanan untuk melanjutkan pekerjaan Anda di dashboard.`
-              : "Masuk dengan User ID dan kata sandi Anda. Admin dan operator akan diminta mendaftarkan 2FA pada login pertama."}
-          </p>
+    <section className="bg-gradient-to-b from-slate-950 to-blue-900">
+      <div className="mx-auto max-w-6xl px-5 py-16 sm:px-8 sm:py-20">
+        <div className="flex flex-col items-start justify-between gap-6 rounded-2xl border border-white/10 bg-white/5 p-6 sm:flex-row sm:items-center sm:p-8">
+          <div>
+            <h2 className="text-xl font-semibold tracking-tight text-white">
+              {user !== null ? `Masuk sebagai ${user.displayName}` : "Sudah punya akun?"}
+            </h2>
+            <p className="mt-1.5 text-sm text-slate-300">
+              {user !== null
+                ? "Lanjutkan ke beranda peran Anda."
+                : "Masuk dengan User ID dan kata sandi Anda. Admin dan operator akan diminta mendaftarkan 2FA pada login pertama."}
+            </p>
+          </div>
+          <Link
+            to={user !== null ? "/welcome" : "/login"}
+            className="inline-flex min-h-11 flex-none items-center rounded-md bg-white px-5 text-sm font-semibold text-slate-950 transition-colors hover:bg-slate-200"
+          >
+            {user !== null ? "Buka Beranda" : "Masuk ke sistem"}
+          </Link>
         </div>
-        {user !== null ? (
-          <Link
-            to="/welcome"
-            className="inline-flex min-h-11 flex-none items-center gap-2 rounded-lg bg-accent px-5 text-sm font-medium text-on-accent transition-colors hover:bg-accent-hover shadow-sm"
-          >
-            <span>Buka Dashboard</span>
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              aria-hidden="true"
-            >
-              <polyline points="9 18 15 12 9 6" />
-            </svg>
-          </Link>
-        ) : (
-          <Link
-            to="/login"
-            className="inline-flex min-h-11 flex-none items-center rounded-lg bg-accent px-5 text-sm font-medium text-on-accent transition-colors hover:bg-accent-hover shadow-sm"
-          >
-            Masuk ke sistem
-          </Link>
-        )}
       </div>
     </section>
   );
 }
 
 function SiteFooter(): ReactNode {
-  const { user } = useSession();
-
   return (
-    <footer className="border-t border-line bg-surface">
-      <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-10">
+    <footer className="border-t border-white/10 bg-slate-950">
+      <div className="mx-auto max-w-6xl px-5 py-10 sm:px-8">
         <div className="flex flex-wrap items-start justify-between gap-6">
           <div>
-            <p className="text-sm font-semibold text-body">Commercial 2026</p>
-            <p className="mt-1 text-xs text-muted">Sistem Data Ban Bus &amp; Truk</p>
+            <p className="text-sm font-semibold text-white">Commercial 2026</p>
+            <p className="mt-1 text-xs text-slate-400">Sistem Data Ban Bus &amp; Truk</p>
           </div>
           <nav aria-label="Tautan kaki halaman" className="flex flex-wrap gap-x-5 gap-y-2 text-sm">
-            {user !== null ? (
-              <Link to="/welcome" className="text-muted hover:text-body">
-                Dashboard ({user.displayName})
-              </Link>
-            ) : (
-              <>
-                <Link to="/login" className="text-muted hover:text-body">
-                  Masuk
-                </Link>
-                <Link to="/register" className="text-muted hover:text-body">
-                  Daftar
-                </Link>
-              </>
-            )}
+            <Link to="/login" className="text-slate-400 transition-colors hover:text-white">
+              Masuk
+            </Link>
+            <Link to="/register" className="text-slate-400 transition-colors hover:text-white">
+              Daftar
+            </Link>
           </nav>
         </div>
 
-        <div className="mt-8 border-t border-line pt-6">
-          <h2 className="text-xs font-semibold uppercase tracking-wide text-subtle">
+        {/*
+          Required by the licences, not a nicety. CC BY and CC BY-SA both oblige
+          us to name the author, state the licence, and link back to the source.
+        */}
+        <div className="mt-8 border-t border-white/10 pt-6">
+          <h2 className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
             Kredit foto
           </h2>
-          <ul className="mt-3 space-y-1.5 text-xs leading-relaxed text-muted">
+          <ul className="mt-3 space-y-1.5 text-xs leading-relaxed text-slate-400">
             {IMAGE_CREDITS.map((credit) => (
               <li key={credit.src}>
-                <span className="text-body">{credit.alt}</span> — {credit.author},{" "}
+                <span className="text-slate-200">{credit.alt}</span> — {credit.author},{" "}
                 {credit.licenseUrl === "" ? (
                   <span>{credit.license}</span>
                 ) : (
@@ -489,7 +456,7 @@ function SiteFooter(): ReactNode {
                     href={credit.licenseUrl}
                     rel="license noopener noreferrer"
                     target="_blank"
-                    className="underline underline-offset-2 hover:text-body"
+                    className="underline underline-offset-2 hover:text-white"
                   >
                     {credit.license}
                   </a>
@@ -499,7 +466,7 @@ function SiteFooter(): ReactNode {
                   href={credit.sourceUrl}
                   rel="noopener noreferrer"
                   target="_blank"
-                  className="underline underline-offset-2 hover:text-body"
+                  className="underline underline-offset-2 hover:text-white"
                 >
                   Wikimedia Commons
                 </a>

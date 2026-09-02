@@ -200,13 +200,20 @@ function CreateBrandDialog({
 }): ReactNode {
   const [name, setName] = useState("");
 
+  const handleClose = (): void => {
+    setName("");
+    onClose();
+  };
+
   const submit = (): void => {
     if (name.trim() === "") return;
-    onSubmit(name.trim());
+    const value = name.trim();
+    setName("");
+    onSubmit(value);
   };
 
   return (
-    <Dialog open title="Tambah Merk Kendaraan" onClose={onClose}>
+    <Dialog open title="Tambah Merk Kendaraan" onClose={handleClose}>
       <form
         noValidate
         onSubmit={(event) => {
@@ -225,11 +232,8 @@ function CreateBrandDialog({
           />
         </Field>
 
-        {/* Inside the form, so Enter and the button take the same path. They
-            used to be separate: the buttons sat outside the <form>, which meant
-            the keyboard and the mouse ran different code. */}
         <DialogFooter>
-          <CancelButton onClick={onClose} />
+          <CancelButton onClick={handleClose} />
           <Button type="submit" loading={submitting} loadingText="Menyimpan…">
             Tambah
           </Button>

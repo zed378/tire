@@ -58,6 +58,11 @@ export function QcReviewPage(): ReactNode {
     mutationFn: (body: unknown) => api.post(`/api/qc/${sn}/decide`, body),
     onSuccess: async () => {
       toast.push({ tone: "success", message: "Keputusan QC tersimpan." });
+      setDecision("");
+      setNotes("");
+      setComments({});
+      setNotesError(undefined);
+      setError(null);
       await queryClient.invalidateQueries({ queryKey: ["qc-queue"] });
       await queryClient.invalidateQueries({ queryKey: ["qc-stats"] });
       void navigate("/qc");
@@ -78,6 +83,8 @@ export function QcReviewPage(): ReactNode {
     mutationFn: (reason: string) => api.post(`/api/qc/${sn}/revert`, { reason }),
     onSuccess: async () => {
       toast.push({ tone: "success", message: "Keputusan QC dibatalkan." });
+      setNotes("");
+      setError(null);
       await queryClient.invalidateQueries({ queryKey: ["inspection", sn] });
     },
     onError: setError,

@@ -25,6 +25,8 @@ import { Button, Card, EmptyState, Field, Input, Select, Spinner } from "../../c
  * Here the filter is the query, and the counters answer the same filter as the
  * table beneath them.
  */
+import { useDebounce } from "../../lib/use-debounce.ts";
+
 export function QcQueuePage(): ReactNode {
   const [status, setStatus] = useState<InspectionStatus | "">("pending_qc");
   const [from, setFrom] = useState("");
@@ -32,11 +34,14 @@ export function QcQueuePage(): ReactNode {
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
 
+  // Debounce search query before requesting from database
+  const debouncedSearch = useDebounce(search.trim(), 350);
+
   const filters = {
     status: status === "" ? undefined : status,
     submittedFrom: from === "" ? undefined : startOfDayIso(from),
     submittedTo: to === "" ? undefined : endOfDayIso(to),
-    q: search === "" ? undefined : search,
+    q: debouncedSearch === "" ? undefined : debouncedSearch,
   };
 
   const queue = useQuery({

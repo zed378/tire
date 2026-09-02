@@ -302,6 +302,20 @@ function CreateUserDialog({
   const [regionProvinceIds, setRegionProvinceIds] = useState<number[]>([]);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
+  const resetForm = (): void => {
+    setUsername("");
+    setDisplayName("");
+    setRole("supplier");
+    setEmail("");
+    setRegionProvinceIds([]);
+    setErrors({});
+  };
+
+  const handleClose = (): void => {
+    resetForm();
+    onClose();
+  };
+
   const submit = (): void => {
     const candidate = {
       username,
@@ -319,7 +333,7 @@ function CreateUserDialog({
       return;
     }
 
-    setErrors({});
+    resetForm();
     onSubmit(parsed.data);
   };
 
@@ -328,7 +342,7 @@ function CreateUserDialog({
       open={open}
       title="Tambah Pengguna"
       description="Password awal dibuat sistem dan hanya ditampilkan sekali."
-      onClose={onClose}
+      onClose={handleClose}
     >
       <form
         noValidate

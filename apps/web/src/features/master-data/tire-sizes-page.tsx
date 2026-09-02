@@ -236,13 +236,20 @@ function CreateSizeDialog({
 }): ReactNode {
   const [size, setSize] = useState("");
 
+  const handleClose = (): void => {
+    setSize("");
+    onClose();
+  };
+
   const submit = (): void => {
     if (size.trim() === "") return;
-    onSubmit({ size: size.trim(), type });
+    const val = size.trim();
+    setSize("");
+    onSubmit({ size: val, type });
   };
 
   return (
-    <Dialog open title={`Tambah Ukuran Ban (${type})`} onClose={onClose}>
+    <Dialog open title={`Tambah Ukuran Ban (${type})`} onClose={handleClose}>
       <form
         noValidate
         onSubmit={(event) => {
@@ -267,7 +274,7 @@ function CreateSizeDialog({
         </Field>
 
         <DialogFooter>
-          <CancelButton onClick={onClose} />
+          <CancelButton onClick={handleClose} />
           <Button type="submit" loading={submitting} loadingText="Menyimpan…">
             Tambah
           </Button>

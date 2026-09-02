@@ -17,24 +17,34 @@ import { Button, Card, EmptyState, Field, Input, Spinner } from "../../component
  * append-only and the privilege is revoked at the database level (PLAN/13 §9) —
  * a trail the application could edit would not be evidence.
  */
+import { useDebounce } from "../../lib/use-debounce.ts";
+
 export function AuditPage(): ReactNode {
   const [entity, setEntity] = useState("");
   const [action, setAction] = useState("");
   const [requestId, setRequestId] = useState("");
   const [page, setPage] = useState(1);
 
+  // Debounce search filters before querying server database
+  const debouncedEntity = useDebounce(entity.trim(), 350);
+  const debouncedAction = useDebounce(action.trim(), 350);
+  const debouncedRequestId = useDebounce(requestId.trim(), 350);
+
   const audit = useQuery({
-    queryKey: ["audit", { entity, action, requestId, page }],
+    queryKey: [
+      "audit",
+      {
+        entity: debouncedEntity,
+        action: debouncedAction,
+        requestId: debouncedRequestId,
+        page,
+      },
+    ],
     queryFn: () =>
       api.get<Paginated<AuditEntry>>("/api/audit", {
-        entity: entity === "" ? undefined : entity,
-        action: action === "" ? undefined : action,
-        // Sent to the server, where it can see every row. This used to be
-        // filtered here, over whichever page happened to be loaded, so looking
-        // up a requestId that lived on page 7 answered "tidak ada hasil" while
-        // the pager underneath said there were twelve pages. That is the same
-        // shape as D-01: a filter that appears to work and does not.
-        requestId: requestId === "" ? undefined : requestId,
+        entity: debouncedEntity === "" ? undefined : debouncedEntity,
+        action: debouncedAction === "" ? undefined : debouncedAction,
+        requestId: debouncedRequestId === "" ? undefined : debouncedRequestId,
         page,
       }),
   });
