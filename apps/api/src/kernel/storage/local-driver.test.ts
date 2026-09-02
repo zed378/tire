@@ -145,7 +145,7 @@ describe('resolveStoragePath', () => {
   });
 
   it('refuses a UNC-style leading backslash', () => {
-    expect(() => resolveStoragePath('\\server\share')).toThrow('escapes the upload directory');
+    expect(() => resolveStoragePath('\\\\server\\share')).toThrow('escapes the upload directory');
   });
 
   it('refuses traversal with forward slashes', () => {
@@ -155,7 +155,7 @@ describe('resolveStoragePath', () => {
   });
 
   it('refuses traversal with backslashes', () => {
-    expect(() => resolveStoragePath('inspections\..\..\secrets.env')).toThrow(
+    expect(() => resolveStoragePath('inspections\\..\\..\\secrets.env')).toThrow(
       'escapes the upload directory',
     );
   });
