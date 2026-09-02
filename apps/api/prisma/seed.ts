@@ -99,14 +99,12 @@ async function main(): Promise<void> {
 
   const csv = await seedCsvData(prisma);
   if (csv.directory === null) {
-    process.stdout.write("  CSV master data skipped: no requirements/ directory found
-");
+    process.stdout.write("  CSV master data skipped: no requirements/ directory found\n");
   } else {
     process.stdout.write(
       `  CSV data: ${String(csv.vehicleBrandsCreated)} vehicle brands, ` +
         `${String(csv.tireBrandsCreated)} tire brands, ` +
-        `${String(csv.patternsCreated)} tire brand patterns created
-`,
+        `${String(csv.patternsCreated)} tire brand patterns created\n`,
     );
   }
 
