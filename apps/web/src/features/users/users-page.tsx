@@ -22,6 +22,7 @@ import {
   useToast,
 } from "../../components/ui/feedback.tsx";
 import { Button, Card, Field, Input, Select, Spinner } from "../../components/ui/primitives.tsx";
+import { Pagination } from "../../components/ui/pagination.tsx";
 
 /**
  * User management (PLAN/04 §5) — closes D-12.
@@ -32,7 +33,10 @@ import { Button, Card, Field, Input, Select, Spinner } from "../../components/ui
  * a role change ends every session, and deletion asks you to retype the username
  * rather than nodding at a browser `confirm()` (which is forbidden anyway).
  */
+const PER_PAGE = 25;
+
 export function UsersPage(): ReactNode {
+  const [page, setPage] = useState(1);
   const queryClient = useQueryClient();
   const toast = useToast();
   const { user: currentUser } = useSession();
@@ -44,8 +48,8 @@ export function UsersPage(): ReactNode {
   const [error, setError] = useState<unknown>(null);
 
   const users = useQuery({
-    queryKey: ["users"],
-    queryFn: () => api.get<Paginated<UserRecord>>("/api/users", { perPage: 100 }),
+    queryKey: ["users", page],
+    queryFn: () => api.get<Paginated<UserRecord>>("/api/users", { page, perPage: PER_PAGE }),
   });
 
   const master = useQuery({
@@ -211,6 +215,14 @@ export function UsersPage(): ReactNode {
             })}
           </ul>
         )}
+
+        <Pagination
+          page={page}
+          totalPages={users.data?.totalPages ?? 1}
+          totalItems={users.data?.total}
+          onPageChange={setPage}
+          disabled={users.isFetching}
+        />
       </Card>
 
       <CreateUserDialog

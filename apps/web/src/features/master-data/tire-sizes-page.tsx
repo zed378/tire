@@ -1,16 +1,24 @@
 import { useState, type ReactNode } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { TireSize, CreateTireSizeInput } from "@c26/contracts";
+import type { CreateTireSizeInput, TireSize, TireSizeListResponse } from "@c26/contracts";
 import { api } from "../../lib/api-client.ts";
 import { ErrorBanner, useToast } from "../../components/ui/feedback.tsx";
-import { Button, Card, Field, Input, Spinner } from "../../components/ui/primitives.tsx";
+import { Button, Card, Field, Input, SkeletonRows } from "../../components/ui/primitives.tsx";
+import { Pagination } from "../../components/ui/pagination.tsx";
 
 type Tab = "TB" | "LT";
+
+/**
+ * Sizes arrive from req-Size.csv and grow whenever the business adds one, so
+ * the list is paged rather than trusting it to stay short.
+ */
+const PER_PAGE = 25;
 
 export function TireSizesPage(): ReactNode {
   const queryClient = useQueryClient();
   const toast = useToast();
   const [tab, setTab] = useState<Tab>("TB");
+  const [page, setPage] = useState(1);
   const [error, setError] = useState<unknown>(null);
   const [creating, setCreating] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
@@ -18,9 +26,9 @@ export function TireSizesPage(): ReactNode {
   const [deletingId, setDeletingId] = useState<number | null>(null);
 
   const sizes = useQuery({
-    queryKey: ["tire-sizes", tab],
+    queryKey: ["tire-sizes", tab, page],
     queryFn: () =>
-      api.get<{ items: TireSize[] }>(`/api/tire-sizes/${tab}`, { perPage: 100 }),
+      api.get<TireSizeListResponse>(`/api/tire-sizes/${tab}`, { page, perPage: PER_PAGE }),
   });
 
   const create = useMutation({
@@ -78,7 +86,10 @@ export function TireSizesPage(): ReactNode {
       <nav className="flex border-b border-line">
         <button
           type="button"
-          onClick={() => setTab("TB")}
+          onClick={() => {
+              setTab("TB");
+              setPage(1);
+            }}
           className={
             tab === "TB"
               ? "border-b-2 border-accent px-4 py-2 text-sm font-medium text-accent-text"
@@ -89,7 +100,10 @@ export function TireSizesPage(): ReactNode {
         </button>
         <button
           type="button"
-          onClick={() => setTab("LT")}
+          onClick={() => {
+              setTab("LT");
+              setPage(1);
+            }}
           className={
             tab === "LT"
               ? "border-b-2 border-accent px-4 py-2 text-sm font-medium text-accent-text"
@@ -101,9 +115,12 @@ export function TireSizesPage(): ReactNode {
       </nav>
 
       {sizes.isLoading ? (
-        <div className="flex justify-center py-16 text-muted">
-          <Spinner className="h-6 w-6" />
-        </div>
+        <Card>
+          <div role="status" aria-live="polite">
+            <span className="sr-only">Memuat ukuran ban…</span>
+            <SkeletonRows rows={5} />
+          </div>
+        </Card>
       ) : null}
 
       {sizes.data !== undefined ? (
@@ -179,6 +196,14 @@ export function TireSizesPage(): ReactNode {
               </tbody>
             </table>
           </div>
+
+          <Pagination
+            page={page}
+            totalPages={Math.max(1, Math.ceil(sizes.data.total / PER_PAGE))}
+            totalItems={sizes.data.total}
+            onPageChange={setPage}
+            disabled={sizes.isFetching}
+          />
         </Card>
       ) : null}
 

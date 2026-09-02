@@ -11,6 +11,7 @@ import { api } from "../../lib/api-client.ts";
 import { formatRelative } from "../../lib/format.ts";
 import { ErrorBanner, useToast } from "../../components/ui/feedback.tsx";
 import { Button, Card, EmptyState, Spinner } from "../../components/ui/primitives.tsx";
+import { Pagination } from "../../components/ui/pagination.tsx";
 
 /**
  * The notification inbox and preferences (PLAN/12 §8).
@@ -21,14 +22,18 @@ import { Button, Card, EmptyState, Spinner } from "../../components/ui/primitive
  * If it could be silenced, D-11 comes back in a new shape — an inspection
  * hanging forever because nobody knew it needed fixing.
  */
+const PER_PAGE = 25;
+
 export function NotificationsPage(): ReactNode {
+  const [page, setPage] = useState(1);
   const queryClient = useQueryClient();
   const toast = useToast();
   const [showPreferences, setShowPreferences] = useState(false);
 
   const inbox = useQuery({
-    queryKey: ["notifications"],
-    queryFn: () => api.get<Paginated<NotificationRecord>>("/api/notifications", { perPage: 50 }),
+    queryKey: ["notifications", page],
+    queryFn: () =>
+      api.get<Paginated<NotificationRecord>>("/api/notifications", { page, perPage: PER_PAGE }),
   });
 
   const preferences = useQuery({
@@ -152,6 +157,14 @@ export function NotificationsPage(): ReactNode {
             ))}
           </ul>
         )}
+
+        <Pagination
+          page={page}
+          totalPages={inbox.data?.totalPages ?? 1}
+          totalItems={inbox.data?.total}
+          onPageChange={setPage}
+          disabled={inbox.isFetching}
+        />
       </Card>
     </div>
   );

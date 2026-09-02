@@ -47,6 +47,22 @@ export function ReportsPage(): ReactNode {
       }),
   });
 
+  /**
+   * The detail table is paged in the browser.
+   *
+   * These rows are an aggregate the server already computed and the chart above
+   * needs all of them, so fetching them again a page at a time would be a second
+   * round trip for data that is right here. One filter combination can still
+   * return a city for every period in the range, which is more rows than anyone
+   * reads at once.
+   */
+  const allPoints = progress.data?.points ?? [];
+  const tableTotalPages = Math.max(1, Math.ceil(allPoints.length / TABLE_PER_PAGE));
+  const pagedPoints = allPoints.slice(
+    (tablePage - 1) * TABLE_PER_PAGE,
+    tablePage * TABLE_PER_PAGE,
+  );
+
   const chartData = (progress.data?.points ?? [])
     .reduce<{ period: string; TB: number; LT: number }[]>((accumulator, point) => {
       const existing = accumulator.find((row) => row.period === point.period);
@@ -178,7 +194,7 @@ export function ReportsPage(): ReactNode {
                  </tr>
                </thead>
                <tbody className="divide-y divide-line">
-                {progress.data.points.map((point) => (
+                {pagedPoints.map((point) => (
                   <tr key={`${point.period}-${point.cityId}`}>
                     <td className="py-2 pr-3">{formatDate(point.period)}</td>
                     <td className="py-2 pr-3">{point.provinceName}</td>
@@ -192,6 +208,13 @@ export function ReportsPage(): ReactNode {
             </table>
           </div>
         )}
+
+        <Pagination
+          page={tablePage}
+          totalPages={tableTotalPages}
+          totalItems={allPoints.length}
+          onPageChange={setTablePage}
+        />
       </Card>
 
       <ExportPanel />

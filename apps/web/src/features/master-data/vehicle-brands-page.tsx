@@ -1,9 +1,14 @@
 import { useState, type ReactNode } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { VehicleBrand, CreateVehicleBrandInput } from "@c26/contracts";
+import type {
+  CreateVehicleBrandInput,
+  VehicleBrand,
+  VehicleBrandListResponse,
+} from "@c26/contracts";
 import { api } from "../../lib/api-client.ts";
 import { ErrorBanner, useToast } from "../../components/ui/feedback.tsx";
-import { Button, Card, Field, Input, Spinner } from "../../components/ui/primitives.tsx";
+import { Button, Card, EmptyState, Field, Input, SkeletonRows } from "../../components/ui/primitives.tsx";
+import { Pagination } from "../../components/ui/pagination.tsx";
 
 /**
  * Master data grows without anyone deciding to grow it — the CSV seed alone
@@ -83,11 +88,17 @@ export function VehicleBrandsPage(): ReactNode {
       {error !== null ? <ErrorBanner error={error} onDismiss={() => setError(null)} /> : null}
 
        <Card>
-         {brands.isLoading ? (
-           <div className="flex justify-center py-10 text-muted">
-             <Spinner className="h-5 w-5" />
-           </div>
-         ) : (
+        {brands.isLoading ? (
+          <div role="status" aria-live="polite">
+            <span className="sr-only">Memuat merk kendaraan…</span>
+            <SkeletonRows rows={5} />
+          </div>
+        ) : total === 0 ? (
+          <EmptyState
+            title="Belum ada merk kendaraan"
+            description="Tambahkan merk pertama lewat tombol di atas."
+          />
+        ) : (
            <ul className="divide-y divide-line">
             {(brands.data?.items ?? []).map((brand) => (
               <li key={brand.id} className="flex flex-wrap items-center justify-between gap-3 py-3">
@@ -136,6 +147,14 @@ export function VehicleBrandsPage(): ReactNode {
             ))}
           </ul>
         )}
+
+        <Pagination
+          page={page}
+          totalPages={totalPages}
+          totalItems={total}
+          onPageChange={setPage}
+          disabled={brands.isFetching}
+        />
       </Card>
 
       {creating ? (
