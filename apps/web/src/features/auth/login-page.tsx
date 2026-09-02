@@ -6,7 +6,6 @@ import { loginSchema, type LoginInput } from "@c26/contracts";
 import { isApiError } from "../../lib/api-client.ts";
 import { useSession } from "../../lib/session.tsx";
 import { Banner } from "../../components/ui/feedback.tsx";
-import { HERO_IMAGE } from "../landing/image-credits.ts";
 import { AUTH_FIELD, AuthLayout } from "./auth-layout.tsx";
 import { PasswordField } from "./auth-fields.tsx";
 import { Button, Field, Input } from "../../components/ui/primitives.tsx";
@@ -109,7 +108,7 @@ export function LoginPage(): ReactNode {
           ? "Satu langkah lagi. Masukkan kode dari aplikasi authenticator Anda."
           : "Gunakan User ID dan kata sandi yang diberikan admin."
       }
-      image={HERO_IMAGE}
+      photo="depot"
       note={`${formatDate(new Date())} WIB`}
       footer={
         <>

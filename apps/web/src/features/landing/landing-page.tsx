@@ -12,7 +12,7 @@ import {
   ProductValue,
   TrustCapability,
 } from "./landing-sections.tsx";
-import { IMAGE_CREDITS } from "./image-credits.ts";
+import { PHOTO_CREDITS } from "../../lib/photo-credits.ts";
 import "./landing.css";
 
 /**
@@ -387,9 +387,13 @@ function SiteFooter(): ReactNode {
         <div className="mt-10 border-t border-line pt-6">
           <p className="text-xs text-subtle">Kredit foto</p>
           <ul className="mt-2 space-y-1">
-            {IMAGE_CREDITS.map((credit) => (
-              <li key={credit.src} className="text-xs text-subtle">
-                {credit.alt} — {credit.author},{" "}
+            {/* Only the photographs this page renders. Crediting one nobody can
+                see here is a list, not attribution. */}
+            {(["tire-tread", "depot"] as const).map((name) => {
+              const credit = PHOTO_CREDITS[name];
+              return (
+              <li key={name} className="text-xs text-subtle">
+                {credit.author},{" "}
                 {credit.licenseUrl === "" ? (
                   credit.license
                 ) : (
@@ -412,7 +416,8 @@ function SiteFooter(): ReactNode {
                   sumber
                 </a>
               </li>
-            ))}
+              );
+            })}
           </ul>
         </div>
 

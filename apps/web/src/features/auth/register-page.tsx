@@ -6,7 +6,6 @@ import { registerSchema, type RegisterInput } from "@c26/contracts";
 import { api, isApiError } from "../../lib/api-client.ts";
 import { Banner } from "../../components/ui/feedback.tsx";
 import { Button, Field, Input } from "../../components/ui/primitives.tsx";
-import { WHEEL_IMAGE } from "../landing/image-credits.ts";
 import { AUTH_FIELD, AuthLayout } from "./auth-layout.tsx";
 import { PasswordChecklist, PasswordField, TreadGauge, scorePassword } from "./auth-fields.tsx";
 import { formatDate } from "../../lib/format.ts";
@@ -64,7 +63,7 @@ export function RegisterPage(): ReactNode {
     <AuthLayout
       title="Mulai menggunakan"
       subtitle="Akun langsung aktif dengan peran Supplier. Admin dapat mengubah peran Anda nanti."
-      image={WHEEL_IMAGE}
+      photo="tire-stack"
       note={`${formatDate(new Date())} WIB`}
       footer={
         <>
