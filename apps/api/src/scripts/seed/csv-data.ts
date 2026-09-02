@@ -1,15 +1,27 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import type { PrismaClient } from "../../src/generated/prisma/index.js";
+import type { PrismaClient } from "../../generated/prisma/index.js";
+import { resolveRequirementsDir } from "./requirements-dir.ts";
 
 /**
- * CSV Data Seeding
+ * CSV master data (PLAN/02 §5).
  *
- * Loads master data from CSV files in the requirements directory:
- * - req-TB Brand Pattern.csv (Truck/Bus tire brands and patterns)
- * - req-LT Brand Pattern.csv (Light Truck tire brands and patterns)
- * - req-Size.csv (Tire sizes for TB and LT)
+ * Four files, supplied by the business rather than invented here:
+ *   req-Vehicle Brand.csv      vehicle manufacturers
+ *   req-TB Brand Pattern.csv   truck and bus tire brands, and their patterns
+ *   req-LT Brand Pattern.csv   light truck tire brands, and their patterns
+ *   req-Size.csv               tire sizes, by group
+ *
+ * Idempotent throughout: every deployment re-runs this, and it must add only
+ * what is missing. Existing rows are left exactly as they are — an operator who
+ * renames or deactivates a brand through the admin screens must not have that
+ * undone by the next deploy.
  */
+
+const TB_FILE = "req-TB Brand Pattern.csv";
+const LT_FILE = "req-LT Brand Pattern.csv";
+const SIZE_FILE = "req-Size.csv";
+const VEHICLE_FILE = "req-Vehicle Brand.csv";
 
 interface BrandPattern {
   brand: string;
@@ -17,195 +29,174 @@ interface BrandPattern {
 }
 
 /**
- * Parse TB/LT Brand Pattern CSV files.
- * Format: empty, BRAND, PATTERN with repeating pattern rows under each brand
+ * Parses the TB/LT files: `,BRAND,PATTERN`, where the brand column is filled in
+ * once and the pattern rows beneath it carry only a pattern.
  */
 function parseBrandPatternCsv(filePath: string): BrandPattern[] {
-  const content = readFileSync(filePath, "utf-8");
-  const lines = content.split("\n").map((line) => line.trim());
+  const lines = readFileSync(filePath, "utf-8")
+    .split("\n")
+    .map((line) => line.trim());
 
   const brandPatterns: BrandPattern[] = [];
   let currentBrand = "";
   let currentPatterns: string[] = [];
 
   for (const line of lines) {
-    if (!line) continue;
+    if (line === "") continue;
 
     const parts = line.split(",").map((part) => part.trim());
+    const brandColumn = parts[1] ?? "";
+    const patternColumn = parts[2] ?? "";
 
-    // Skip header row (empty, BRAND, PATTERN)
-    if (parts[1] === "BRAND" && parts[2] === "PATTERN") continue;
+    if (brandColumn === "BRAND" && patternColumn === "PATTERN") continue;
 
-    // New brand row (has brand name in second column)
-    if (parts[1] && parts[1] !== "") {
-      // Save previous brand if exists
-      if (currentBrand && currentPatterns.length > 0) {
-        brandPatterns.push({
-          brand: currentBrand,
-          patterns: [...currentPatterns],
-        });
+    if (brandColumn !== "") {
+      if (currentBrand !== "") {
+        brandPatterns.push({ brand: currentBrand, patterns: [...currentPatterns] });
       }
-      currentBrand = parts[1];
+      currentBrand = brandColumn;
       currentPatterns = [];
     }
 
-    // Pattern row (has pattern in third column)
-    if (parts[2] && parts[2] !== "" && currentBrand) {
-      currentPatterns.push(parts[2]);
+    if (patternColumn !== "" && currentBrand !== "") {
+      currentPatterns.push(patternColumn);
     }
   }
 
-  // Save last brand
-  if (currentBrand && currentPatterns.length > 0) {
-    brandPatterns.push({
-      brand: currentBrand,
-      patterns: currentPatterns,
-    });
+  // A brand with no patterns is still a brand, so this is not guarded on
+  // `currentPatterns.length` the way the earlier version was — that dropped the
+  // last brand in the file whenever it happened to have none.
+  if (currentBrand !== "") {
+    brandPatterns.push({ brand: currentBrand, patterns: currentPatterns });
   }
 
   return brandPatterns;
 }
 
-/**
- * Parse Vehicle Brand CSV file.
- * Format: BRAND with one brand per row
- */
+/** Parses `req-Vehicle Brand.csv`: one brand per line under a `BRAND` header. */
 function parseVehicleBrandCsv(filePath: string): string[] {
-  const content = readFileSync(filePath, "utf-8");
-  const lines = content.split("\n").map((line) => line.trim());
-
-  const brands: string[] = [];
-
-  for (const line of lines) {
-    if (!line) continue;
-
-    // Skip header (BRAND)
-    if (line === "BRAND") continue;
-
-    // Add brand
-    if (line) {
-      brands.push(line);
-    }
-  }
-
-  return brands;
+  return readFileSync(filePath, "utf-8")
+    .split("\n")
+    .map((line) => line.trim())
+    .filter((line) => line !== "" && line !== "BRAND");
 }
 
-/**
- * Parse Size CSV file.
- * Format: Group,SIZE with rows like "TB,10.00-20" or "LT,215/75R17.5"
- */
+/** Parses `req-Size.csv`: `Group,SIZE`, the group repeating down its block. */
 function parseSizeCsv(filePath: string): { group: string; size: string }[] {
-  const content = readFileSync(filePath, "utf-8");
-  const lines = content.split("\n").map((line) => line.trim());
+  const lines = readFileSync(filePath, "utf-8")
+    .split("\n")
+    .map((line) => line.trim());
 
   const sizes: { group: string; size: string }[] = [];
+  let currentGroup = "";
 
   for (const line of lines) {
-    if (!line) continue;
-
-    // Skip header row (,Group,SIZE or empty first column)
-    if (line.startsWith(",") || line.startsWith("Group,")) continue;
+    if (line === "") continue;
 
     const parts = line.split(",").map((part) => part.trim());
-    if (parts.length >= 2 && parts[0] && parts[1]) {
-      sizes.push({
-        group: parts[0],
-        size: parts[1],
-      });
+    const groupColumn = parts[0] ?? "";
+    const sizeColumn = parts[1] ?? "";
+
+    if (groupColumn === "Group" && sizeColumn === "SIZE") continue;
+    if (groupColumn === "TB" || groupColumn === "LT") currentGroup = groupColumn;
+    if (sizeColumn !== "" && currentGroup !== "") {
+      sizes.push({ group: currentGroup, size: sizeColumn });
     }
   }
 
   return sizes;
 }
 
-export async function seedCsvData(prisma: PrismaClient): Promise<void> {
-  const requirementsDir = resolve(process.cwd(), "../../requirements");
+export interface CsvSeedResult {
+  /** Absolute directory the files were read from, or null when none was found. */
+  directory: string | null;
+  missingFiles: string[];
+  vehicleBrandsCreated: number;
+  tireBrandsCreated: number;
+  patternsCreated: number;
+  /** Parsed but not stored: no table holds sizes. See the note below. */
+  sizesParsed: number;
+}
 
-  // Parse CSV files
-  const tbBrandPatterns = parseBrandPatternCsv(
-    resolve(requirementsDir, "req-TB Brand Pattern.csv"),
-  );
+export async function seedCsvData(prisma: PrismaClient): Promise<CsvSeedResult> {
+  const directory = resolveRequirementsDir();
+  if (directory === null) {
+    return {
+      directory: null,
+      missingFiles: [VEHICLE_FILE, TB_FILE, LT_FILE, SIZE_FILE],
+      vehicleBrandsCreated: 0,
+      tireBrandsCreated: 0,
+      patternsCreated: 0,
+      sizesParsed: 0,
+    };
+  }
 
-  const ltBrandPatterns = parseBrandPatternCsv(
-    resolve(requirementsDir, "req-LT Brand Pattern.csv"),
-  );
+  const paths = {
+    vehicle: resolve(directory, VEHICLE_FILE),
+    tb: resolve(directory, TB_FILE),
+    lt: resolve(directory, LT_FILE),
+    size: resolve(directory, SIZE_FILE),
+  };
 
-  const sizes = parseSizeCsv(resolve(requirementsDir, "req-Size.csv"));
+  const missingFiles = Object.entries(paths)
+    .filter(([, path]) => !existsSync(path))
+    .map(([, path]) => path.slice(directory.length + 1));
 
-  const vehicleBrands = parseVehicleBrandCsv(
-    resolve(requirementsDir, "req-Vehicle Brand.csv"),
-  );
+  // Each file is seeded on its own. The earlier version required all four to be
+  // present and skipped every one of them otherwise, so a single missing file
+  // left the whole tire brand list empty with only a warning to show for it.
+  const vehicleBrands = existsSync(paths.vehicle) ? parseVehicleBrandCsv(paths.vehicle) : [];
+  const tbBrandPatterns = existsSync(paths.tb) ? parseBrandPatternCsv(paths.tb) : [];
+  const ltBrandPatterns = existsSync(paths.lt) ? parseBrandPatternCsv(paths.lt) : [];
+  const sizes = existsSync(paths.size) ? parseSizeCsv(paths.size) : [];
 
-  // Track created vs skipped for each type
-  let vehicleBrandCreated = 0;
-  let vehicleBrandSkipped = 0;
-  let tbBrandCreated = 0;
-  let tbBrandSkipped = 0;
-  let ltBrandCreated = 0;
-  let ltBrandSkipped = 0;
+  let vehicleBrandsCreated = 0;
+  for (const name of vehicleBrands) {
+    const existing = await prisma.vehicleBrand.findUnique({ where: { name } });
+    if (existing !== null) continue;
+    await prisma.vehicleBrand.create({ data: { name } });
+    vehicleBrandsCreated++;
+  }
 
-  // Seed Vehicle Brands - only import new ones
-  for (const brand of vehicleBrands) {
-    const existing = await prisma.vehicleBrand.findUnique({
-      where: { name: brand },
-    });
+  let tireBrandsCreated = 0;
+  let patternsCreated = 0;
 
-    if (existing === null) {
-      await prisma.vehicleBrand.create({ data: { name: brand } });
-      vehicleBrandCreated++;
-    } else {
-      vehicleBrandSkipped++;
+  for (const [type, brandPatterns] of [
+    ["TB", tbBrandPatterns],
+    ["LT", ltBrandPatterns],
+  ] as const) {
+    for (const { brand, patterns } of brandPatterns) {
+      const existing = await prisma.tireBrand.findUnique({ where: { name: brand } });
+      if (existing === null) {
+        await prisma.tireBrand.create({ data: { name: brand } });
+        tireBrandsCreated++;
+      }
+
+      // The patterns were parsed and then thrown away by every previous version
+      // of this seed, which is why `tire_brand_patterns` was empty in every
+      // environment while the master-brand screens listed nothing.
+      for (const pattern of patterns) {
+        const existingPattern = await prisma.tireBrandPattern.findUnique({
+          where: { brand_pattern_type: { brand, pattern, type } },
+        });
+        if (existingPattern !== null) continue;
+        await prisma.tireBrandPattern.create({ data: { brand, pattern, type } });
+        patternsCreated++;
+      }
     }
   }
 
-  // Seed TB Tire Brands - only import new ones
-  for (const brandPattern of tbBrandPatterns) {
-    const existing = await prisma.tireBrand.findUnique({
-      where: { name: brandPattern.brand },
-    });
-
-    if (existing === null) {
-      await prisma.tireBrand.create({ data: { name: brandPattern.brand } });
-      tbBrandCreated++;
-    } else {
-      tbBrandSkipped++;
-    }
-  }
-
-  // Seed LT Tire Brands - only import new ones
-  for (const brandPattern of ltBrandPatterns) {
-    const existing = await prisma.tireBrand.findUnique({
-      where: { name: brandPattern.brand },
-    });
-
-    if (existing === null) {
-      await prisma.tireBrand.create({ data: { name: brandPattern.brand } });
-      ltBrandCreated++;
-    } else {
-      ltBrandSkipped++;
-    }
-  }
-
-  // Output summary with created vs skipped breakdown
-  const totalCreated = vehicleBrandCreated + tbBrandCreated + ltBrandCreated;
-  const totalSkipped = vehicleBrandSkipped + tbBrandSkipped + ltBrandSkipped;
-
-  process.stdout.write(
-    `  CSV data: ` +
-      `${vehicleBrandCreated} vehicle brands created (${vehicleBrandSkipped} skipped), ` +
-      `${tbBrandCreated} TB brands created (${tbBrandSkipped} skipped), ` +
-      `${ltBrandCreated} LT brands created (${ltBrandSkipped} skipped), ` +
-      `${sizes.length} tire sizes\n`,
-  );
-
-  if (totalSkipped > 0) {
-    process.stdout.write(
-      `  (${totalSkipped} existing brands were not re-imported to avoid duplicates)\n`,
-    );
-  }
-
-  if (totalCreated === 0 && totalSkipped > 0) {
-    process.stdout.write(`  (All CSV data already exists in database - no new records imported)\n`);
-  }
+  // Sizes are parsed to report the file was read, and deliberately not stored:
+  // there is no tire size table. `tire_specs.size` is free text captured per
+  // tire (PLAN/02 §7). Earlier versions printed a size count as though rows had
+  // been written, which is the kind of log line that makes an empty table look
+  // like a seeded one.
+  return {
+    directory,
+    missingFiles,
+    vehicleBrandsCreated,
+    tireBrandsCreated,
+    patternsCreated,
+    sizesParsed: sizes.length,
+  };
 }

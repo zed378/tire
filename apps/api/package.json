@@ -17,10 +17,8 @@
     "db:queue": "node dist/scripts/queue-setup.js",
     "db:queue-smoke": "node dist/scripts/queue-smoke.js",
     "db:seed": "tsx prisma/seed.ts",
-    "db:init-seed": "tsx prisma/db-init-seed.ts",
-    "db:seed:prod": "node dist/scripts/seed-csv-prod.js",
+    "db:seed:init": "node dist/scripts/seed-init.js",
     "db:seed:prod-admin": "node dist/scripts/seed-prod-admin.js",
-    "db:seed:csv-prod": "node dist/scripts/seed-csv-prod.js",
     "db:reset": "prisma migrate reset --force --skip-seed",
     "prisma": "prisma"
   },

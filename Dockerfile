@@ -55,11 +55,6 @@ COPY --from=build /app/apps/api/prisma.config.ts ./apps/api/prisma.config.ts
 # Copy seed subdirectory (master-data, csv-data, demo-data, sample-photos)
 COPY --from=build /app/apps/api/prisma/seed ./apps/api/prisma/seed
 
-# ── Source .ts files for tsx execution (db-init-seed.ts) ────────────────────
-# The build stage only has compiled .js files. We need source .ts files for
-# tsx to execute db-init-seed.ts at runtime. Copy only the files needed.
-COPY --from=build /app/apps/api/prisma/db-init-seed.ts ./apps/api/prisma/db-init-seed.ts
-
 # Copy package.json files needed for seed scripts and pnpm db:migrate
 COPY --from=build /app/apps/api/package.json ./apps/api/package.json
 COPY --from=build /app/packages/contracts/package.json ./packages/contracts/package.json
@@ -83,16 +78,20 @@ RUN mkdir -p /app/uploads && chown -R node:node /app/uploads
 USER node
 EXPOSE 3000
 
-# ── Database initialization happens automatically on container start ───────
-# docker-entrypoint.sh runs:
-#   1. prisma migrate deploy (creates schema)
-#   2. tsx apps/api/prisma/db-init-seed.ts (seeds master data + CSV data) — automatic
-#   3. queue setup (initializes job queues)
+# ── Deployment-time database work ───────────────────────────────────────────
+# None of it happens here. The `db-init` service in docker-compose.prod.yml runs
+# it as its `command`, and api and worker wait for that to succeed:
 #
-# Admin account setup is MANUAL-ONLY and must be run separately:
+#   pnpm db:migrate    prisma migrate deploy, then pg-boss queue setup
+#   pnpm db:seed:init  reference data — provinces, cities, brands, patterns
+#
+# Both are compiled JavaScript under dist/, run by node. An earlier arrangement
+# put this in a docker-entrypoint.sh that was never copied into the image and
+# never set as an ENTRYPOINT, so it never ran and nothing said so.
+#
+# The first admin account is created by an operator, never by a deployment:
 #   docker exec <container> node dist/scripts/seed-prod-admin.js "password"
-#
-# This separation ensures credentials are never automated in deployment.
+# so no password is ever part of a deployment step (PLAN/13 §8).
 
 # ── Entrypoint: API server ───────────────────────────────────────────────────
 CMD ["node", "dist/server.js"]

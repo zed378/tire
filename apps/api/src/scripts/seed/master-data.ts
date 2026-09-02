@@ -1,4 +1,4 @@
-import type { PrismaClient } from "../../src/generated/prisma/index.js";
+import type { PrismaClient } from "../../generated/prisma/index.js";
 
 /**
  * Master data (PLAN/02 §5) — closes Q-07.

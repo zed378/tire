@@ -62,6 +62,14 @@ services:
       timeout: 5s
       retries: 3
 
+  # Everything that must happen once per deployment, in order, before api and
+  # worker are allowed to start. api and worker both wait on this completing
+  # successfully, so a failure here holds the deployment rather than bringing up
+  # a system with empty master data.
+  #
+  # It used to run `pnpm db:migrate` alone. The seeding was written in
+  # docker-entrypoint.sh, which nothing ever executed, so every deployment came
+  # up with no provinces, no cities and no tire brands.
   db-init:
     build:
       context: .
@@ -70,12 +78,17 @@ services:
     restart: "no"
     env_file: .env.prod
     volumes:
-      # CSV files for seed data (optional)
+      # The tire and vehicle brand CSVs. Read-only: this is business input, and
+      # the seed only ever reads it.
       - ./requirements:/app/requirements:ro
+      # The seed does not write photos, but it shares a config module that
+      # resolves UPLOAD_DIR, and mounting the real volume keeps this container's
+      # view of the filesystem identical to the api container's.
+      - uploads:/app/uploads
     depends_on:
       postgres:
         condition: service_healthy
-    command: ["sh", "-c", "pnpm db:migrate"]
+    command: ["sh", "-c", "pnpm db:migrate && pnpm db:seed:init"]
 
   worker:
     build:
@@ -92,6 +105,11 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      # The worker consumes the pg-boss queues that db-init registers. Starting
+      # before they exist is how "no partition of relation job found for row"
+      # reached production.
+      db-init:
+        condition: service_completed_successfully
 
   pgadmin:
     image: dpage/pgadmin4:latest
