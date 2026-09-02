@@ -439,6 +439,12 @@ export async function listSessions(userId: bigint, currentSessionId: string): Pr
     id: session.id,
     deviceLabel: session.deviceLabel ?? "Perangkat tidak dikenal",
     ipAddress: session.ipAddress,
+    // NOT IMPLEMENTED. PLAN/13 §5 lists an approximate location beside each
+    // device, and it would take a geo-IP lookup — another dependency, a
+    // network call per row, and somebody's whereabouts stored in a table we
+    // do not currently keep. It is left null on purpose and the interface
+    // shows the IP address instead, which is real. Filling this in is a
+    // decision about personal data, not a small piece of plumbing.
     approximateLocation: null,
     lastSeenAt: session.lastSeenAt.toISOString(),
     createdAt: session.createdAt.toISOString(),

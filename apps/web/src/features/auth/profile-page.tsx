@@ -157,9 +157,10 @@ export function ProfilePage(): ReactNode {
                     {session.deviceLabel}
                     {session.current ? <Badge tone="accent">Perangkat ini</Badge> : null}
                   </p>
-                  <p className="mt-0.5 text-xs text-muted">
-                    {session.approximateLocation ?? "Lokasi tidak diketahui"}
-                    {session.ipAddress === null ? "" : ` · ${session.ipAddress}`}
+                  <p className="mt-0.5 font-mono text-xs text-muted">
+                    {session.approximateLocation ??
+                      session.ipAddress ??
+                      "Alamat IP tidak tercatat"}
                   </p>
                   <p className="mt-0.5 text-xs text-subtle">
                     Terakhir aktif {formatRelative(session.lastSeenAt)} · Masuk{" "}
