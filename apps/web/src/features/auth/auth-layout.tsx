@@ -48,9 +48,9 @@ export function AuthLayout({
       </div>
 
       <main className="mx-auto flex w-full max-w-6xl flex-1 items-center px-5 pb-10 sm:px-8">
-        <div className="grid w-full overflow-hidden rounded-3xl border border-line bg-surface shadow-sm lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)]">
+        <div className="grid w-full animate-scale-in overflow-hidden rounded-3xl border border-line bg-surface shadow-sm lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)]">
           <div className="flex flex-col justify-center px-6 py-10 sm:px-10 sm:py-12">
-            <div className="mx-auto w-full max-w-sm">
+            <div className="mx-auto w-full max-w-sm animate-fade-up [animation-delay:120ms]">
               <span className="inline-flex items-center rounded-full border border-line-strong px-3 py-1 text-xs font-medium text-muted">
                 Commercial 2026
               </span>
@@ -79,7 +79,7 @@ export function AuthLayout({
             {/* A scrim so the cards below stay legible whatever the photo does. */}
             <div aria-hidden="true" className="absolute inset-0 bg-black/25" />
 
-            <div className="absolute inset-x-6 bottom-6 space-y-2.5">
+            <div className="absolute inset-x-6 bottom-6 animate-fade-up space-y-2.5 [animation-delay:260ms]">
               {imageCaption.map((item) => (
                 <div
                   key={item.label}
