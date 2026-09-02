@@ -91,6 +91,21 @@ docker compose -f docker-compose.prod.yml up -d --build
 The api publishes only to `127.0.0.1:3000`, so nothing is reachable from the
 VM's network — the tunnel is the sole way in.
 
+### Seeding the Admin Account in Production
+
+In a production environment (`APP_ENV=production`), the default `pnpm db:seed` script refuses to create admin accounts. To create the initial administrator account in production, use the dedicated `seed-prod-admin.js` script, which **must be executed from inside a container**:
+
+```bash
+# Run inside the running API container:
+docker exec -it commercial2026-api-1 node dist/scripts/seed-prod-admin.js "PasswordProdSecret123!"
+
+# Or via the pnpm shortcut:
+docker exec -it commercial2026-api-1 pnpm db:seed:prod-admin "PasswordProdSecret123!"
+
+# Optional: specify a custom admin username (default: admin)
+docker exec -it commercial2026-api-1 node dist/scripts/seed-prod-admin.js "PasswordProdSecret123!" --username=superadmin
+```
+
 ## Where photos are stored
 
 `STORAGE_DRIVER=local` writes them to `apps/api/uploads` and serves them through the
