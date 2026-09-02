@@ -158,23 +158,103 @@ const TIRE_BRANDS = [
 ]
 ```
 
-### Upsert Strategy
+## Anti-Duplicate Strategy
 
-All data uses Prisma's `upsert()` for safety:
+### No Duplicates Guarantee
 
+The seeding system uses a strict **create-only** approach to prevent duplicates:
+
+1. **Check Before Create**: For every record, the system checks if it already exists
+2. **Create Only New Records**: Only records that don't exist are imported
+3. **Skip Existing Records**: Existing records are counted but not re-imported
+4. **Clear Reporting**: Output shows created vs skipped breakdown
+
+### Implementation
+
+**Master Data Seeding** (`apps/api/prisma/seed/master-data.ts`):
 ```typescript
-const province = await prisma.province.upsert({
+// Check if record exists first
+const existing = await prisma.province.findUnique({
   where: { code: region.code },
-  create: { code: region.code, name: region.name },
-  update: { name: region.name },
 });
+
+// Only create if not found
+if (existing === null) {
+  await prisma.province.create({
+    data: { code: region.code, name: region.name },
+  });
+  provinceCreated++;
+} else {
+  provinceSkipped++;
+}
 ```
 
-**Benefits**:
-- ✅ Idempotent: Safe to run multiple times
-- ✅ No duplicates: Uses unique `code` as key
-- ✅ Non-destructive: Won't delete existing data
-- ✅ Updates names if changed
+**CSV Seeding** (`apps/api/prisma/seed/csv-data.ts`):
+```typescript
+// Check if brand exists first
+const existing = await prisma.tireBrand.findUnique({
+  where: { name: brandPattern.brand },
+});
+
+// Only create if not found
+if (existing === null) {
+  await prisma.tireBrand.create({
+    data: { name: brandPattern.brand },
+  });
+  brandCreated++;
+} else {
+  brandSkipped++;
+}
+```
+
+### Output Example
+
+**First run** (no existing data):
+```
+master data: 34 provinces created (0 skipped), 289 cities created (0 skipped), 
+19 vehicle brands created (0 skipped), 27 tire brands created (0 skipped)
+CSV data: 30 vehicle brands created (0 skipped), 141 TB brands created (0 skipped), 
+76 LT brands created (0 skipped), 28 tire sizes
+```
+
+**Second run** (data already exists):
+```
+master data: 0 provinces created (34 skipped), 0 cities created (289 skipped), 
+0 vehicle brands created (19 skipped), 0 tire brands created (27 skipped)
+(360 existing records were not re-imported to avoid duplicates)
+CSV data: 0 vehicle brands created (30 skipped), 0 TB brands created (141 skipped), 
+0 LT brands created (76 skipped), 28 tire sizes
+(247 existing brands were not re-imported to avoid duplicates)
+(All CSV data already exists in database - no new records imported)
+```
+
+### Safety Guarantees
+
+✅ **No Duplicates**: Every record is checked before creation
+✅ **Idempotent**: Safe to run multiple times without data corruption
+✅ **Transparent**: Created vs skipped counts shown for each type
+✅ **Safe Re-runs**: Existing data is never overwritten or re-imported
+✅ **Clear Feedback**: User knows exactly what was created vs skipped
+
+### Running Multiple Times
+
+Safe to run seeding script multiple times:
+
+```bash
+# First run: imports all data
+pnpm db:seed
+# Output: 34 provinces created, 289 cities created, etc.
+
+# Second run: skips all existing data
+pnpm db:seed
+# Output: 0 provinces created (34 skipped), 0 cities created (289 skipped), etc.
+
+# Third run: same as second run
+pnpm db:seed
+# Output: (no new records imported)
+```
+
+No duplicate data will ever be created, regardless of how many times you run it.
 
 ## Optional: CSV Seeding
 
