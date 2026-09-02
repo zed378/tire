@@ -1,0 +1,120 @@
+/*
+ * Self-hosted typefaces (DESIGN_PLAN §2).
+ *
+ * The files live in `public/fonts/` and are served from our own origin. That is
+ * not a preference: the CSP is `font-src 'self'` (PLAN/13 §7), so a Google
+ * Fonts link would be refused by the browser. It also removes a third-party
+ * round trip on a connection PLAN/06 §7 assumes is 4G on a mid-range phone.
+ *
+ * WHY THE FILES ARE COPIED RATHER THAN IMPORTED FROM A PACKAGE: the
+ * `@fontsource` packages ship a vietnamese subset alongside latin and
+ * latin-ext, and importing their stylesheet pulls all three. Copying the six
+ * files we actually use keeps ~60 KB of Vietnamese glyphs off the wire. The
+ * provenance is recorded in `public/fonts/SOURCE.md` so a future update is not
+ * archaeology.
+ *
+ * Archivo and Plus Jakarta Sans are variable: one file covers 100–900, which is
+ * why three families still cost less than the six static weights they replace.
+ *
+ * Plus Jakarta Sans is a Tokotype face commissioned for Jakarta's city
+ * identity. On an Indonesian fleet product that is not trivia — it is the
+ * reason it was chosen over the neutral defaults.
+ */
+
+/* ── Archivo — display and headings ───────────────────────────────────────── */
+
+@font-face {
+  font-family: "Archivo Variable";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 100 900;
+  src: url("/fonts/archivo-latin-wght-normal.woff2") format("woff2-variations");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC,
+    U+0304, U+0308, U+0329, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212,
+    U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: "Archivo Variable";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 100 900;
+  src: url("/fonts/archivo-latin-ext-wght-normal.woff2") format("woff2-variations");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304,
+    U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0,
+    U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+/* ── Plus Jakarta Sans — body and interface ─────────────────────────────────────── */
+
+@font-face {
+  font-family: "Plus Jakarta Sans Variable";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 100 900;
+  src: url("/fonts/plus-jakarta-sans-latin-wght-normal.woff2") format("woff2-variations");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC,
+    U+0304, U+0308, U+0329, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212,
+    U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: "Plus Jakarta Sans Variable";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 100 900;
+  src: url("/fonts/plus-jakarta-sans-latin-ext-wght-normal.woff2") format("woff2-variations");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304,
+    U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0,
+    U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+/* ── IBM Plex Mono — alphanumeric data only ───────────────────────────────── */
+
+@font-face {
+  font-family: "IBM Plex Mono";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 400;
+  src: url("/fonts/ibm-plex-mono-latin-400-normal.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC,
+    U+0304, U+0308, U+0329, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212,
+    U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: "IBM Plex Mono";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 500;
+  src: url("/fonts/ibm-plex-mono-latin-500-normal.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC,
+    U+0304, U+0308, U+0329, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212,
+    U+2215, U+FEFF, U+FFFD;
+}
+
+/*
+ * Fallback faces, metric-matched to cut layout shift while the real files load.
+ *
+ * `font-display: swap` means the fallback is what people actually see on a slow
+ * connection, and swapping between two fonts of different proportions is what
+ * produces the jump. `size-adjust` and the override descriptors bring Arial
+ * close enough that the reflow is not noticeable.
+ */
+@font-face {
+  font-family: "Archivo Fallback";
+  src: local("Arial");
+  size-adjust: 96%;
+  ascent-override: 92%;
+  descent-override: 24%;
+  line-gap-override: 0%;
+}
+
+@font-face {
+  font-family: "Plus Jakarta Sans Fallback";
+  src: local("Arial");
+  size-adjust: 104%;
+  ascent-override: 92%;
+  descent-override: 24%;
+  line-gap-override: 0%;
+}

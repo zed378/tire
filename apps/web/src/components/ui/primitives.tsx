@@ -86,8 +86,12 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
       // decoration (PLAN/05 §5.2 rule 3).
       disabled={disabled === true || loading}
       className={cn(
-        "inline-flex items-center justify-center gap-2 rounded-md font-medium",
-        "transition-colors disabled:cursor-not-allowed",
+        "inline-flex cursor-pointer items-center justify-center gap-2 rounded-base font-medium",
+        // Presses down 1px rather than scaling: a scale on a button in a row
+        // nudges its neighbours, and the brief bans transforms that move the
+        // layout. Colour is the only other thing that moves on hover.
+        "transition-colors duration-[180ms] ease-precision active:translate-y-px",
+        "disabled:cursor-not-allowed disabled:active:translate-y-0",
         BUTTON_SIZES[size],
         BUTTON_VARIANTS[variant],
         className,
@@ -143,6 +147,8 @@ export interface FieldProps {
   error?: string;
   hint?: string;
   required?: boolean;
+  /** Shown beside the label as `used/max`. Only where a limit is real. */
+  counter?: { value: number; max: number };
   children: ReactNode;
 }
 
@@ -159,6 +165,7 @@ export function Field({
   error,
   hint,
   required = false,
+  counter,
   children,
 }: FieldProps): ReactNode {
   const errorId = `${htmlFor}-error`;
@@ -172,14 +179,30 @@ export function Field({
   return (
     <FieldContext.Provider value={{ describedBy, invalid: error !== undefined }}>
       <div className="space-y-1.5">
-        <label htmlFor={htmlFor} className="block text-sm font-medium text-body">
-          {label}
-          {required ? (
-            <span className="ml-1 text-danger" aria-hidden="true">
-              *
+        <div className="flex items-baseline justify-between gap-3">
+          <label htmlFor={htmlFor} className="block text-sm font-medium text-body">
+            {label}
+            {required ? (
+              <span className="ml-1 text-danger" aria-hidden="true">
+                *
+              </span>
+            ) : null}
+          </label>
+          {counter !== undefined ? (
+            // `aria-hidden`: the limit is already announced through the input's
+            // own `maxLength`, and hearing a number tick on every keystroke is
+            // noise, not help.
+            <span
+              aria-hidden="true"
+              className={cn(
+                "font-data text-xs",
+                counter.value > counter.max ? "text-danger-text" : "text-subtle",
+              )}
+            >
+              {counter.value}/{counter.max}
             </span>
           ) : null}
-        </label>
+        </div>
         {children}
         {showHint ? (
           <p id={hintId} className="text-xs text-muted">
@@ -225,21 +248,55 @@ export function useFieldWiring(invalid: boolean | undefined): {
 
 export interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   invalid?: boolean;
+  /** Non-interactive adornment, e.g. a unit or a search glyph. */
+  leading?: ReactNode;
+  /** Interactive controls (a reveal toggle) go here so padding stays correct. */
+  trailing?: ReactNode;
 }
 
 export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
-  { invalid, className, "aria-describedby": ariaDescribedBy, ...props },
+  { invalid, className, leading, trailing, "aria-describedby": ariaDescribedBy, ...props },
   ref,
 ) {
   const wiring = useFieldWiring(invalid);
-  return (
+
+  const field = (
     <input
       ref={ref}
       aria-invalid={wiring.invalid}
       aria-describedby={ariaDescribedBy ?? wiring.describedBy}
-      className={cn(CONTROL_CLASSES, controlTone(wiring.invalid), className)}
+      className={cn(
+        CONTROL_CLASSES,
+        controlTone(wiring.invalid),
+        leading !== undefined && "pl-10",
+        trailing !== undefined && "pr-11",
+        className,
+      )}
       {...props}
     />
+  );
+
+  // Without a slot the input is returned bare, so nothing changes for the
+  // twenty screens already calling this.
+  if (leading === undefined && trailing === undefined) return field;
+
+  return (
+    <div className="relative">
+      {leading !== undefined ? (
+        <span
+          aria-hidden="true"
+          className="pointer-events-none absolute left-3 top-1/2 flex -translate-y-1/2 items-center text-subtle"
+        >
+          {leading}
+        </span>
+      ) : null}
+      {field}
+      {trailing !== undefined ? (
+        <span className="absolute right-1 top-1/2 flex -translate-y-1/2 items-center">
+          {trailing}
+        </span>
+      ) : null}
+    </div>
   );
 });
 

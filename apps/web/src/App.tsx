@@ -8,6 +8,7 @@ import { Button, Spinner } from "./components/ui/primitives.tsx";
 import { ErrorBanner } from "./components/ui/feedback.tsx";
 import { LoginPage } from "./features/auth/login-page.tsx";
 import { RegisterPage } from "./features/auth/register-page.tsx";
+import { StyleguidePage } from "./features/styleguide/styleguide-page.tsx";
 import { ChangePasswordPage } from "./features/auth/change-password-page.tsx";
 import { ProfilePage } from "./features/auth/profile-page.tsx";
 import { MfaEnrollPage } from "./features/auth/mfa-enroll-page.tsx";
@@ -94,6 +95,9 @@ function AppRoutes(): ReactNode {
       <Route path="/" element={<LandingPage />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
+      {/* TEMPORARY — removed in the final phase of the redesign. Public by
+          design so it can be reviewed without signing in; carries no data. */}
+      <Route path="/__styleguide" element={<StyleguidePage />} />
 
       {/* Protected routes */}
       <Route

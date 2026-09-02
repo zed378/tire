@@ -58,6 +58,20 @@ export default {
         },
         "on-accent": token("on-accent"),
 
+        /*
+         * The locked palette, named for the material. The semantic names
+         * above (surface, body, muted, accent…) point at these, so a
+         * component can reach for either the role or the material — but
+         * there is only one set of values underneath.
+         */
+        graphite: { DEFAULT: token("graphite"), 80: token("graphite-80") },
+        concrete: token("concrete"),
+        paper: token("paper"),
+        steel: { DEFAULT: token("steel"), ink: token("steel-ink") },
+        amber: token("amber"),
+        blue: { DEFAULT: token("blue"), deep: token("blue-deep") },
+        signal: { danger: token("danger"), ok: token("ok") },
+
         danger: {
           DEFAULT: token("danger"),
           soft: token("danger-soft"),
@@ -131,7 +145,62 @@ export default {
         drift: "drift 6s ease-in-out infinite",
       },
       fontFamily: {
-        sans: ["system-ui", "-apple-system", "Segoe UI", "Roboto", "sans-serif"],
+        // Body and interface. The fallback is metric-matched in fonts.css so
+        // the swap does not shift the layout.
+        sans: [
+          "Plus Jakarta Sans Variable",
+          "Plus Jakarta Sans Fallback",
+          "system-ui",
+          "-apple-system",
+          "Segoe UI",
+          "Roboto",
+          "sans-serif",
+        ],
+        // Headings only. Never body text: it is a display grotesk.
+        display: ["Archivo Variable", "Archivo Fallback", "system-ui", "sans-serif"],
+        // Alphanumeric data: tire sizes, DOT codes, plates, serial numbers.
+        data: ["IBM Plex Mono", "ui-monospace", "SFMono-Regular", "Menlo", "monospace"],
+      },
+      fontSize: {
+        // 1.250 at mobile, 1.333 at desktop (DESIGN_PLAN §1.2). Body never
+        // below 16px — these screens are read on cheap displays in bad light.
+        xs: ["0.75rem", { lineHeight: "1.4" }],
+        sm: ["0.875rem", { lineHeight: "1.5" }],
+        base: ["1rem", { lineHeight: "1.6" }],
+        lg: ["1.25rem", { lineHeight: "1.4" }],
+        xl: ["1.5625rem", { lineHeight: "1.25" }],
+        "2xl": ["1.9375rem", { lineHeight: "1.15" }],
+        "3xl": ["2.4375rem", { lineHeight: "1.05" }],
+      },
+      borderRadius: {
+        // Hierarchy, not one value everywhere. The scale follows how close
+        // the element sits to the hand (DESIGN_PLAN §1.4).
+        sharp: "0",
+        tight: "2px",
+        base: "6px",
+        panel: "12px",
+      },
+      boxShadow: {
+        // Three steps. On a concrete ground a hairline reads more honestly
+        // than a shadow, so the default card has none.
+        raised: "0 1px 2px rgb(22 24 28 / 0.06), 0 2px 8px rgb(22 24 28 / 0.06)",
+        overlay: "0 8px 24px rgb(22 24 28 / 0.16)",
+      },
+      zIndex: {
+        float: "10",
+        header: "20",
+        drawer: "30",
+        dialog: "50",
+        toast: "60",
+      },
+      maxWidth: {
+        // One container width for the whole site, and one measure for prose.
+        site: "72rem",
+        prose: "34rem",
+      },
+      transitionTimingFunction: {
+        // A single easing everywhere, per the brief.
+        precision: "cubic-bezier(.2,.8,.2,1)",
       },
     },
   },
