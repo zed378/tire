@@ -19,6 +19,8 @@ import { QcReviewPage } from "./features/qc/qc-review-page.tsx";
 import { TireSpecPage } from "./features/tire-specs/tire-spec-page.tsx";
 import { UsersPage } from "./features/users/users-page.tsx";
 import { MasterDataPage } from "./features/master-data/master-data-page.tsx";
+import { VehicleBrandsPage } from "./features/master-data/vehicle-brands-page.tsx";
+import { TireBrandPatternsPage } from "./features/master-data/tire-brand-patterns-page.tsx";
 import { NotificationsPage } from "./features/notifications/notifications-page.tsx";
 import { AuditPage } from "./features/audit/audit-page.tsx";
 import { OpsPage } from "./features/ops/ops-page.tsx";
@@ -108,6 +110,22 @@ function AppRoutes(): ReactNode {
                     element={
                       <RequirePermission permission="masterdata.manage">
                         <MasterDataPage />
+                      </RequirePermission>
+                    }
+                  />
+                  <Route
+                    path="master-data/vehicle-brands"
+                    element={
+                      <RequirePermission permission="masterdata.manage">
+                        <VehicleBrandsPage />
+                      </RequirePermission>
+                    }
+                  />
+                  <Route
+                    path="master-data/tire-brand-patterns"
+                    element={
+                      <RequirePermission permission="masterdata.manage">
+                        <TireBrandPatternsPage />
                       </RequirePermission>
                     }
                   />
