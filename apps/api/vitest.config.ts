@@ -41,6 +41,7 @@ export default defineConfig({
         "src/server.ts",
         "src/worker.ts",
         "src/**/routes.ts",
+        "src/scripts/**",
       ],
       thresholds: {
         // Ratchet. Raise, never lower. Target is 70 (PLAN/08 §6.1).

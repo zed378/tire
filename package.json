@@ -26,6 +26,7 @@
     "verify": "pnpm typecheck && pnpm lint && pnpm test:coverage && pnpm check:forbidden && pnpm check:rules",
     "db:migrate": "pnpm --filter @c26/api db:migrate",
     "db:seed": "pnpm --filter @c26/api db:seed",
+    "db:seed:prod-admin": "pnpm --filter @c26/api db:seed:prod-admin",
     "db:reset": "pnpm --filter @c26/api db:reset"
   },
   "devDependencies": {

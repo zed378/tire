@@ -17,6 +17,7 @@
     "db:queue": "tsx prisma/queue-setup.ts",
     "db:queue-smoke": "tsx prisma/queue-smoke.ts",
     "db:seed": "tsx prisma/seed.ts",
+    "db:seed:prod-admin": "node dist/scripts/seed-prod-admin.js",
     "db:reset": "prisma migrate reset --force --skip-seed",
     "prisma": "prisma"
   },

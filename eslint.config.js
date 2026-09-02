@@ -24,6 +24,7 @@ export default tseslint.config(
       // is deliberately outside the TypeScript project.
       ".claude/**",
       "**/*.config.js",
+      "**/*.mjs",
     ],
   },
 
@@ -157,7 +158,7 @@ export default tseslint.config(
   },
 
   {
-    files: ["**/*.test.ts", "**/*.test.tsx", "scripts/**/*.ts"],
+    files: ["**/*.test.ts", "**/*.test.tsx", "scripts/**/*.ts", "apps/api/src/scripts/**/*.ts"],
     rules: {
       "@typescript-eslint/no-unsafe-assignment": "off",
       "@typescript-eslint/no-unsafe-member-access": "off",
