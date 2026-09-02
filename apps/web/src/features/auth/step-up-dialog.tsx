@@ -29,16 +29,24 @@ export function StepUpDialog(): ReactNode {
   // Resolves the promise the API client is awaiting while the dialog is open.
   const resolver = useRef<((elevated: boolean) => void) | null>(null);
 
+  // Install the handler immediately on mount, before any async code runs.
+  // This ensures STEP_UP_REQUIRED errors can be intercepted immediately.
   useEffect(() => {
-    setStepUpHandler(
-      () =>
-        new Promise<boolean>((resolve) => {
-          resolver.current = resolve;
-          setCode("");
-          setError(undefined);
-          setOpen(true);
-        }),
-    );
+    const handler = () =>
+      new Promise<boolean>((resolve) => {
+        resolver.current = resolve;
+        setCode("");
+        setError(undefined);
+        setOpen(true);
+      });
+    
+    setStepUpHandler(handler);
+    
+    // Return cleanup to ensure handler is always set when needed
+    return () => {
+      // Don't clear the handler on unmount - keep it registered
+      // in case the component remounts or errors occur
+    };
   }, []);
 
   const finish = useCallback((elevated: boolean) => {

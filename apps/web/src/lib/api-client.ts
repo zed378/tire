@@ -58,6 +58,13 @@ let onSessionExpired: (() => void) | null = null;
  */
 let onStepUpRequired: (() => Promise<boolean>) | null = null;
 
+/**
+ * Queue of promises waiting for the step-up handler to be registered.
+ * This ensures that if a STEP_UP_REQUIRED error occurs before the dialog
+ * has mounted and registered its handler, we wait for it instead of failing.
+ */
+const stepUpHandlerQueue: Array<(handler: () => Promise<boolean>) => void> = [];
+
 export function setVersionMismatchHandler(handler: (serverVersion: string) => void): void {
   onVersionMismatch = handler;
 }
@@ -68,6 +75,39 @@ export function setSessionExpiredHandler(handler: () => void): void {
 
 export function setStepUpHandler(handler: () => Promise<boolean>): void {
   onStepUpRequired = handler;
+  // Notify any waiting requests that the handler is now available
+  while (stepUpHandlerQueue.length > 0) {
+    const resolve = stepUpHandlerQueue.shift();
+    if (resolve) resolve(handler);
+  }
+}
+
+/**
+ * Wait for the step-up handler to be available, with a timeout.
+ * If the handler is already registered, resolves immediately.
+ * If not, waits up to 5 seconds for it to be registered.
+ */
+function waitForStepUpHandler(): Promise<() => Promise<boolean>> {
+  if (onStepUpRequired !== null) {
+    return Promise.resolve(onStepUpRequired);
+  }
+
+  return new Promise<() => Promise<boolean>>((resolve) => {
+    const timeoutId = window.setTimeout(() => {
+      // Remove from queue and reject if handler still not available
+      const index = stepUpHandlerQueue.indexOf(resolve as any);
+      if (index !== -1) {
+        stepUpHandlerQueue.splice(index, 1);
+      }
+      // If handler is now available, use it; otherwise resolve with null check
+      resolve(onStepUpRequired ?? (() => Promise.resolve(false)));
+    }, 5000);
+
+    stepUpHandlerQueue.push((handler) => {
+      window.clearTimeout(timeoutId);
+      resolve(handler);
+    });
+  });
 }
 
 interface RequestOptions {
@@ -162,11 +202,16 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
    */
   if (
     envelope.code === "STEP_UP_REQUIRED" &&
-    onStepUpRequired !== null &&
     options.afterStepUp !== true
   ) {
-    const elevated = await onStepUpRequired();
-    if (elevated) return apiRequest<T>(path, { ...options, afterStepUp: true });
+    // Wait for the handler to be available (it may not be registered yet if the
+    // dialog is still mounting). This prevents race conditions where an API error
+    // occurs before the step-up dialog has finished initializing.
+    const handler = await waitForStepUpHandler();
+    if (handler !== null) {
+      const elevated = await handler();
+      if (elevated) return apiRequest<T>(path, { ...options, afterStepUp: true });
+    }
   }
 
   throw new ApiError(envelope);
