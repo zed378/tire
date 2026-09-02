@@ -89,8 +89,8 @@ export function OpsPage(): ReactNode {
   const report = health.data;
 
   return (
-    <div className="space-y-4">
-      <h1 className="text-lg font-semibold text-slate-900">Panel Operasional</h1>
+     <div className="space-y-4">
+       <h1 className="text-lg font-semibold text-slate-900 dark:text-slate-100">Panel Operasional</h1>
 
       {error !== null ? <ErrorBanner error={error} onDismiss={() => setError(null)} /> : null}
 

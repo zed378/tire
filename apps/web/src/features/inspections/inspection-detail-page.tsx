@@ -59,13 +59,13 @@ export function InspectionDetailPage(): ReactNode {
     onError: setError,
   });
 
-  if (detail.isLoading) {
-    return (
-      <div className="flex justify-center py-16 text-slate-500">
-        <Spinner className="h-6 w-6" />
-      </div>
-    );
-  }
+   if (detail.isLoading) {
+     return (
+       <div className="flex justify-center py-16 text-slate-500 dark:text-slate-400">
+         <Spinner className="h-6 w-6" />
+       </div>
+     );
+   }
 
   if (detail.error !== null) return <ErrorBanner error={detail.error} />;
   if (detail.data === undefined) return null;
@@ -75,17 +75,17 @@ export function InspectionDetailPage(): ReactNode {
   const editable = inspection.status === "draft" || inspection.status === "needs_revision";
   const photosBySlot = photos.data ?? [];
 
-  return (
-    <div className="space-y-4">
-      <div className="flex flex-wrap items-start justify-between gap-2">
-        <div>
-          <h1 className="text-lg font-semibold text-slate-900">{inspection.serialNumber}</h1>
-          <p className="text-sm text-slate-600">
-            {inspection.plateDisplay} · {inspection.cityName}, {inspection.provinceName}
-          </p>
-        </div>
-        <StatusBadge status={inspection.status} />
-      </div>
+   return (
+     <div className="space-y-4">
+       <div className="flex flex-wrap items-start justify-between gap-2">
+         <div>
+           <h1 className="text-lg font-semibold text-slate-900 dark:text-white">{inspection.serialNumber}</h1>
+           <p className="text-sm text-slate-600 dark:text-slate-400">
+             {inspection.plateDisplay} · {inspection.cityName}, {inspection.provinceName}
+           </p>
+         </div>
+         <StatusBadge status={inspection.status} />
+       </div>
 
       {error !== null ? <ErrorBanner error={error} onDismiss={() => setError(null)} /> : null}
 
@@ -173,9 +173,9 @@ export function InspectionDetailPage(): ReactNode {
           {inspection.submitBlockedReason !== null ? (
             <Banner tone="warning">{inspection.submitBlockedReason}</Banner>
           ) : (
-            <p className="text-sm text-slate-600">
-              Semua posisi ban sudah ada fotonya. Pengajuan siap dikirim ke antrean QC.
-            </p>
+           <p className="text-sm text-slate-600 dark:text-slate-400">
+             Semua posisi ban sudah ada fotonya. Pengajuan siap dikirim ke antrean QC.
+             </p>
           )}
 
           <Button
@@ -191,50 +191,50 @@ export function InspectionDetailPage(): ReactNode {
       ) : null}
 
       {inspection.status === "passed_qc" && can("tirespec.write") ? (
-        <Card title="Spesifikasi Ban">
-          <p className="text-sm text-slate-600">
-            Terisi {inspection.specProgress.filled} dari {inspection.specProgress.total} posisi.
-          </p>
+       <Card title="Spesifikasi Ban">
+           <p className="text-sm text-slate-600 dark:text-slate-400">
+             Terisi {inspection.specProgress.filled} dari {inspection.specProgress.total} posisi.
+           </p>
           <Link to={`/inspections/${sn}/tire-specs`}>
             <Button className="mt-3">Isi Spesifikasi Ban</Button>
           </Link>
         </Card>
       ) : null}
 
-      <Card title="Riwayat Quality Control">
-        {reviews.data === undefined || reviews.data.length === 0 ? (
-          <p className="text-sm text-slate-500">Belum ada keputusan QC.</p>
-        ) : (
+       <Card title="Riwayat Quality Control">
+         {reviews.data === undefined || reviews.data.length === 0 ? (
+           <p className="text-sm text-slate-500 dark:text-slate-400">Belum ada keputusan QC.</p>
+         ) : (
           <ol className="space-y-3">
             {/* A history table, not a status column. The legacy system kept
                 `Nama Admin QC` on the record, so a second decision erased the
                 first and nobody could tell there had been one (PLAN/02 §9). */}
-            {reviews.data.map((review) => (
-              <li key={review.id} className="rounded-md border border-slate-200 p-3">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <p className="text-sm font-medium text-slate-900">
-                    {review.statusBefore} → {review.statusAfter}
-                  </p>
-                  <p className="text-xs text-slate-500">{formatDateTime(review.reviewedAt)}</p>
-                </div>
-                <p className="mt-0.5 text-xs text-slate-500">oleh {review.reviewerName}</p>
-                {review.notes !== null ? (
-                  <p className="mt-2 text-sm text-slate-700">{review.notes}</p>
-                ) : null}
-                {review.comments.length > 0 ? (
-                  <ul className="mt-2 space-y-1">
-                    {review.comments.map((comment) => (
-                      <li key={comment.id} className="text-sm text-slate-600">
-                        <span className="font-medium">
-                          {comment.tirePositionLabel ?? "Foto"}:
-                        </span>{" "}
-                        {comment.body}
-                      </li>
-                    ))}
-                  </ul>
-                ) : null}
-              </li>
-            ))}
+             {reviews.data.map((review) => (
+               <li key={review.id} className="rounded-md border border-slate-200 dark:border-slate-700 p-3">
+                 <div className="flex flex-wrap items-center justify-between gap-2">
+                   <p className="text-sm font-medium text-slate-900 dark:text-white">
+                     {review.statusBefore} → {review.statusAfter}
+                   </p>
+                   <p className="text-xs text-slate-500 dark:text-slate-400">{formatDateTime(review.reviewedAt)}</p>
+                 </div>
+                 <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">oleh {review.reviewerName}</p>
+                 {review.notes !== null ? (
+                   <p className="mt-2 text-sm text-slate-700 dark:text-slate-300">{review.notes}</p>
+                 ) : null}
+                 {review.comments.length > 0 ? (
+                   <ul className="mt-2 space-y-1">
+                     {review.comments.map((comment) => (
+                       <li key={comment.id} className="text-sm text-slate-600 dark:text-slate-400">
+                         <span className="font-medium">
+                           {comment.tirePositionLabel ?? "Foto"}:
+                         </span>{" "}
+                         {comment.body}
+                       </li>
+                     ))}
+                   </ul>
+                 ) : null}
+               </li>
+             ))}
           </ol>
         )}
       </Card>
@@ -243,13 +243,13 @@ export function InspectionDetailPage(): ReactNode {
 }
 
 function Detail({ label, value }: { label: string; value: string }): ReactNode {
-  return (
-    <div>
-      <dt className="text-xs uppercase tracking-wide text-slate-500">{label}</dt>
-      <dd className="mt-0.5 text-sm text-slate-900">{value}</dd>
-    </div>
-  );
-}
+   return (
+     <div>
+       <dt className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">{label}</dt>
+       <dd className="mt-0.5 text-sm text-slate-900 dark:text-white">{value}</dd>
+     </div>
+   );
+ }
 
 interface PhotoSlotProps {
   serialNumber: string;
@@ -297,52 +297,52 @@ function PhotoSlot({
     }
   };
 
-  return (
-    <div className="rounded-md border border-slate-200 p-3">
-      <div className="flex items-baseline justify-between gap-2">
-        <div className="min-w-0">
-          <p className="truncate text-sm font-medium text-slate-800">{label}</p>
-          {sublabel !== undefined ? (
-            <p className="font-mono text-xs text-slate-400">{sublabel}</p>
-          ) : null}
-        </div>
-        <span
-          className={
-            total === 0 ? "text-xs font-medium text-red-700" : "text-xs text-slate-500"
-          }
-        >
-          {total}/{MAX_PHOTOS_PER_SLOT}
-        </span>
-      </div>
+   return (
+     <div className="rounded-md border border-slate-200 dark:border-slate-700 p-3">
+       <div className="flex items-baseline justify-between gap-2">
+         <div className="min-w-0">
+           <p className="truncate text-sm font-medium text-slate-800 dark:text-slate-100">{label}</p>
+           {sublabel !== undefined ? (
+             <p className="font-mono text-xs text-slate-400 dark:text-slate-500">{sublabel}</p>
+           ) : null}
+         </div>
+         <span
+           className={
+             total === 0 ? "text-xs font-medium text-red-700 dark:text-red-400" : "text-xs text-slate-500 dark:text-slate-400"
+           }
+         >
+           {total}/{MAX_PHOTOS_PER_SLOT}
+         </span>
+       </div>
 
-      {photos.length > 0 || queued.length > 0 ? (
-        <ul className="mt-2 flex flex-wrap gap-2">
-          {photos.map((photo) => (
-            <li key={photo.id}>
-              <img
-                src={photo.thumbnailUrl ?? photo.url}
-                alt={photo.tirePositionLabel ?? label}
-                loading="lazy"
-                className="h-16 w-16 rounded border border-slate-200 object-cover"
-              />
-            </li>
-          ))}
-          {queued.map((item) => (
-            <li
-              key={item.id}
-              className="flex h-16 w-16 flex-col items-center justify-center rounded border border-dashed border-amber-400 bg-amber-50 text-center"
-              title={item.lastError ?? "Menunggu sinyal"}
-            >
-              <span className="text-[10px] font-medium text-amber-800">
-                {item.status === "failed" ? "Gagal" : "Menunggu"}
-              </span>
-              <span className="text-[10px] text-amber-700">unggah</span>
-            </li>
-          ))}
-        </ul>
-      ) : (
-        <p className="mt-2 text-xs text-slate-400">Belum ada foto.</p>
-      )}
+       {photos.length > 0 || queued.length > 0 ? (
+         <ul className="mt-2 flex flex-wrap gap-2">
+           {photos.map((photo) => (
+             <li key={photo.id}>
+               <img
+                 src={photo.thumbnailUrl ?? photo.url}
+                 alt={photo.tirePositionLabel ?? label}
+                 loading="lazy"
+                 className="h-16 w-16 rounded border border-slate-200 dark:border-slate-700 object-cover"
+               />
+             </li>
+           ))}
+           {queued.map((item) => (
+             <li
+               key={item.id}
+               className="flex h-16 w-16 flex-col items-center justify-center rounded border border-dashed border-amber-400 dark:border-amber-600 bg-amber-50 dark:bg-amber-900/20 text-center"
+               title={item.lastError ?? "Menunggu sinyal"}
+             >
+               <span className="text-[10px] font-medium text-amber-800 dark:text-amber-200">
+                 {item.status === "failed" ? "Gagal" : "Menunggu"}
+               </span>
+               <span className="text-[10px] text-amber-700 dark:text-amber-300">unggah</span>
+             </li>
+           ))}
+         </ul>
+       ) : (
+         <p className="mt-2 text-xs text-slate-400 dark:text-slate-500">Belum ada foto.</p>
+       )}
 
       {editable && total < MAX_PHOTOS_PER_SLOT ? (
         <label className="mt-3 block">
@@ -361,7 +361,7 @@ function PhotoSlot({
         </label>
       ) : null}
 
-      {busy ? <p className="mt-2 text-xs text-slate-500">Mengompresi foto…</p> : null}
+       {busy ? <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">Mengompresi foto…</p> : null}
     </div>
   );
 }

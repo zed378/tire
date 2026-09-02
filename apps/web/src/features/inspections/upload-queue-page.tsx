@@ -42,9 +42,9 @@ export function UploadQueuePage(): ReactNode {
   const summary = summarise(items);
   const isIos = /iPad|iPhone|iPod/.test(navigator.userAgent);
 
-  return (
-    <div className="space-y-4">
-      <h1 className="text-lg font-semibold text-slate-900">Antrean Unggah Foto</h1>
+   return (
+     <div className="space-y-4">
+       <h1 className="text-lg font-semibold text-slate-900 dark:text-white">Antrean Unggah Foto</h1>
 
       <Banner tone="info" title="Cara antrean ini bekerja">
         Foto terunggah saat aplikasi dibuka dan ada sinyal — bukan secara otomatis di latar
@@ -76,20 +76,20 @@ export function UploadQueuePage(): ReactNode {
           </Button>
         }
       >
-        <dl className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-          <Stat label="Menunggu" value={String(summary.pending)} />
-          <Stat label="Sedang diunggah" value={String(summary.uploading)} />
-          <Stat label="Gagal" value={String(summary.failed)} tone={summary.failed > 0 ? "bad" : undefined} />
-          <Stat label="Total ukuran" value={formatBytes(summary.totalBytes)} />
-        </dl>
+         <dl className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+           <Stat label="Menunggu" value={String(summary.pending)} />
+           <Stat label="Sedang diunggah" value={String(summary.uploading)} />
+           <Stat label="Gagal" value={String(summary.failed)} tone={summary.failed > 0 ? "bad" : undefined} />
+           <Stat label="Total ukuran" value={formatBytes(summary.totalBytes)} />
+         </dl>
 
-        {storage !== null && storage.quotaBytes > 0 ? (
-          <p className="mt-3 text-xs text-slate-500">
-            Penyimpanan perangkat terpakai {formatBytes(storage.usageBytes)} dari{" "}
-            {formatBytes(storage.quotaBytes)}.
-            {persistent === true ? " Penyimpanan permanen aktif." : null}
-          </p>
-        ) : null}
+         {storage !== null && storage.quotaBytes > 0 ? (
+           <p className="mt-3 text-xs text-slate-500 dark:text-slate-400">
+             Penyimpanan perangkat terpakai {formatBytes(storage.usageBytes)} dari{" "}
+             {formatBytes(storage.quotaBytes)}.
+             {persistent === true ? " Penyimpanan permanen aktif." : null}
+           </p>
+         ) : null}
 
         {persistent !== true ? (
           <Button
@@ -102,88 +102,88 @@ export function UploadQueuePage(): ReactNode {
         ) : null}
       </Card>
 
-      <Card title="Daftar antrean">
-        {items.length === 0 ? (
-          <EmptyState
-            title="Tidak ada foto yang menunggu"
-            description="Semua foto sudah terunggah."
-          />
-        ) : (
-          <ul className="divide-y divide-slate-200">
-            {items.map((item) => (
-              <li key={item.id} className="flex flex-wrap items-center justify-between gap-3 py-3">
-                <div className="min-w-0">
-                  <p className="text-sm font-medium text-slate-900">
-                    <Link to={`/inspections/${item.serialNumber}`} className="hover:underline">
-                      {item.serialNumber}
-                    </Link>{" "}
-                    · {item.positionLabel}
-                  </p>
-                  <p className="mt-0.5 text-xs text-slate-500">
-                    {formatBytes(item.byteSize)} · ditambahkan {formatRelative(item.createdAt)}
-                    {item.attempts > 0 ? ` · ${item.attempts} percobaan` : ""}
-                  </p>
-                  {item.lastError !== null ? (
-                    <p className="mt-1 text-xs text-red-700">{item.lastError}</p>
-                  ) : null}
-                </div>
+       <Card title="Daftar antrean">
+         {items.length === 0 ? (
+           <EmptyState
+             title="Tidak ada foto yang menunggu"
+             description="Semua foto sudah terunggah."
+           />
+         ) : (
+           <ul className="divide-y divide-slate-200 dark:divide-slate-700">
+             {items.map((item) => (
+               <li key={item.id} className="flex flex-wrap items-center justify-between gap-3 py-3">
+                 <div className="min-w-0">
+                   <p className="text-sm font-medium text-slate-900 dark:text-white">
+                     <Link to={`/inspections/${item.serialNumber}`} className="hover:underline">
+                       {item.serialNumber}
+                     </Link>{" "}
+                     · {item.positionLabel}
+                   </p>
+                   <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+                     {formatBytes(item.byteSize)} · ditambahkan {formatRelative(item.createdAt)}
+                     {item.attempts > 0 ? ` · ${item.attempts} percobaan` : ""}
+                   </p>
+                   {item.lastError !== null ? (
+                     <p className="mt-1 text-xs text-red-700 dark:text-red-400">{item.lastError}</p>
+                   ) : null}
+                 </div>
 
-                <div className="flex items-center gap-2">
-                  <span
-                    className={
-                      item.status === "failed"
-                        ? "rounded-full border border-red-300 bg-red-50 px-2 py-0.5 text-xs text-red-800"
-                        : "rounded-full border border-amber-300 bg-amber-50 px-2 py-0.5 text-xs text-amber-800"
-                    }
-                  >
-                    {item.status === "failed"
-                      ? "Gagal"
-                      : item.status === "uploading"
-                        ? "Mengunggah"
-                        : "Menunggu"}
-                  </span>
+                 <div className="flex items-center gap-2">
+                   <span
+                     className={
+                       item.status === "failed"
+                         ? "rounded-full border border-red-300 dark:border-red-700 bg-red-50 dark:bg-red-900/20 px-2 py-0.5 text-xs text-red-800 dark:text-red-200"
+                         : "rounded-full border border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-900/20 px-2 py-0.5 text-xs text-amber-800 dark:text-amber-200"
+                     }
+                   >
+                     {item.status === "failed"
+                       ? "Gagal"
+                       : item.status === "uploading"
+                         ? "Mengunggah"
+                         : "Menunggu"}
+                   </span>
 
-                  {item.status === "failed" ? (
-                    <>
-                      <Button variant="secondary" onClick={() => void retryQueueItem(item.id)}>
-                        Coba lagi
-                      </Button>
-                      <Button variant="ghost" onClick={() => void removeQueueItem(item.id)}>
-                        Buang
-                      </Button>
-                    </>
-                  ) : null}
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
-      </Card>
+                   {item.status === "failed" ? (
+                     <>
+                       <Button variant="secondary" onClick={() => void retryQueueItem(item.id)}>
+                         Coba lagi
+                       </Button>
+                       <Button variant="ghost" onClick={() => void removeQueueItem(item.id)}>
+                         Buang
+                       </Button>
+                     </>
+                   ) : null}
+                 </div>
+               </li>
+             ))}
+           </ul>
+         )}
+       </Card>
     </div>
   );
 }
 
 function Stat({
-  label,
-  value,
-  tone,
-}: {
-  label: string;
-  value: string;
-  tone?: "bad";
-}): ReactNode {
-  return (
-    <div>
-      <dt className="text-xs uppercase tracking-wide text-slate-500">{label}</dt>
-      <dd
-        className={
-          tone === "bad"
-            ? "mt-0.5 text-xl font-semibold text-red-700"
-            : "mt-0.5 text-xl font-semibold text-slate-900"
-        }
-      >
-        {value}
-      </dd>
-    </div>
-  );
-}
+   label,
+   value,
+   tone,
+ }: {
+   label: string;
+   value: string;
+   tone?: "bad";
+ }): ReactNode {
+   return (
+     <div>
+       <dt className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">{label}</dt>
+       <dd
+         className={
+           tone === "bad"
+             ? "mt-0.5 text-xl font-semibold text-red-700 dark:text-red-400"
+             : "mt-0.5 text-xl font-semibold text-slate-900 dark:text-white"
+         }
+       >
+         {value}
+       </dd>
+     </div>
+   );
+ }

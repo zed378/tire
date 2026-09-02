@@ -77,47 +77,47 @@ export function TireBrandPatternsPage(): ReactNode {
     update.mutate({ id: editingId, pattern: editPattern.trim(), brand: editBrand.trim() });
   };
 
-  return (
-    <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <h1 className="text-lg font-semibold text-slate-900">Manajemen Pattern Ban</h1>
-        <Button onClick={() => setCreating(true)}>Tambah Pattern</Button>
-      </div>
+   return (
+     <div className="space-y-4">
+       <div className="flex flex-wrap items-center justify-between gap-2">
+         <h1 className="text-lg font-semibold text-slate-900 dark:text-white">Manajemen Pattern Ban</h1>
+         <Button onClick={() => setCreating(true)}>Tambah Pattern</Button>
+       </div>
 
       {error !== null ? <ErrorBanner error={error} onDismiss={() => setError(null)} /> : null}
 
-      <nav className="flex border-b border-slate-200">
-        <button
-          type="button"
-          onClick={() => setTab("TB")}
-          className={
-            tab === "TB"
-              ? "border-b-2 border-brand-600 px-4 py-2 text-sm font-medium text-brand-700"
-              : "px-4 py-2 text-sm text-slate-600 hover:text-slate-900"
-          }
-        >
-          TB (Truck/Bus)
-        </button>
-        <button
-          type="button"
-          onClick={() => setTab("LT")}
-          className={
-            tab === "LT"
-              ? "border-b-2 border-brand-600 px-4 py-2 text-sm font-medium text-brand-700"
-              : "px-4 py-2 text-sm text-slate-600 hover:text-slate-900"
-          }
-        >
-          LT (Light Truck)
-        </button>
-      </nav>
+       <nav className="flex border-b border-slate-200 dark:border-slate-700">
+         <button
+           type="button"
+           onClick={() => setTab("TB")}
+           className={
+             tab === "TB"
+               ? "border-b-2 border-brand-600 px-4 py-2 text-sm font-medium text-brand-700"
+               : "px-4 py-2 text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+           }
+         >
+           TB (Truck/Bus)
+         </button>
+         <button
+           type="button"
+           onClick={() => setTab("LT")}
+           className={
+             tab === "LT"
+               ? "border-b-2 border-brand-600 px-4 py-2 text-sm font-medium text-brand-700"
+               : "px-4 py-2 text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+           }
+         >
+           LT (Light Truck)
+         </button>
+       </nav>
 
-      <Card>
-        {patterns.isLoading ? (
-          <div className="flex justify-center py-10 text-slate-500">
-            <Spinner className="h-5 w-5" />
-          </div>
-        ) : (
-          <ul className="divide-y divide-slate-200">
+       <Card>
+         {patterns.isLoading ? (
+           <div className="flex justify-center py-10 text-slate-500 dark:text-slate-400">
+             <Spinner className="h-5 w-5" />
+           </div>
+         ) : (
+           <ul className="divide-y divide-slate-200 dark:divide-slate-700">
             {(patterns.data?.items ?? []).map((pattern) => (
               <li key={pattern.id} className="flex flex-wrap items-center justify-between gap-3 py-3">
                 {editingId === pattern.id ? (
@@ -151,19 +151,19 @@ export function TireBrandPatternsPage(): ReactNode {
                       Batal
                     </Button>
                   </div>
-                ) : (
-                  <>
-                    <div className="min-w-0">
-                      <p className="font-medium text-slate-900">
-                        {pattern.pattern}{" "}
-                        <span className="text-xs font-normal text-slate-500">
-                          ({pattern.brand})
-                        </span>
-                      </p>
-                      <p className="mt-0.5 text-xs text-slate-500">
-                        {pattern.isActive ? "Aktif" : "Nonaktif"}
-                      </p>
-                    </div>
+                 ) : (
+                   <>
+                     <div className="min-w-0">
+                       <p className="font-medium text-slate-900 dark:text-white">
+                         {pattern.pattern}{" "}
+                         <span className="text-xs font-normal text-slate-500 dark:text-slate-400">
+                           ({pattern.brand})
+                         </span>
+                       </p>
+                       <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+                         {pattern.isActive ? "Aktif" : "Nonaktif"}
+                       </p>
+                     </div>
                     <div className="flex flex-wrap items-center gap-2">
                       <Button variant="secondary" onClick={() => startEdit(pattern)}>
                         Edit
@@ -221,14 +221,14 @@ function CreatePatternDialog({
     onSubmit({ pattern: pattern.trim(), brand: brand.trim(), type: type.toLowerCase() as "TB" | "LT" });
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="w-full max-w-lg rounded-lg bg-white shadow-xl">
-        <div className="border-b border-slate-200 px-4 py-3">
-          <h2 className="text-base font-semibold text-slate-900">
-            Tambah Pattern Ban ({type})
-          </h2>
-        </div>
+   return (
+     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+       <div className="w-full max-w-lg rounded-lg bg-white dark:bg-slate-900 shadow-xl">
+         <div className="border-b border-slate-200 dark:border-slate-700 px-4 py-3">
+           <h2 className="text-base font-semibold text-slate-900 dark:text-white">
+             Tambah Pattern Ban ({type})
+           </h2>
+         </div>
         <div className="space-y-3 p-4">
           <Field label="Pattern" htmlFor="new-pattern-name" required>
             <Input
@@ -248,14 +248,14 @@ function CreatePatternDialog({
             />
           </Field>
         </div>
-        <div className="flex justify-end gap-2 border-t border-slate-200 px-4 py-3">
-          <Button variant="secondary" onClick={onClose} disabled={submitting}>
-            Batal
-          </Button>
-          <Button onClick={submit} loading={submitting} loadingText="Menyimpan…">
-            Tambah
-          </Button>
-        </div>
+         <div className="flex justify-end gap-2 border-t border-slate-200 dark:border-slate-700 px-4 py-3">
+           <Button variant="secondary" onClick={onClose} disabled={submitting}>
+             Batal
+           </Button>
+           <Button onClick={submit} loading={submitting} loadingText="Menyimpan…">
+             Tambah
+           </Button>
+         </div>
       </div>
     </div>
   );
@@ -274,14 +274,14 @@ function ConfirmDeleteDialog({
   onClose: () => void;
   submitting: boolean;
 }): ReactNode {
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="w-full max-w-lg rounded-lg bg-white shadow-xl">
-        <div className="border-b border-slate-200 px-4 py-3">
-          <h2 className="text-base font-semibold text-slate-900">{title}</h2>
-          <p className="mt-0.5 text-sm text-slate-500">{description}</p>
-        </div>
-        <div className="flex justify-end gap-2 border-t border-slate-200 px-4 py-3">
+   return (
+     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+       <div className="w-full max-w-lg rounded-lg bg-white dark:bg-slate-900 shadow-xl">
+         <div className="border-b border-slate-200 dark:border-slate-700 px-4 py-3">
+           <h2 className="text-base font-semibold text-slate-900 dark:text-white">{title}</h2>
+           <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">{description}</p>
+         </div>
+         <div className="flex justify-end gap-2 border-t border-slate-200 dark:border-slate-700 px-4 py-3">
           <Button variant="secondary" onClick={onClose} disabled={submitting}>
             Batal
           </Button>

@@ -37,10 +37,10 @@ export interface BannerProps {
 }
 
 const BANNER_TONES = {
-  error: "border-red-300 bg-red-50 text-red-900",
-  warning: "border-amber-300 bg-amber-50 text-amber-900",
-  info: "border-blue-300 bg-blue-50 text-blue-900",
-  success: "border-green-300 bg-green-50 text-green-900",
+  error: "border-red-300 bg-red-50 text-red-900 dark:border-red-800 dark:bg-red-950/40 dark:text-red-200",
+  warning: "border-amber-300 bg-amber-50 text-amber-900 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-200",
+  info: "border-blue-300 bg-blue-50 text-blue-900 dark:border-blue-800 dark:bg-blue-950/40 dark:text-blue-200",
+  success: "border-green-300 bg-green-50 text-green-900 dark:border-green-800 dark:bg-green-950/40 dark:text-green-200",
 } as const;
 
 export function Banner({
@@ -57,14 +57,14 @@ export function Banner({
           {title !== undefined ? <p className="font-semibold">{title}</p> : null}
           <div className={cn(title !== undefined && "mt-0.5")}>{children}</div>
 
-          {requestId !== undefined ? (
-            <p className="mt-2 text-xs opacity-80">
-              Sebutkan kode ini saat melapor:{" "}
-              <code className="select-all rounded bg-white/60 px-1 py-0.5 font-mono">
-                {requestId}
-              </code>
-            </p>
-          ) : null}
+           {requestId !== undefined ? (
+             <p className="mt-2 text-xs opacity-80">
+               Sebutkan kode ini saat melapor:{" "}
+               <code className="select-all rounded bg-white/60 dark:bg-slate-800/60 px-1 py-0.5 font-mono">
+                 {requestId}
+               </code>
+             </p>
+           ) : null}
         </div>
 
         {onDismiss !== undefined ? (
@@ -168,15 +168,15 @@ export function ToastProvider({ children }: { children: ReactNode }): ReactNode 
         className="pointer-events-none fixed inset-x-0 bottom-0 z-50 flex flex-col items-center gap-2 p-4 safe-bottom"
       >
         {toasts.map((toast) => (
-          <div
-            key={toast.id}
-            className={cn(
-              "pointer-events-auto flex w-full max-w-md items-center justify-between gap-3 rounded-md border px-4 py-3 text-sm shadow-lg",
-              toast.tone === "success" && "border-green-300 bg-green-50 text-green-900",
-              toast.tone === "error" && "border-red-300 bg-red-50 text-red-900",
-              toast.tone === "info" && "border-slate-300 bg-white text-slate-900",
-            )}
-          >
+           <div
+             key={toast.id}
+             className={cn(
+               "pointer-events-auto flex w-full max-w-md items-center justify-between gap-3 rounded-md border px-4 py-3 text-sm shadow-lg",
+               toast.tone === "success" && "border-green-300 bg-green-50 text-green-900 dark:border-green-800 dark:bg-green-950/40 dark:text-green-200",
+               toast.tone === "error" && "border-red-300 bg-red-50 text-red-900 dark:border-red-800 dark:bg-red-950/40 dark:text-red-200",
+               toast.tone === "info" && "border-slate-300 bg-white text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100",
+             )}
+           >
             <span className="min-w-0">{toast.message}</span>
             <div className="flex shrink-0 items-center gap-2">
               {toast.action !== undefined ? (
@@ -250,12 +250,12 @@ export function Dialog({
         role="dialog"
         aria-modal="true"
         aria-label={title}
-        className="w-full max-w-lg rounded-lg bg-white shadow-xl"
+        className="w-full max-w-lg rounded-lg bg-white dark:bg-slate-800 shadow-xl"
       >
-        <header className="border-b border-slate-200 px-4 py-3">
-          <h2 className="text-base font-semibold text-slate-900">{title}</h2>
+        <header className="border-b border-slate-200 dark:border-slate-700 px-4 py-3">
+          <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">{title}</h2>
           {description !== undefined ? (
-            <p className="mt-0.5 text-sm text-slate-500">{description}</p>
+            <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">{description}</p>
           ) : null}
         </header>
         <div className="p-4">{children}</div>
@@ -279,11 +279,11 @@ export function CancelButton({ onClick }: { onClick: () => void }): ReactNode {
 // ── Status badge ────────────────────────────────────────────────────────────
 
 const STATUS_TONES: Record<InspectionStatus, string> = {
-  draft: "bg-slate-100 text-slate-700 border-slate-300",
-  pending_qc: "bg-amber-50 text-amber-800 border-amber-300",
-  needs_revision: "bg-orange-50 text-orange-800 border-orange-300",
-  passed_qc: "bg-green-50 text-green-800 border-green-300",
-  dropped_qc: "bg-red-50 text-red-800 border-red-300",
+  draft: "bg-slate-100 text-slate-700 border-slate-300 dark:bg-slate-700/40 dark:text-slate-300 dark:border-slate-600",
+  pending_qc: "bg-amber-50 text-amber-800 border-amber-300 dark:bg-amber-950/40 dark:text-amber-200 dark:border-amber-700",
+  needs_revision: "bg-orange-50 text-orange-800 border-orange-300 dark:bg-orange-950/40 dark:text-orange-200 dark:border-orange-700",
+  passed_qc: "bg-green-50 text-green-800 border-green-300 dark:bg-green-950/40 dark:text-green-200 dark:border-green-700",
+  dropped_qc: "bg-red-50 text-red-800 border-red-300 dark:bg-red-950/40 dark:text-red-200 dark:border-red-700",
 };
 
 export function StatusBadge({ status }: { status: InspectionStatus }): ReactNode {

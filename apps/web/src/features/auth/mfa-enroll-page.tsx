@@ -11,6 +11,7 @@ import { api } from "../../lib/api-client.ts";
 import { useSession } from "../../lib/session.tsx";
 import { Banner, ErrorBanner, useToast } from "../../components/ui/feedback.tsx";
 import { Button, Card, Field, Input } from "../../components/ui/primitives.tsx";
+import { QRCodeSVG } from "../../components/ui/qr-code.tsx";
 
 /**
  * TOTP enrolment (PLAN/13 §3).
@@ -31,6 +32,7 @@ export function MfaEnrollPage(): ReactNode {
   const [code, setCode] = useState("");
   const [codeError, setCodeError] = useState<string | undefined>(undefined);
   const [recoveryCodes, setRecoveryCodes] = useState<string[] | null>(null);
+  const [copiedKey, setCopiedKey] = useState(false);
 
   const status = useQuery({
     queryKey: ["mfa-status"],
@@ -56,6 +58,17 @@ export function MfaEnrollPage(): ReactNode {
 
   const required = user !== null && ROLES_REQUIRING_MFA.includes(user.role);
 
+  const handleCopySecret = async (secret: string) => {
+    try {
+      await navigator.clipboard.writeText(secret);
+      setCopiedKey(true);
+      setTimeout(() => setCopiedKey(false), 2000);
+      toast.push({ tone: "success", message: "Kunci rahasia disalin ke papan klip." });
+    } catch {
+      // Fallback
+    }
+  };
+
   // Shown exactly once, at enrolment (PLAN/13 §3.3). There is no way back to
   // this screen for these codes, and that is stated plainly rather than implied.
   if (recoveryCodes !== null) {
@@ -71,7 +84,7 @@ export function MfaEnrollPage(): ReactNode {
             {recoveryCodes.map((recoveryCode) => (
               <li
                 key={recoveryCode}
-                className="select-all rounded border border-slate-200 bg-slate-50 px-3 py-2 text-center font-mono text-sm"
+                className="select-all rounded border border-slate-200 bg-slate-50 px-3 py-2 text-center font-mono text-sm dark:border-slate-800 dark:bg-slate-900"
               >
                 {recoveryCode}
               </li>
@@ -94,7 +107,7 @@ export function MfaEnrollPage(): ReactNode {
       <div className="mx-auto max-w-lg">
         <Card title="Autentikasi Dua Faktor">
           <Banner tone="success">Autentikasi dua faktor sudah aktif untuk akun Anda.</Banner>
-          <p className="mt-3 text-sm text-slate-600">
+          <p className="mt-3 text-sm text-slate-600 dark:text-slate-400">
             Sisa kode pemulihan: {status.data.remainingRecoveryCodes}. Kalau Anda kehilangan akses ke
             aplikasi authenticator dan kehabisan kode pemulihan, admin lain harus mengatur ulang —
             proses itu tercatat di jejak audit dan mengakhiri seluruh sesi Anda.
@@ -115,7 +128,7 @@ export function MfaEnrollPage(): ReactNode {
 
       <Card
         title="Aktifkan Autentikasi Dua Faktor"
-        description="Gunakan aplikasi authenticator seperti Google Authenticator atau Authy. Kode dari aplikasi tersebut bekerja tanpa sinyal."
+        description="Gunakan aplikasi authenticator seperti Google Authenticator, Authy, atau Passkeys. Pindai kode QR untuk menambahkan akun secara otomatis."
       >
         {enrollment.error !== null ? <ErrorBanner error={enrollment.error} /> : null}
 
@@ -128,16 +141,38 @@ export function MfaEnrollPage(): ReactNode {
             Mulai Pendaftaran
           </Button>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-5">
             <div>
-              <p className="text-sm text-slate-700">
-                1. Buka aplikasi authenticator, pilih tambah akun, lalu pindai kode QR atau masukkan
-                kunci berikut secara manual:
+              <p className="text-sm font-medium text-slate-800 dark:text-slate-200">
+                1. Pindai Kode QR ini dari aplikasi authenticator Anda:
               </p>
-              <p className="mt-2 select-all break-all rounded border border-slate-200 bg-slate-50 px-3 py-2 font-mono text-sm">
-                {enrollment.data.secretForManualEntry}
-              </p>
-              <p className="mt-2 break-all text-xs text-slate-500">{enrollment.data.otpauthUri}</p>
+
+              {/* Scannable QR Code SVG Container */}
+              <div className="mt-3 flex flex-col items-center justify-center">
+                <QRCodeSVG value={enrollment.data.otpauthUri} size={190} />
+                <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+                  Google Authenticator &bull; Authy &bull; Microsoft &bull; 1Password
+                </p>
+              </div>
+
+              {/* Manual Secret Key Fallback */}
+              <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-900/60">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                    Kunci Manual (Opsional)
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => void handleCopySecret(enrollment.data!.secretForManualEntry)}
+                    className="text-xs font-medium text-brand-600 hover:text-brand-700 dark:text-cyan-400 dark:hover:text-cyan-300"
+                  >
+                    {copiedKey ? "✓ Tersalin" : "Salin Kunci"}
+                  </button>
+                </div>
+                <p className="mt-1 select-all break-all font-mono text-sm font-semibold tracking-wider text-slate-900 dark:text-slate-100">
+                  {enrollment.data.secretForManualEntry}
+                </p>
+              </div>
             </div>
 
             <Field
@@ -152,6 +187,7 @@ export function MfaEnrollPage(): ReactNode {
                 maxLength={6}
                 value={code}
                 invalid={codeError !== undefined}
+                className="text-center font-mono text-lg tracking-widest"
                 onChange={(event) => {
                   setCode(event.target.value.replace(/\D/g, ""));
                   setCodeError(undefined);

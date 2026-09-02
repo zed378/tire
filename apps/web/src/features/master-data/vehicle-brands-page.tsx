@@ -61,22 +61,22 @@ export function VehicleBrandsPage(): ReactNode {
     update.mutate({ id: editingId, name: editName.trim() });
   };
 
-  return (
-    <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <h1 className="text-lg font-semibold text-slate-900">Manajemen Merk Kendaraan</h1>
-        <Button onClick={() => setCreating(true)}>Tambah Merk</Button>
-      </div>
+   return (
+     <div className="space-y-4">
+       <div className="flex flex-wrap items-center justify-between gap-2">
+         <h1 className="text-lg font-semibold text-slate-900 dark:text-white">Manajemen Merk Kendaraan</h1>
+         <Button onClick={() => setCreating(true)}>Tambah Merk</Button>
+       </div>
 
       {error !== null ? <ErrorBanner error={error} onDismiss={() => setError(null)} /> : null}
 
-      <Card>
-        {brands.isLoading ? (
-          <div className="flex justify-center py-10 text-slate-500">
-            <Spinner className="h-5 w-5" />
-          </div>
-        ) : (
-          <ul className="divide-y divide-slate-200">
+       <Card>
+         {brands.isLoading ? (
+           <div className="flex justify-center py-10 text-slate-500 dark:text-slate-400">
+             <Spinner className="h-5 w-5" />
+           </div>
+         ) : (
+           <ul className="divide-y divide-slate-200 dark:divide-slate-700">
             {(brands.data?.items ?? []).map((brand) => (
               <li key={brand.id} className="flex flex-wrap items-center justify-between gap-3 py-3">
                 {editingId === brand.id ? (
@@ -102,14 +102,14 @@ export function VehicleBrandsPage(): ReactNode {
                       Batal
                     </Button>
                   </div>
-                ) : (
-                  <>
-                    <div className="min-w-0">
-                      <p className="font-medium text-slate-900">{brand.name}</p>
-                      <p className="mt-0.5 text-xs text-slate-500">
-                        {brand.isActive ? "Aktif" : "Nonaktif"}
-                      </p>
-                    </div>
+                 ) : (
+                   <>
+                     <div className="min-w-0">
+                       <p className="font-medium text-slate-900 dark:text-white">{brand.name}</p>
+                       <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+                         {brand.isActive ? "Aktif" : "Nonaktif"}
+                       </p>
+                     </div>
                     <div className="flex flex-wrap items-center gap-2">
                       <Button variant="secondary" onClick={() => startEdit(brand)}>
                         Edit
@@ -163,12 +163,12 @@ function CreateBrandDialog({
     onSubmit(name.trim());
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="w-full max-w-lg rounded-lg bg-white shadow-xl">
-        <div className="border-b border-slate-200 px-4 py-3">
-          <h2 className="text-base font-semibold text-slate-900">Tambah Merk Kendaraan</h2>
-        </div>
+   return (
+     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+       <div className="w-full max-w-lg rounded-lg bg-white dark:bg-slate-900 shadow-xl">
+         <div className="border-b border-slate-200 dark:border-slate-700 px-4 py-3">
+           <h2 className="text-base font-semibold text-slate-900 dark:text-white">Tambah Merk Kendaraan</h2>
+         </div>
         <form
           noValidate
           onSubmit={(event) => {
@@ -187,14 +187,14 @@ function CreateBrandDialog({
             />
           </Field>
         </form>
-        <div className="flex justify-end gap-2 border-t border-slate-200 px-4 py-3">
-          <Button variant="secondary" onClick={onClose} disabled={submitting}>
-            Batal
-          </Button>
-          <Button onClick={submit} loading={submitting} loadingText="Menyimpan…">
-            Tambah
-          </Button>
-        </div>
+         <div className="flex justify-end gap-2 border-t border-slate-200 dark:border-slate-700 px-4 py-3">
+           <Button variant="secondary" onClick={onClose} disabled={submitting}>
+             Batal
+           </Button>
+           <Button onClick={submit} loading={submitting} loadingText="Menyimpan…">
+             Tambah
+           </Button>
+         </div>
       </div>
     </div>
   );
@@ -213,14 +213,14 @@ function ConfirmDeleteDialog({
   onClose: () => void;
   submitting: boolean;
 }): ReactNode {
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="w-full max-w-lg rounded-lg bg-white shadow-xl">
-        <div className="border-b border-slate-200 px-4 py-3">
-          <h2 className="text-base font-semibold text-slate-900">{title}</h2>
-          <p className="mt-0.5 text-sm text-slate-500">{description}</p>
-        </div>
-        <div className="flex justify-end gap-2 border-t border-slate-200 px-4 py-3">
+   return (
+     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+       <div className="w-full max-w-lg rounded-lg bg-white dark:bg-slate-900 shadow-xl">
+         <div className="border-b border-slate-200 dark:border-slate-700 px-4 py-3">
+           <h2 className="text-base font-semibold text-slate-900 dark:text-white">{title}</h2>
+           <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">{description}</p>
+         </div>
+         <div className="flex justify-end gap-2 border-t border-slate-200 dark:border-slate-700 px-4 py-3">
           <Button variant="secondary" onClick={onClose} disabled={submitting}>
             Batal
           </Button>
