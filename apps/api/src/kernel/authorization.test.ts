@@ -20,9 +20,9 @@ const baseActor = {
 };
 
 describe('requirePermission', () => {
-  it('throws FORBIDDEN_ROLE when operator lacks inspection.read', () => {
+  it('throws FORBIDDEN_ROLE when operator lacks submission.read.all', () => {
     const actor = { ...baseActor, role: 'operator' as const };
-    expect(() => requirePermission(actor, 'inspection.read')).toThrow(
+    expect(() => requirePermission(actor, 'submission.read.all')).toThrow(
       'Anda tidak memiliki akses untuk melakukan tindakan ini.',
     );
   });
@@ -41,9 +41,9 @@ describe('hasPermission', () => {
     expect(hasPermission(actor, 'qc.review')).toBe(true);
   });
 
-  it('returns false for operator with inspection.read', () => {
+  it('returns false for operator with submission.read.all', () => {
     const actor = { ...baseActor, role: 'operator' as const };
-    expect(hasPermission(actor, 'inspection.read')).toBe(false);
+    expect(hasPermission(actor, 'submission.read.all')).toBe(false);
   });
 });
 
