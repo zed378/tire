@@ -67,7 +67,7 @@ export function LandingHero(): ReactNode {
   }, []);
 
   return (
-    <section className={`relative bg-canvas ${play ? "hero--play" : ""}`}>
+    <section className={`relative bg-canvas lg:min-h-[34rem] ${play ? "hero--play" : ""}`}>
       {/*
         The text sits in the normal container so its left edge lines up with
         every section below it. The image is taken out of flow on desktop and
@@ -109,67 +109,62 @@ export function LandingHero(): ReactNode {
             </a>
           </div>
         </div>
-
       </div>
 
       {/* On mobile it follows the text at a fixed ratio; on desktop it is
           pinned to the right half of the viewport, full height. */}
       <div className="relative mx-5 aspect-[4/3] overflow-hidden rounded-panel bg-graphite sm:mx-8 lg:absolute lg:inset-y-0 lg:right-0 lg:mx-0 lg:aspect-auto lg:w-[45%] lg:rounded-l-panel lg:rounded-r-none">
-          <img
-            src={TREAD_IMAGE.src}
-            alt={TREAD_IMAGE.alt}
-            width={1600}
-            height={1200}
-            fetchPriority="high"
-            className="hero-photo absolute inset-0 h-full w-full scale-[1.35] rotate-[8deg] object-cover"
-          />
+        <img
+          src={TREAD_IMAGE.src}
+          alt={TREAD_IMAGE.alt}
+          width={1600}
+          height={1200}
+          fetchPriority="high"
+          className="hero-photo absolute inset-0 h-full w-full scale-[1.35] rotate-[8deg] object-cover"
+        />
 
-          {/* A measurement rule sweeping across the image, once. */}
+        {/* A measurement rule sweeping across the image, once. */}
+        <div
+          aria-hidden="true"
+          className="hero-sweep pointer-events-none absolute inset-y-0 left-0 w-px bg-amber/70"
+        />
+
+        {CALLOUTS.map((callout, index) => (
           <div
-            aria-hidden="true"
-            className="hero-sweep pointer-events-none absolute inset-y-0 left-0 w-px bg-amber/70"
-          />
-
-          {CALLOUTS.map((callout, index) => (
-            <div
-              key={callout.label}
-              tabIndex={0}
-              className={`hero-callout hero-callout-${String(index + 1)} absolute left-0 flex items-center gap-0 outline-none ${callout.anchor}`}
-            >
-              <span
-                aria-hidden="true"
-                className="hero-leader h-px w-10 bg-paper/50 sm:w-16"
-              />
-              <span
-                aria-hidden="true"
-                className="h-1.5 w-1.5 flex-none rounded-full border border-paper/70"
-              />
-              <span className="hero-callout-label ml-2.5 whitespace-nowrap font-data text-xs leading-tight text-paper">
-                <span className="block font-medium">{callout.value}</span>
-                <span className="block text-[0.6875rem] text-paper/70">{callout.label}</span>
-              </span>
-            </div>
-          ))}
-
-          {/*
-            One fragment of the real interface, overlapping the image edge. It
-            ties the photograph to the product — without it the hero is a stock
-            tire and a paragraph, which describes any tire company at all.
-          */}
-          <div className="absolute bottom-4 right-4 rounded-base border border-paper/15 bg-graphite/85 px-3.5 py-2.5 backdrop-blur-sm sm:bottom-6 sm:right-6">
-            <p className="font-data text-[0.6875rem] uppercase tracking-wide text-paper/60">
-              SN2026-00148
-            </p>
-            <p className="mt-1 flex items-center gap-2 text-xs font-medium text-paper">
-              <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-signal-ok" />
-              Pass QC
-            </p>
+            key={callout.label}
+            tabIndex={0}
+            className={`hero-callout hero-callout-${String(index + 1)} absolute left-0 flex items-center gap-0 outline-none ${callout.anchor}`}
+          >
+            <span
+              aria-hidden="true"
+              className="hero-leader h-px w-10 bg-paper/50 sm:w-16"
+            />
+            <span
+              aria-hidden="true"
+              className="h-1.5 w-1.5 flex-none rounded-full border border-paper/70"
+            />
+            <span className="hero-callout-label ml-2.5 whitespace-nowrap font-data text-xs leading-tight text-paper">
+              <span className="block font-medium">{callout.value}</span>
+              <span className="block text-[0.6875rem] text-paper/70">{callout.label}</span>
+            </span>
           </div>
-      </div>
+        ))}
 
-      {/* Restores the section's height on desktop, where the image is out of
-          flow and would otherwise contribute nothing. */}
-      <div aria-hidden="true" className="hidden lg:block lg:h-[34rem]" />
+        {/*
+          One fragment of the real interface, overlapping the image edge. It
+          ties the photograph to the product — without it the hero is a stock
+          tire and a paragraph, which describes any tire company at all.
+        */}
+        <div className="absolute bottom-4 right-4 rounded-base border border-paper/15 bg-graphite/85 px-3.5 py-2.5 backdrop-blur-sm sm:bottom-6 sm:right-6">
+          <p className="font-data text-[0.6875rem] uppercase tracking-wide text-paper/60">
+            SN2026-00148
+          </p>
+          <p className="mt-1 flex items-center gap-2 text-xs font-medium text-paper">
+            <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-signal-ok" />
+            Pass QC
+          </p>
+        </div>
+      </div>
     </section>
   );
 }

@@ -59,4 +59,13 @@ export const TREAD_IMAGE: ImageCredit = {
   sourceUrl: "https://commons.wikimedia.org/wiki/File:Texture_-_tire_tread_(30784753).jpg",
 };
 
-export const IMAGE_CREDITS: ImageCredit[] = [HERO_IMAGE, WHEEL_IMAGE, TREAD_IMAGE];
+/**
+ * The credits the landing page renders — the photographs it actually shows, in
+ * the order it shows them.
+ *
+ * `WHEEL_IMAGE` is deliberately not here. It is still declared above because
+ * the file is downloaded and available, but the redesigned page does not use
+ * it, and crediting a photograph nobody can see on the page is not attribution
+ * — it is a list. If a section starts using it, add it here.
+ */
+export const IMAGE_CREDITS: ImageCredit[] = [TREAD_IMAGE, HERO_IMAGE];
