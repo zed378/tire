@@ -42,6 +42,9 @@ COPY --from=build /app/apps/api/dist ./dist
 COPY --from=build /app/apps/api/src/generated/prisma ./dist/generated/prisma
 COPY --from=build /app/apps/api/src ./apps/api/src
 
+# Create symlink so commands running inside apps/api (like pnpm db:migrate) resolve dist/ correctly
+RUN mkdir -p ./apps/api && ln -s /app/dist ./apps/api/dist
+
 # ── Prisma files for seeding ─────────────────────────────────────────────────
 # Include schema, migrations, and seed scripts for production database setup
 # Must be at apps/api/prisma so pnpm db:migrate can find it
