@@ -34,6 +34,11 @@ export type VehicleBrand = $Result.DefaultSelection<Prisma.$VehicleBrandPayload>
  */
 export type TireBrand = $Result.DefaultSelection<Prisma.$TireBrandPayload>
 /**
+ * Model TireBrandPattern
+ * 
+ */
+export type TireBrandPattern = $Result.DefaultSelection<Prisma.$TireBrandPatternPayload>
+/**
  * Model User
  * 
  */
@@ -490,6 +495,16 @@ export class PrismaClient<
     * ```
     */
   get tireBrand(): Prisma.TireBrandDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.tireBrandPattern`: Exposes CRUD operations for the **TireBrandPattern** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more TireBrandPatterns
+    * const tireBrandPatterns = await prisma.tireBrandPattern.findMany()
+    * ```
+    */
+  get tireBrandPattern(): Prisma.TireBrandPatternDelegate<ExtArgs, ClientOptions>;
 
   /**
    * `prisma.user`: Exposes CRUD operations for the **User** model.
@@ -1185,6 +1200,7 @@ export namespace Prisma {
     City: 'City',
     VehicleBrand: 'VehicleBrand',
     TireBrand: 'TireBrand',
+    TireBrandPattern: 'TireBrandPattern',
     User: 'User',
     UserRegion: 'UserRegion',
     Session: 'Session',
@@ -1228,7 +1244,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "province" | "city" | "vehicleBrand" | "tireBrand" | "user" | "userRegion" | "session" | "loginAttempt" | "userMfa" | "mfaRecoveryCode" | "mfaUsedCode" | "vehicle" | "vehiclePlateHistory" | "axleConfig" | "inspection" | "serialCounter" | "tirePosition" | "tireSpec" | "photo" | "pendingUpload" | "qcReview" | "qcComment" | "auditLog" | "outbox" | "notification" | "notificationPreference" | "exportJob" | "dailyMetric" | "migrationQuarantine"
+      modelProps: "province" | "city" | "vehicleBrand" | "tireBrand" | "tireBrandPattern" | "user" | "userRegion" | "session" | "loginAttempt" | "userMfa" | "mfaRecoveryCode" | "mfaUsedCode" | "vehicle" | "vehiclePlateHistory" | "axleConfig" | "inspection" | "serialCounter" | "tirePosition" | "tireSpec" | "photo" | "pendingUpload" | "qcReview" | "qcComment" | "auditLog" | "outbox" | "notification" | "notificationPreference" | "exportJob" | "dailyMetric" | "migrationQuarantine"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -1525,6 +1541,80 @@ export namespace Prisma {
           count: {
             args: Prisma.TireBrandCountArgs<ExtArgs>
             result: $Utils.Optional<TireBrandCountAggregateOutputType> | number
+          }
+        }
+      }
+      TireBrandPattern: {
+        payload: Prisma.$TireBrandPatternPayload<ExtArgs>
+        fields: Prisma.TireBrandPatternFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.TireBrandPatternFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TireBrandPatternPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.TireBrandPatternFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TireBrandPatternPayload>
+          }
+          findFirst: {
+            args: Prisma.TireBrandPatternFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TireBrandPatternPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.TireBrandPatternFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TireBrandPatternPayload>
+          }
+          findMany: {
+            args: Prisma.TireBrandPatternFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TireBrandPatternPayload>[]
+          }
+          create: {
+            args: Prisma.TireBrandPatternCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TireBrandPatternPayload>
+          }
+          createMany: {
+            args: Prisma.TireBrandPatternCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.TireBrandPatternCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TireBrandPatternPayload>[]
+          }
+          delete: {
+            args: Prisma.TireBrandPatternDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TireBrandPatternPayload>
+          }
+          update: {
+            args: Prisma.TireBrandPatternUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TireBrandPatternPayload>
+          }
+          deleteMany: {
+            args: Prisma.TireBrandPatternDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.TireBrandPatternUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.TireBrandPatternUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TireBrandPatternPayload>[]
+          }
+          upsert: {
+            args: Prisma.TireBrandPatternUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TireBrandPatternPayload>
+          }
+          aggregate: {
+            args: Prisma.TireBrandPatternAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateTireBrandPattern>
+          }
+          groupBy: {
+            args: Prisma.TireBrandPatternGroupByArgs<ExtArgs>
+            result: $Utils.Optional<TireBrandPatternGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.TireBrandPatternCountArgs<ExtArgs>
+            result: $Utils.Optional<TireBrandPatternCountAggregateOutputType> | number
           }
         }
       }
@@ -3478,6 +3568,7 @@ export namespace Prisma {
     city?: CityOmit
     vehicleBrand?: VehicleBrandOmit
     tireBrand?: TireBrandOmit
+    tireBrandPattern?: TireBrandPatternOmit
     user?: UserOmit
     userRegion?: UserRegionOmit
     session?: SessionOmit
@@ -8678,6 +8769,1061 @@ export namespace Prisma {
      * Choose, which related nodes to fetch as well
      */
     include?: TireBrandInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model TireBrandPattern
+   */
+
+  export type AggregateTireBrandPattern = {
+    _count: TireBrandPatternCountAggregateOutputType | null
+    _avg: TireBrandPatternAvgAggregateOutputType | null
+    _sum: TireBrandPatternSumAggregateOutputType | null
+    _min: TireBrandPatternMinAggregateOutputType | null
+    _max: TireBrandPatternMaxAggregateOutputType | null
+  }
+
+  export type TireBrandPatternAvgAggregateOutputType = {
+    id: number | null
+  }
+
+  export type TireBrandPatternSumAggregateOutputType = {
+    id: bigint | null
+  }
+
+  export type TireBrandPatternMinAggregateOutputType = {
+    id: bigint | null
+    brand: string | null
+    pattern: string | null
+    type: string | null
+    isActive: boolean | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type TireBrandPatternMaxAggregateOutputType = {
+    id: bigint | null
+    brand: string | null
+    pattern: string | null
+    type: string | null
+    isActive: boolean | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type TireBrandPatternCountAggregateOutputType = {
+    id: number
+    brand: number
+    pattern: number
+    type: number
+    isActive: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type TireBrandPatternAvgAggregateInputType = {
+    id?: true
+  }
+
+  export type TireBrandPatternSumAggregateInputType = {
+    id?: true
+  }
+
+  export type TireBrandPatternMinAggregateInputType = {
+    id?: true
+    brand?: true
+    pattern?: true
+    type?: true
+    isActive?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type TireBrandPatternMaxAggregateInputType = {
+    id?: true
+    brand?: true
+    pattern?: true
+    type?: true
+    isActive?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type TireBrandPatternCountAggregateInputType = {
+    id?: true
+    brand?: true
+    pattern?: true
+    type?: true
+    isActive?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type TireBrandPatternAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which TireBrandPattern to aggregate.
+     */
+    where?: TireBrandPatternWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of TireBrandPatterns to fetch.
+     */
+    orderBy?: TireBrandPatternOrderByWithRelationInput | TireBrandPatternOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: TireBrandPatternWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` TireBrandPatterns from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` TireBrandPatterns.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned TireBrandPatterns
+    **/
+    _count?: true | TireBrandPatternCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: TireBrandPatternAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: TireBrandPatternSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: TireBrandPatternMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: TireBrandPatternMaxAggregateInputType
+  }
+
+  export type GetTireBrandPatternAggregateType<T extends TireBrandPatternAggregateArgs> = {
+        [P in keyof T & keyof AggregateTireBrandPattern]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateTireBrandPattern[P]>
+      : GetScalarType<T[P], AggregateTireBrandPattern[P]>
+  }
+
+
+
+
+  export type TireBrandPatternGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: TireBrandPatternWhereInput
+    orderBy?: TireBrandPatternOrderByWithAggregationInput | TireBrandPatternOrderByWithAggregationInput[]
+    by: TireBrandPatternScalarFieldEnum[] | TireBrandPatternScalarFieldEnum
+    having?: TireBrandPatternScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: TireBrandPatternCountAggregateInputType | true
+    _avg?: TireBrandPatternAvgAggregateInputType
+    _sum?: TireBrandPatternSumAggregateInputType
+    _min?: TireBrandPatternMinAggregateInputType
+    _max?: TireBrandPatternMaxAggregateInputType
+  }
+
+  export type TireBrandPatternGroupByOutputType = {
+    id: bigint
+    brand: string
+    pattern: string
+    type: string
+    isActive: boolean
+    createdAt: Date
+    updatedAt: Date
+    _count: TireBrandPatternCountAggregateOutputType | null
+    _avg: TireBrandPatternAvgAggregateOutputType | null
+    _sum: TireBrandPatternSumAggregateOutputType | null
+    _min: TireBrandPatternMinAggregateOutputType | null
+    _max: TireBrandPatternMaxAggregateOutputType | null
+  }
+
+  type GetTireBrandPatternGroupByPayload<T extends TireBrandPatternGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<TireBrandPatternGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof TireBrandPatternGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], TireBrandPatternGroupByOutputType[P]>
+            : GetScalarType<T[P], TireBrandPatternGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type TireBrandPatternSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    brand?: boolean
+    pattern?: boolean
+    type?: boolean
+    isActive?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }, ExtArgs["result"]["tireBrandPattern"]>
+
+  export type TireBrandPatternSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    brand?: boolean
+    pattern?: boolean
+    type?: boolean
+    isActive?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }, ExtArgs["result"]["tireBrandPattern"]>
+
+  export type TireBrandPatternSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    brand?: boolean
+    pattern?: boolean
+    type?: boolean
+    isActive?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }, ExtArgs["result"]["tireBrandPattern"]>
+
+  export type TireBrandPatternSelectScalar = {
+    id?: boolean
+    brand?: boolean
+    pattern?: boolean
+    type?: boolean
+    isActive?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type TireBrandPatternOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "brand" | "pattern" | "type" | "isActive" | "createdAt" | "updatedAt", ExtArgs["result"]["tireBrandPattern"]>
+
+  export type $TireBrandPatternPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "TireBrandPattern"
+    objects: {}
+    scalars: $Extensions.GetPayloadResult<{
+      id: bigint
+      brand: string
+      pattern: string
+      type: string
+      isActive: boolean
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["tireBrandPattern"]>
+    composites: {}
+  }
+
+  type TireBrandPatternGetPayload<S extends boolean | null | undefined | TireBrandPatternDefaultArgs> = $Result.GetResult<Prisma.$TireBrandPatternPayload, S>
+
+  type TireBrandPatternCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<TireBrandPatternFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: TireBrandPatternCountAggregateInputType | true
+    }
+
+  export interface TireBrandPatternDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['TireBrandPattern'], meta: { name: 'TireBrandPattern' } }
+    /**
+     * Find zero or one TireBrandPattern that matches the filter.
+     * @param {TireBrandPatternFindUniqueArgs} args - Arguments to find a TireBrandPattern
+     * @example
+     * // Get one TireBrandPattern
+     * const tireBrandPattern = await prisma.tireBrandPattern.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends TireBrandPatternFindUniqueArgs>(args: SelectSubset<T, TireBrandPatternFindUniqueArgs<ExtArgs>>): Prisma__TireBrandPatternClient<$Result.GetResult<Prisma.$TireBrandPatternPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one TireBrandPattern that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {TireBrandPatternFindUniqueOrThrowArgs} args - Arguments to find a TireBrandPattern
+     * @example
+     * // Get one TireBrandPattern
+     * const tireBrandPattern = await prisma.tireBrandPattern.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends TireBrandPatternFindUniqueOrThrowArgs>(args: SelectSubset<T, TireBrandPatternFindUniqueOrThrowArgs<ExtArgs>>): Prisma__TireBrandPatternClient<$Result.GetResult<Prisma.$TireBrandPatternPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first TireBrandPattern that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TireBrandPatternFindFirstArgs} args - Arguments to find a TireBrandPattern
+     * @example
+     * // Get one TireBrandPattern
+     * const tireBrandPattern = await prisma.tireBrandPattern.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends TireBrandPatternFindFirstArgs>(args?: SelectSubset<T, TireBrandPatternFindFirstArgs<ExtArgs>>): Prisma__TireBrandPatternClient<$Result.GetResult<Prisma.$TireBrandPatternPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first TireBrandPattern that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TireBrandPatternFindFirstOrThrowArgs} args - Arguments to find a TireBrandPattern
+     * @example
+     * // Get one TireBrandPattern
+     * const tireBrandPattern = await prisma.tireBrandPattern.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends TireBrandPatternFindFirstOrThrowArgs>(args?: SelectSubset<T, TireBrandPatternFindFirstOrThrowArgs<ExtArgs>>): Prisma__TireBrandPatternClient<$Result.GetResult<Prisma.$TireBrandPatternPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more TireBrandPatterns that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TireBrandPatternFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all TireBrandPatterns
+     * const tireBrandPatterns = await prisma.tireBrandPattern.findMany()
+     * 
+     * // Get first 10 TireBrandPatterns
+     * const tireBrandPatterns = await prisma.tireBrandPattern.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const tireBrandPatternWithIdOnly = await prisma.tireBrandPattern.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends TireBrandPatternFindManyArgs>(args?: SelectSubset<T, TireBrandPatternFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$TireBrandPatternPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a TireBrandPattern.
+     * @param {TireBrandPatternCreateArgs} args - Arguments to create a TireBrandPattern.
+     * @example
+     * // Create one TireBrandPattern
+     * const TireBrandPattern = await prisma.tireBrandPattern.create({
+     *   data: {
+     *     // ... data to create a TireBrandPattern
+     *   }
+     * })
+     * 
+     */
+    create<T extends TireBrandPatternCreateArgs>(args: SelectSubset<T, TireBrandPatternCreateArgs<ExtArgs>>): Prisma__TireBrandPatternClient<$Result.GetResult<Prisma.$TireBrandPatternPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many TireBrandPatterns.
+     * @param {TireBrandPatternCreateManyArgs} args - Arguments to create many TireBrandPatterns.
+     * @example
+     * // Create many TireBrandPatterns
+     * const tireBrandPattern = await prisma.tireBrandPattern.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends TireBrandPatternCreateManyArgs>(args?: SelectSubset<T, TireBrandPatternCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many TireBrandPatterns and returns the data saved in the database.
+     * @param {TireBrandPatternCreateManyAndReturnArgs} args - Arguments to create many TireBrandPatterns.
+     * @example
+     * // Create many TireBrandPatterns
+     * const tireBrandPattern = await prisma.tireBrandPattern.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many TireBrandPatterns and only return the `id`
+     * const tireBrandPatternWithIdOnly = await prisma.tireBrandPattern.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends TireBrandPatternCreateManyAndReturnArgs>(args?: SelectSubset<T, TireBrandPatternCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$TireBrandPatternPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a TireBrandPattern.
+     * @param {TireBrandPatternDeleteArgs} args - Arguments to delete one TireBrandPattern.
+     * @example
+     * // Delete one TireBrandPattern
+     * const TireBrandPattern = await prisma.tireBrandPattern.delete({
+     *   where: {
+     *     // ... filter to delete one TireBrandPattern
+     *   }
+     * })
+     * 
+     */
+    delete<T extends TireBrandPatternDeleteArgs>(args: SelectSubset<T, TireBrandPatternDeleteArgs<ExtArgs>>): Prisma__TireBrandPatternClient<$Result.GetResult<Prisma.$TireBrandPatternPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one TireBrandPattern.
+     * @param {TireBrandPatternUpdateArgs} args - Arguments to update one TireBrandPattern.
+     * @example
+     * // Update one TireBrandPattern
+     * const tireBrandPattern = await prisma.tireBrandPattern.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends TireBrandPatternUpdateArgs>(args: SelectSubset<T, TireBrandPatternUpdateArgs<ExtArgs>>): Prisma__TireBrandPatternClient<$Result.GetResult<Prisma.$TireBrandPatternPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more TireBrandPatterns.
+     * @param {TireBrandPatternDeleteManyArgs} args - Arguments to filter TireBrandPatterns to delete.
+     * @example
+     * // Delete a few TireBrandPatterns
+     * const { count } = await prisma.tireBrandPattern.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends TireBrandPatternDeleteManyArgs>(args?: SelectSubset<T, TireBrandPatternDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more TireBrandPatterns.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TireBrandPatternUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many TireBrandPatterns
+     * const tireBrandPattern = await prisma.tireBrandPattern.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends TireBrandPatternUpdateManyArgs>(args: SelectSubset<T, TireBrandPatternUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more TireBrandPatterns and returns the data updated in the database.
+     * @param {TireBrandPatternUpdateManyAndReturnArgs} args - Arguments to update many TireBrandPatterns.
+     * @example
+     * // Update many TireBrandPatterns
+     * const tireBrandPattern = await prisma.tireBrandPattern.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more TireBrandPatterns and only return the `id`
+     * const tireBrandPatternWithIdOnly = await prisma.tireBrandPattern.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends TireBrandPatternUpdateManyAndReturnArgs>(args: SelectSubset<T, TireBrandPatternUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$TireBrandPatternPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one TireBrandPattern.
+     * @param {TireBrandPatternUpsertArgs} args - Arguments to update or create a TireBrandPattern.
+     * @example
+     * // Update or create a TireBrandPattern
+     * const tireBrandPattern = await prisma.tireBrandPattern.upsert({
+     *   create: {
+     *     // ... data to create a TireBrandPattern
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the TireBrandPattern we want to update
+     *   }
+     * })
+     */
+    upsert<T extends TireBrandPatternUpsertArgs>(args: SelectSubset<T, TireBrandPatternUpsertArgs<ExtArgs>>): Prisma__TireBrandPatternClient<$Result.GetResult<Prisma.$TireBrandPatternPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of TireBrandPatterns.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TireBrandPatternCountArgs} args - Arguments to filter TireBrandPatterns to count.
+     * @example
+     * // Count the number of TireBrandPatterns
+     * const count = await prisma.tireBrandPattern.count({
+     *   where: {
+     *     // ... the filter for the TireBrandPatterns we want to count
+     *   }
+     * })
+    **/
+    count<T extends TireBrandPatternCountArgs>(
+      args?: Subset<T, TireBrandPatternCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], TireBrandPatternCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a TireBrandPattern.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TireBrandPatternAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends TireBrandPatternAggregateArgs>(args: Subset<T, TireBrandPatternAggregateArgs>): Prisma.PrismaPromise<GetTireBrandPatternAggregateType<T>>
+
+    /**
+     * Group by TireBrandPattern.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TireBrandPatternGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends TireBrandPatternGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: TireBrandPatternGroupByArgs['orderBy'] }
+        : { orderBy?: TireBrandPatternGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, TireBrandPatternGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetTireBrandPatternGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the TireBrandPattern model
+   */
+  readonly fields: TireBrandPatternFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for TireBrandPattern.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__TireBrandPatternClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the TireBrandPattern model
+   */
+  interface TireBrandPatternFieldRefs {
+    readonly id: FieldRef<"TireBrandPattern", 'BigInt'>
+    readonly brand: FieldRef<"TireBrandPattern", 'String'>
+    readonly pattern: FieldRef<"TireBrandPattern", 'String'>
+    readonly type: FieldRef<"TireBrandPattern", 'String'>
+    readonly isActive: FieldRef<"TireBrandPattern", 'Boolean'>
+    readonly createdAt: FieldRef<"TireBrandPattern", 'DateTime'>
+    readonly updatedAt: FieldRef<"TireBrandPattern", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * TireBrandPattern findUnique
+   */
+  export type TireBrandPatternFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TireBrandPattern
+     */
+    select?: TireBrandPatternSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TireBrandPattern
+     */
+    omit?: TireBrandPatternOmit<ExtArgs> | null
+    /**
+     * Filter, which TireBrandPattern to fetch.
+     */
+    where: TireBrandPatternWhereUniqueInput
+  }
+
+  /**
+   * TireBrandPattern findUniqueOrThrow
+   */
+  export type TireBrandPatternFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TireBrandPattern
+     */
+    select?: TireBrandPatternSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TireBrandPattern
+     */
+    omit?: TireBrandPatternOmit<ExtArgs> | null
+    /**
+     * Filter, which TireBrandPattern to fetch.
+     */
+    where: TireBrandPatternWhereUniqueInput
+  }
+
+  /**
+   * TireBrandPattern findFirst
+   */
+  export type TireBrandPatternFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TireBrandPattern
+     */
+    select?: TireBrandPatternSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TireBrandPattern
+     */
+    omit?: TireBrandPatternOmit<ExtArgs> | null
+    /**
+     * Filter, which TireBrandPattern to fetch.
+     */
+    where?: TireBrandPatternWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of TireBrandPatterns to fetch.
+     */
+    orderBy?: TireBrandPatternOrderByWithRelationInput | TireBrandPatternOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for TireBrandPatterns.
+     */
+    cursor?: TireBrandPatternWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` TireBrandPatterns from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` TireBrandPatterns.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of TireBrandPatterns.
+     */
+    distinct?: TireBrandPatternScalarFieldEnum | TireBrandPatternScalarFieldEnum[]
+  }
+
+  /**
+   * TireBrandPattern findFirstOrThrow
+   */
+  export type TireBrandPatternFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TireBrandPattern
+     */
+    select?: TireBrandPatternSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TireBrandPattern
+     */
+    omit?: TireBrandPatternOmit<ExtArgs> | null
+    /**
+     * Filter, which TireBrandPattern to fetch.
+     */
+    where?: TireBrandPatternWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of TireBrandPatterns to fetch.
+     */
+    orderBy?: TireBrandPatternOrderByWithRelationInput | TireBrandPatternOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for TireBrandPatterns.
+     */
+    cursor?: TireBrandPatternWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` TireBrandPatterns from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` TireBrandPatterns.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of TireBrandPatterns.
+     */
+    distinct?: TireBrandPatternScalarFieldEnum | TireBrandPatternScalarFieldEnum[]
+  }
+
+  /**
+   * TireBrandPattern findMany
+   */
+  export type TireBrandPatternFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TireBrandPattern
+     */
+    select?: TireBrandPatternSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TireBrandPattern
+     */
+    omit?: TireBrandPatternOmit<ExtArgs> | null
+    /**
+     * Filter, which TireBrandPatterns to fetch.
+     */
+    where?: TireBrandPatternWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of TireBrandPatterns to fetch.
+     */
+    orderBy?: TireBrandPatternOrderByWithRelationInput | TireBrandPatternOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing TireBrandPatterns.
+     */
+    cursor?: TireBrandPatternWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` TireBrandPatterns from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` TireBrandPatterns.
+     */
+    skip?: number
+    distinct?: TireBrandPatternScalarFieldEnum | TireBrandPatternScalarFieldEnum[]
+  }
+
+  /**
+   * TireBrandPattern create
+   */
+  export type TireBrandPatternCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TireBrandPattern
+     */
+    select?: TireBrandPatternSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TireBrandPattern
+     */
+    omit?: TireBrandPatternOmit<ExtArgs> | null
+    /**
+     * The data needed to create a TireBrandPattern.
+     */
+    data: XOR<TireBrandPatternCreateInput, TireBrandPatternUncheckedCreateInput>
+  }
+
+  /**
+   * TireBrandPattern createMany
+   */
+  export type TireBrandPatternCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many TireBrandPatterns.
+     */
+    data: TireBrandPatternCreateManyInput | TireBrandPatternCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * TireBrandPattern createManyAndReturn
+   */
+  export type TireBrandPatternCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TireBrandPattern
+     */
+    select?: TireBrandPatternSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the TireBrandPattern
+     */
+    omit?: TireBrandPatternOmit<ExtArgs> | null
+    /**
+     * The data used to create many TireBrandPatterns.
+     */
+    data: TireBrandPatternCreateManyInput | TireBrandPatternCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * TireBrandPattern update
+   */
+  export type TireBrandPatternUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TireBrandPattern
+     */
+    select?: TireBrandPatternSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TireBrandPattern
+     */
+    omit?: TireBrandPatternOmit<ExtArgs> | null
+    /**
+     * The data needed to update a TireBrandPattern.
+     */
+    data: XOR<TireBrandPatternUpdateInput, TireBrandPatternUncheckedUpdateInput>
+    /**
+     * Choose, which TireBrandPattern to update.
+     */
+    where: TireBrandPatternWhereUniqueInput
+  }
+
+  /**
+   * TireBrandPattern updateMany
+   */
+  export type TireBrandPatternUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update TireBrandPatterns.
+     */
+    data: XOR<TireBrandPatternUpdateManyMutationInput, TireBrandPatternUncheckedUpdateManyInput>
+    /**
+     * Filter which TireBrandPatterns to update
+     */
+    where?: TireBrandPatternWhereInput
+    /**
+     * Limit how many TireBrandPatterns to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * TireBrandPattern updateManyAndReturn
+   */
+  export type TireBrandPatternUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TireBrandPattern
+     */
+    select?: TireBrandPatternSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the TireBrandPattern
+     */
+    omit?: TireBrandPatternOmit<ExtArgs> | null
+    /**
+     * The data used to update TireBrandPatterns.
+     */
+    data: XOR<TireBrandPatternUpdateManyMutationInput, TireBrandPatternUncheckedUpdateManyInput>
+    /**
+     * Filter which TireBrandPatterns to update
+     */
+    where?: TireBrandPatternWhereInput
+    /**
+     * Limit how many TireBrandPatterns to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * TireBrandPattern upsert
+   */
+  export type TireBrandPatternUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TireBrandPattern
+     */
+    select?: TireBrandPatternSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TireBrandPattern
+     */
+    omit?: TireBrandPatternOmit<ExtArgs> | null
+    /**
+     * The filter to search for the TireBrandPattern to update in case it exists.
+     */
+    where: TireBrandPatternWhereUniqueInput
+    /**
+     * In case the TireBrandPattern found by the `where` argument doesn't exist, create a new TireBrandPattern with this data.
+     */
+    create: XOR<TireBrandPatternCreateInput, TireBrandPatternUncheckedCreateInput>
+    /**
+     * In case the TireBrandPattern was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<TireBrandPatternUpdateInput, TireBrandPatternUncheckedUpdateInput>
+  }
+
+  /**
+   * TireBrandPattern delete
+   */
+  export type TireBrandPatternDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TireBrandPattern
+     */
+    select?: TireBrandPatternSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TireBrandPattern
+     */
+    omit?: TireBrandPatternOmit<ExtArgs> | null
+    /**
+     * Filter which TireBrandPattern to delete.
+     */
+    where: TireBrandPatternWhereUniqueInput
+  }
+
+  /**
+   * TireBrandPattern deleteMany
+   */
+  export type TireBrandPatternDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which TireBrandPatterns to delete
+     */
+    where?: TireBrandPatternWhereInput
+    /**
+     * Limit how many TireBrandPatterns to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * TireBrandPattern without action
+   */
+  export type TireBrandPatternDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TireBrandPattern
+     */
+    select?: TireBrandPatternSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TireBrandPattern
+     */
+    omit?: TireBrandPatternOmit<ExtArgs> | null
   }
 
 
@@ -38646,6 +39792,19 @@ export namespace Prisma {
   export type TireBrandScalarFieldEnum = (typeof TireBrandScalarFieldEnum)[keyof typeof TireBrandScalarFieldEnum]
 
 
+  export const TireBrandPatternScalarFieldEnum: {
+    id: 'id',
+    brand: 'brand',
+    pattern: 'pattern',
+    type: 'type',
+    isActive: 'isActive',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type TireBrandPatternScalarFieldEnum = (typeof TireBrandPatternScalarFieldEnum)[keyof typeof TireBrandPatternScalarFieldEnum]
+
+
   export const UserScalarFieldEnum: {
     id: 'id',
     username: 'username',
@@ -39618,6 +40777,71 @@ export namespace Prisma {
     isActive?: BoolWithAggregatesFilter<"TireBrand"> | boolean
     createdAt?: DateTimeWithAggregatesFilter<"TireBrand"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"TireBrand"> | Date | string
+  }
+
+  export type TireBrandPatternWhereInput = {
+    AND?: TireBrandPatternWhereInput | TireBrandPatternWhereInput[]
+    OR?: TireBrandPatternWhereInput[]
+    NOT?: TireBrandPatternWhereInput | TireBrandPatternWhereInput[]
+    id?: BigIntFilter<"TireBrandPattern"> | bigint | number
+    brand?: StringFilter<"TireBrandPattern"> | string
+    pattern?: StringFilter<"TireBrandPattern"> | string
+    type?: StringFilter<"TireBrandPattern"> | string
+    isActive?: BoolFilter<"TireBrandPattern"> | boolean
+    createdAt?: DateTimeFilter<"TireBrandPattern"> | Date | string
+    updatedAt?: DateTimeFilter<"TireBrandPattern"> | Date | string
+  }
+
+  export type TireBrandPatternOrderByWithRelationInput = {
+    id?: SortOrder
+    brand?: SortOrder
+    pattern?: SortOrder
+    type?: SortOrder
+    isActive?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type TireBrandPatternWhereUniqueInput = Prisma.AtLeast<{
+    id?: bigint | number
+    brand_pattern_type?: TireBrandPatternBrandPatternTypeCompoundUniqueInput
+    AND?: TireBrandPatternWhereInput | TireBrandPatternWhereInput[]
+    OR?: TireBrandPatternWhereInput[]
+    NOT?: TireBrandPatternWhereInput | TireBrandPatternWhereInput[]
+    brand?: StringFilter<"TireBrandPattern"> | string
+    pattern?: StringFilter<"TireBrandPattern"> | string
+    type?: StringFilter<"TireBrandPattern"> | string
+    isActive?: BoolFilter<"TireBrandPattern"> | boolean
+    createdAt?: DateTimeFilter<"TireBrandPattern"> | Date | string
+    updatedAt?: DateTimeFilter<"TireBrandPattern"> | Date | string
+  }, "id" | "brand_pattern_type">
+
+  export type TireBrandPatternOrderByWithAggregationInput = {
+    id?: SortOrder
+    brand?: SortOrder
+    pattern?: SortOrder
+    type?: SortOrder
+    isActive?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: TireBrandPatternCountOrderByAggregateInput
+    _avg?: TireBrandPatternAvgOrderByAggregateInput
+    _max?: TireBrandPatternMaxOrderByAggregateInput
+    _min?: TireBrandPatternMinOrderByAggregateInput
+    _sum?: TireBrandPatternSumOrderByAggregateInput
+  }
+
+  export type TireBrandPatternScalarWhereWithAggregatesInput = {
+    AND?: TireBrandPatternScalarWhereWithAggregatesInput | TireBrandPatternScalarWhereWithAggregatesInput[]
+    OR?: TireBrandPatternScalarWhereWithAggregatesInput[]
+    NOT?: TireBrandPatternScalarWhereWithAggregatesInput | TireBrandPatternScalarWhereWithAggregatesInput[]
+    id?: BigIntWithAggregatesFilter<"TireBrandPattern"> | bigint | number
+    brand?: StringWithAggregatesFilter<"TireBrandPattern"> | string
+    pattern?: StringWithAggregatesFilter<"TireBrandPattern"> | string
+    type?: StringWithAggregatesFilter<"TireBrandPattern"> | string
+    isActive?: BoolWithAggregatesFilter<"TireBrandPattern"> | boolean
+    createdAt?: DateTimeWithAggregatesFilter<"TireBrandPattern"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"TireBrandPattern"> | Date | string
   }
 
   export type UserWhereInput = {
@@ -41962,6 +43186,76 @@ export namespace Prisma {
   export type TireBrandUncheckedUpdateManyInput = {
     id?: BigIntFieldUpdateOperationsInput | bigint | number
     name?: StringFieldUpdateOperationsInput | string
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type TireBrandPatternCreateInput = {
+    id?: bigint | number
+    brand: string
+    pattern: string
+    type: string
+    isActive?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type TireBrandPatternUncheckedCreateInput = {
+    id?: bigint | number
+    brand: string
+    pattern: string
+    type: string
+    isActive?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type TireBrandPatternUpdateInput = {
+    id?: BigIntFieldUpdateOperationsInput | bigint | number
+    brand?: StringFieldUpdateOperationsInput | string
+    pattern?: StringFieldUpdateOperationsInput | string
+    type?: StringFieldUpdateOperationsInput | string
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type TireBrandPatternUncheckedUpdateInput = {
+    id?: BigIntFieldUpdateOperationsInput | bigint | number
+    brand?: StringFieldUpdateOperationsInput | string
+    pattern?: StringFieldUpdateOperationsInput | string
+    type?: StringFieldUpdateOperationsInput | string
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type TireBrandPatternCreateManyInput = {
+    id?: bigint | number
+    brand: string
+    pattern: string
+    type: string
+    isActive?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type TireBrandPatternUpdateManyMutationInput = {
+    id?: BigIntFieldUpdateOperationsInput | bigint | number
+    brand?: StringFieldUpdateOperationsInput | string
+    pattern?: StringFieldUpdateOperationsInput | string
+    type?: StringFieldUpdateOperationsInput | string
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type TireBrandPatternUncheckedUpdateManyInput = {
+    id?: BigIntFieldUpdateOperationsInput | bigint | number
+    brand?: StringFieldUpdateOperationsInput | string
+    pattern?: StringFieldUpdateOperationsInput | string
+    type?: StringFieldUpdateOperationsInput | string
     isActive?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -44463,6 +45757,50 @@ export namespace Prisma {
   }
 
   export type TireBrandSumOrderByAggregateInput = {
+    id?: SortOrder
+  }
+
+  export type TireBrandPatternBrandPatternTypeCompoundUniqueInput = {
+    brand: string
+    pattern: string
+    type: string
+  }
+
+  export type TireBrandPatternCountOrderByAggregateInput = {
+    id?: SortOrder
+    brand?: SortOrder
+    pattern?: SortOrder
+    type?: SortOrder
+    isActive?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type TireBrandPatternAvgOrderByAggregateInput = {
+    id?: SortOrder
+  }
+
+  export type TireBrandPatternMaxOrderByAggregateInput = {
+    id?: SortOrder
+    brand?: SortOrder
+    pattern?: SortOrder
+    type?: SortOrder
+    isActive?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type TireBrandPatternMinOrderByAggregateInput = {
+    id?: SortOrder
+    brand?: SortOrder
+    pattern?: SortOrder
+    type?: SortOrder
+    isActive?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type TireBrandPatternSumOrderByAggregateInput = {
     id?: SortOrder
   }
 

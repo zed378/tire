@@ -67,36 +67,28 @@ function parseBrandPatternCsv(filePath: string): BrandPattern[] {
 }
 
 /**
- * Parse Size CSV file.
- * Format: Group, SIZE with rows like TB,10.00-20 or LT,215/75R17.5
+ * Parse Vehicle Brand CSV file.
+ * Format: BRAND with one brand per row
  */
-function parseSizeCsv(filePath: string): { group: string; size: string }[] {
+function parseVehicleBrandCsv(filePath: string): string[] {
   const content = readFileSync(filePath, "utf-8");
   const lines = content.split("\n").map((line) => line.trim());
 
-  const sizes: { group: string; size: string }[] = [];
-  let currentGroup = "";
+  const brands: string[] = [];
 
   for (const line of lines) {
     if (!line) continue;
 
-    const parts = line.split(",").map((part) => part.trim());
+    // Skip header (BRAND)
+    if (line === "BRAND") continue;
 
-    // Skip header (Group, SIZE)
-    if (parts[0] === "Group" && parts[1] === "SIZE") continue;
-
-    // New group row (has group in first column)
-    if (parts[0] && parts[0] !== "" && (parts[0] === "TB" || parts[0] === "LT")) {
-      currentGroup = parts[0];
-    }
-
-    // Size row (has size in second column)
-    if (parts[1] && parts[1] !== "" && currentGroup) {
-      sizes.push({ group: currentGroup, size: parts[1] });
+    // Add brand
+    if (line) {
+      brands.push(line);
     }
   }
 
-  return sizes;
+  return brands;
 }
 
 export async function seedCsvData(prisma: PrismaClient): Promise<void> {
@@ -114,6 +106,22 @@ export async function seedCsvData(prisma: PrismaClient): Promise<void> {
 
   // Parse Sizes
   const sizes = parseSizeCsv(resolve(requirementsDir, "req-Size.csv"));
+
+  // Parse Vehicle Brands
+  const vehicleBrands = parseVehicleBrandCsv(
+    resolve(requirementsDir, "req-Vehicle Brand.csv"),
+  );
+
+  // Seed Vehicle Brands
+  let vehicleBrandCount = 0;
+  for (const brand of vehicleBrands) {
+    await prisma.vehicleBrand.upsert({
+      where: { name: brand },
+      create: { name: brand },
+      update: {},
+    });
+    vehicleBrandCount++;
+  }
 
   // Seed TB Tire Brands with Patterns
   let tbBrandCount = 0;
@@ -138,6 +146,6 @@ export async function seedCsvData(prisma: PrismaClient): Promise<void> {
   }
 
   process.stdout.write(
-    `  CSV data: ${tbBrandCount} TB brands, ${ltBrandCount} LT brands, ${sizes.length} tire sizes\n`,
+    `  CSV data: ${vehicleBrandCount} vehicle brands, ${tbBrandCount} TB brands, ${ltBrandCount} LT brands, ${sizes.length} tire sizes\n`,
   );
 }

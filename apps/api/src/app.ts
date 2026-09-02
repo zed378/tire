@@ -17,6 +17,7 @@ import { AppError } from "./kernel/envelope/index.ts";
 import { registerAuthRoutes, resolveActor } from "./modules/auth/index.ts";
 import { registerUserRoutes } from "./modules/users/index.ts";
 import { registerMasterDataRoutes } from "./modules/master-data/index.ts";
+import { registerMasterBrandRoutes } from "./modules/master-brand/index.ts";
 import { registerVehicleRoutes } from "./modules/vehicles/index.ts";
 import { registerInspectionRoutes } from "./modules/inspections/index.ts";
 import { registerPhotoRoutes } from "./modules/photos/index.ts";
@@ -176,6 +177,7 @@ export function buildApp(): FastifyInstance {
   registerAuthRoutes(app);
   registerUserRoutes(app);
   registerMasterDataRoutes(app);
+  registerMasterBrandRoutes(app);
   registerVehicleRoutes(app);
   registerInspectionRoutes(app);
   registerPhotoRoutes(app);

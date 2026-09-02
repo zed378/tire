@@ -21,6 +21,7 @@ export * from "./inspection.ts";
 export * from "./auth.ts";
 export * from "./user.ts";
 export * from "./master-data.ts";
+export * from "./master-brand.ts";
 export * from "./photo.ts";
 export * from "./qc.ts";
 export * from "./tire-spec.ts";

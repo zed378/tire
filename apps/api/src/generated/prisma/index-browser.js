@@ -156,6 +156,16 @@ exports.Prisma.TireBrandScalarFieldEnum = {
   updatedAt: 'updatedAt'
 };
 
+exports.Prisma.TireBrandPatternScalarFieldEnum = {
+  id: 'id',
+  brand: 'brand',
+  pattern: 'pattern',
+  type: 'type',
+  isActive: 'isActive',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
 exports.Prisma.UserScalarFieldEnum = {
   id: 'id',
   username: 'username',
@@ -571,6 +581,7 @@ exports.Prisma.ModelName = {
   City: 'City',
   VehicleBrand: 'VehicleBrand',
   TireBrand: 'TireBrand',
+  TireBrandPattern: 'TireBrandPattern',
   User: 'User',
   UserRegion: 'UserRegion',
   Session: 'Session',

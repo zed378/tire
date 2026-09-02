@@ -95,6 +95,31 @@ function parseBrandPatternCsv(filePath: string): BrandPattern[] {
 }
 
 /**
+ * Parse Vehicle Brand CSV file.
+ * Format: BRAND with one brand per row
+ */
+function parseVehicleBrandCsv(filePath: string): string[] {
+  const content = readFileSync(filePath, "utf-8");
+  const lines = content.split("\n").map((line) => line.trim());
+
+  const brands: string[] = [];
+
+  for (const line of lines) {
+    if (!line) continue;
+
+    // Skip header (BRAND)
+    if (line === "BRAND") continue;
+
+    // Add brand
+    if (line) {
+      brands.push(line);
+    }
+  }
+
+  return brands;
+}
+
+/**
  * Parse Size CSV file.
  * Format: Group, SIZE with rows like TB,10.00-20 or LT,215/75R17.5
  */
@@ -169,6 +194,7 @@ export async function seedCsvProd(options: SeedCsvProdOptions = {}): Promise<voi
     const tbFile = resolve(requirementsDir, "req-TB Brand Pattern.csv");
     const ltFile = resolve(requirementsDir, "req-LT Brand Pattern.csv");
     const sizeFile = resolve(requirementsDir, "req-Size.csv");
+    const vehicleFile = resolve(requirementsDir, "req-Vehicle Brand.csv");
 
     if (!existsSync(tbFile)) {
       throw new Error(`File tidak ditemukan: ${tbFile}`);
@@ -179,6 +205,9 @@ export async function seedCsvProd(options: SeedCsvProdOptions = {}): Promise<voi
     if (!existsSync(sizeFile)) {
       throw new Error(`File tidak ditemukan: ${sizeFile}`);
     }
+    if (!existsSync(vehicleFile)) {
+      throw new Error(`File tidak ditemukan: ${vehicleFile}`);
+    }
 
     process.stdout.write("Parsing CSV files...\n");
 
@@ -186,10 +215,21 @@ export async function seedCsvProd(options: SeedCsvProdOptions = {}): Promise<voi
     const tbBrandPatterns = parseBrandPatternCsv(tbFile);
     const ltBrandPatterns = parseBrandPatternCsv(ltFile);
     const sizes = parseSizeCsv(sizeFile);
+    const vehicleBrands = parseVehicleBrandCsv(vehicleFile);
 
     process.stdout.write(
-      `Parsed: ${tbBrandPatterns.length} TB brands, ${ltBrandPatterns.length} LT brands, ${sizes.length} sizes\n`,
+      `Parsed: ${tbBrandPatterns.length} TB brands, ${ltBrandPatterns.length} LT brands, ${sizes.length} sizes, ${vehicleBrands.length} vehicle brands\n`,
     );
+
+    // Seed Vehicle Brands
+    process.stdout.write("Seeding vehicle brands...\n");
+    for (const brand of vehicleBrands) {
+      await prisma.vehicleBrand.upsert({
+        where: { name: brand },
+        create: { name: brand },
+        update: {},
+      });
+    }
 
     // Seed TB Tire Brands
     process.stdout.write("Seeding TB tire brands...\n");
@@ -212,7 +252,7 @@ export async function seedCsvProd(options: SeedCsvProdOptions = {}): Promise<voi
     }
 
     process.stdout.write(
-      `✓ Seeding berhasil: ${tbBrandPatterns.length + ltBrandPatterns.length} tire brands, ${sizes.length} tire sizes\n`,
+      `✓ Seeding berhasil: ${vehicleBrands.length} vehicle brands, ${tbBrandPatterns.length + ltBrandPatterns.length} tire brands, ${sizes.length} tire sizes\n`,
     );
   } finally {
     if (!options.prisma) {

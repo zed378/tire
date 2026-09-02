@@ -1,0 +1,89 @@
+import { z } from "zod";
+
+/**
+ * Vehicle Brand management schemas.
+ * Used for CRUD operations on vehicle brands (Hino, Mitsubishi, etc.)
+ */
+
+export const vehicleBrandSchema = z.object({
+  id: z.number().int().positive(),
+  name: z.string().trim().min(2).max(120),
+  isActive: z.boolean(),
+  createdAt: z.string().datetime(),
+  updatedAt: z.string().datetime(),
+});
+
+export type VehicleBrand = z.infer<typeof vehicleBrandSchema>;
+
+export const createVehicleBrandSchema = z.object({
+  name: z.string().trim().min(2).max(120),
+});
+
+export type CreateVehicleBrandInput = z.infer<typeof createVehicleBrandSchema>;
+
+export const updateVehicleBrandSchema = z.object({
+  name: z.string().trim().min(2).max(120).optional(),
+  isActive: z.boolean().optional(),
+});
+
+export type UpdateVehicleBrandInput = z.infer<typeof updateVehicleBrandSchema>;
+
+/**
+ * Tire Brand Pattern schemas.
+ * Used for CRUD operations on tire brand patterns
+ */
+
+export const tireBrandPatternSchema = z.object({
+  id: z.number().int().positive(),
+  brand: z.string().trim().min(2).max(120),
+  pattern: z.string().trim().min(1).max(120),
+  type: z.enum(["TB", "LT"]),
+  isActive: z.boolean(),
+  createdAt: z.string().datetime(),
+  updatedAt: z.string().datetime(),
+});
+
+export type TireBrandPattern = z.infer<typeof tireBrandPatternSchema>;
+
+export const createTireBrandPatternSchema = z.object({
+  brand: z.string().trim().min(2).max(120),
+  pattern: z.string().trim().min(1).max(120),
+  type: z.enum(["TB", "LT"]),
+});
+
+export type CreateTireBrandPatternInput = z.infer<typeof createTireBrandPatternSchema>;
+
+export const updateTireBrandPatternSchema = z.object({
+  brand: z.string().trim().min(2).max(120).optional(),
+  pattern: z.string().trim().min(1).max(120).optional(),
+  isActive: z.boolean().optional(),
+});
+
+export type UpdateTireBrandPatternInput = z.infer<typeof updateTireBrandPatternSchema>;
+
+/**
+ * List response with pagination
+ */
+
+export const paginationSchema = z.object({
+  page: z.coerce.number().int().min(1).default(1),
+  perPage: z.coerce.number().int().min(1).max(1000).default(100),
+});
+
+export const vehicleBrandListResponseSchema = z.object({
+  items: z.array(vehicleBrandSchema),
+  total: z.number().int().nonnegative(),
+  page: z.number().int().positive(),
+  perPage: z.number().int().positive(),
+});
+
+export type VehicleBrandListResponse = z.infer<typeof vehicleBrandListResponseSchema>;
+
+export const tireBrandPatternListResponseSchema = z.object({
+  items: z.array(tireBrandPatternSchema),
+  total: z.number().int().nonnegative(),
+  page: z.number().int().positive(),
+  perPage: z.number().int().positive(),
+});
+
+export type TireBrandPatternListResponse = z.infer<typeof tireBrandPatternListResponseSchema>;
