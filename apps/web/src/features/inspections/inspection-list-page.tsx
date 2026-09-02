@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import {
   INSPECTION_STATUS_LABELS,
   INSPECTION_STATUSES,
@@ -12,7 +12,17 @@ import { api } from "../../lib/api-client.ts";
 import { endOfDayIso, formatDate, startOfDayIso } from "../../lib/format.ts";
 import { useSession } from "../../lib/session.tsx";
 import { ErrorBanner, StatusBadge } from "../../components/ui/feedback.tsx";
-import { Button, Card, EmptyState, Field, Input, Select, Spinner } from "../../components/ui/primitives.tsx";
+import {
+  Button,
+  Card,
+  EmptyState,
+  Field,
+  Input,
+  PageHeader,
+  Select,
+  SkeletonRows,
+} from "../../components/ui/primitives.tsx";
+import { Pagination } from "../../components/ui/pagination.tsx";
 
 /**
  * The inspection list.
@@ -27,7 +37,14 @@ import { Button, Card, EmptyState, Field, Input, Select, Spinner } from "../../c
  */
 export function InspectionListPage(): ReactNode {
   const { can } = useSession();
-  const [status, setStatus] = useState<InspectionStatus | "">("");
+
+  // The status filter lives in the URL so it can be linked to. The home screen
+  // sends a supplier straight to their revisions, and that link has to survive
+  // being bookmarked or shared (B-07).
+  const [searchParams, setSearchParams] = useSearchParams();
+  const statusParam = searchParams.get("status") ?? "";
+  const status: InspectionStatus | "" = isInspectionStatus(statusParam) ? statusParam : "";
+
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
   const [search, setSearch] = useState("");
@@ -45,16 +62,23 @@ export function InspectionListPage(): ReactNode {
       }),
   });
 
+  const setStatus = (next: string): void => {
+    setSearchParams(next === "" ? {} : { status: next }, { replace: true });
+    setPage(1);
+  };
+
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <h1 className="text-lg font-semibold text-slate-900">Pengajuan</h1>
-        {can("submission.create") ? (
-          <Link to="/inspections/new">
-            <Button>Pemeriksaan Baru</Button>
-          </Link>
-        ) : null}
-      </div>
+      <PageHeader
+        title="Pengajuan"
+        actions={
+          can("submission.create") ? (
+            <Link to="/inspections/new">
+              <Button>Pemeriksaan Baru</Button>
+            </Link>
+          ) : undefined
+        }
+      />
 
       <Card>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -63,8 +87,7 @@ export function InspectionListPage(): ReactNode {
               id="filter-status"
               value={status}
               onChange={(event) => {
-                setStatus(event.target.value as InspectionStatus | "");
-                setPage(1);
+                setStatus(event.target.value);
               }}
             >
               <option value="">Semua status</option>
@@ -118,30 +141,50 @@ export function InspectionListPage(): ReactNode {
 
       <Card>
         {query.isLoading ? (
-          <div className="flex justify-center py-10 text-slate-500">
-            <Spinner className="h-5 w-5" />
+          <div role="status" aria-live="polite">
+            <span className="sr-only">Memuat pengajuan…</span>
+            <SkeletonRows rows={4} />
           </div>
         ) : query.data === undefined || query.data.items.length === 0 ? (
           <EmptyState
             title="Belum ada pengajuan"
-            description="Pengajuan yang Anda buat akan muncul di sini beserta statusnya."
+            description={
+              status === ""
+                ? "Pengajuan yang Anda buat akan muncul di sini beserta statusnya."
+                : `Tidak ada pengajuan berstatus ${INSPECTION_STATUS_LABELS[status]}.`
+            }
+            action={
+              status === "" ? undefined : (
+                <Button
+                  variant="secondary"
+                  onClick={() => {
+                    setStatus("");
+                  }}
+                >
+                  Tampilkan semua status
+                </Button>
+              )
+            }
           />
         ) : (
           <>
-            <ul className="divide-y divide-slate-200">
+            <ul className="divide-y divide-line">
               {query.data.items.map((item) => (
                 <li key={item.id} className="py-3">
-                  <Link to={`/inspections/${item.serialNumber}`} className="block hover:opacity-80">
+                  <Link
+                    to={`/inspections/${item.serialNumber}`}
+                    className="block rounded-md transition-colors hover:bg-surface-sunken"
+                  >
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <div className="min-w-0">
-                        <p className="font-medium text-slate-900">
+                        <p className="font-medium text-body">
                           {item.serialNumber} · {item.plateDisplay}
                         </p>
-                        <p className="mt-0.5 text-sm text-slate-600">
+                        <p className="mt-0.5 text-sm text-muted">
                           {item.cityName}, {item.provinceName} · {item.category} ·{" "}
                           {item.totalTires} ban · {item.photoCount} foto
                         </p>
-                        <p className="mt-0.5 text-xs text-slate-500">
+                        <p className="mt-0.5 text-xs text-subtle">
                           {item.submittedAt === null
                             ? "Belum dikirim"
                             : `Dikirim ${formatDate(item.submittedAt)}`}
@@ -155,7 +198,7 @@ export function InspectionListPage(): ReactNode {
                     {/* The reason travels with the row. A supplier should not
                         have to open a detail page to learn what to fix. */}
                     {item.latestQcNotes !== null ? (
-                      <p className="mt-2 rounded border border-orange-200 bg-orange-50 px-3 py-2 text-sm text-orange-900">
+                      <p className="mt-2 rounded border border-warning-line bg-warning-soft px-3 py-2 text-sm text-warning-text">
                         {item.latestQcNotes}
                       </p>
                     ) : null}
@@ -164,30 +207,19 @@ export function InspectionListPage(): ReactNode {
               ))}
             </ul>
 
-            <nav className="mt-4 flex items-center justify-between">
-              <p className="text-sm text-slate-500">
-                Halaman {query.data.page} dari {query.data.totalPages} · {query.data.total} data
-              </p>
-              <div className="flex gap-2">
-                <Button
-                  variant="secondary"
-                  disabled={query.data.page <= 1}
-                  onClick={() => setPage((current) => current - 1)}
-                >
-                  Sebelumnya
-                </Button>
-                <Button
-                  variant="secondary"
-                  disabled={query.data.page >= query.data.totalPages}
-                  onClick={() => setPage((current) => current + 1)}
-                >
-                  Berikutnya
-                </Button>
-              </div>
-            </nav>
+            <Pagination
+              page={query.data.page}
+              totalPages={query.data.totalPages}
+              totalItems={query.data.total}
+              onPageChange={setPage}
+            />
           </>
         )}
       </Card>
     </div>
   );
+}
+
+function isInspectionStatus(value: string): value is InspectionStatus {
+  return (INSPECTION_STATUSES as readonly string[]).includes(value);
 }

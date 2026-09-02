@@ -13,8 +13,8 @@ import {
   requestPersistentStorage,
   type QueueItem,
 } from "../../lib/photo/queue-store.ts";
+import { Badge, Button, Card, EmptyState, PageHeader, StatTile } from "../../components/ui/primitives.tsx";
 import { Banner } from "../../components/ui/feedback.tsx";
-import { Button, Card, EmptyState } from "../../components/ui/primitives.tsx";
 
 /**
  * The upload queue (PLAN/06 §4).
@@ -44,7 +44,10 @@ export function UploadQueuePage(): ReactNode {
 
    return (
      <div className="space-y-4">
-       <h1 className="text-lg font-semibold text-slate-900 dark:text-white">Antrean Unggah Foto</h1>
+      <PageHeader
+        title="Antrean Unggah Foto"
+        description="Foto yang belum sampai ke server. Semuanya tersimpan di perangkat ini."
+      />
 
       <Banner tone="info" title="Cara antrean ini bekerja">
         Foto terunggah saat aplikasi dibuka dan ada sinyal — bukan secara otomatis di latar
@@ -76,15 +79,19 @@ export function UploadQueuePage(): ReactNode {
           </Button>
         }
       >
-         <dl className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-           <Stat label="Menunggu" value={String(summary.pending)} />
-           <Stat label="Sedang diunggah" value={String(summary.uploading)} />
-           <Stat label="Gagal" value={String(summary.failed)} tone={summary.failed > 0 ? "bad" : undefined} />
-           <Stat label="Total ukuran" value={formatBytes(summary.totalBytes)} />
-         </dl>
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <StatTile label="Menunggu" value={summary.pending} />
+          <StatTile label="Sedang diunggah" value={summary.uploading} />
+          <StatTile
+            label="Gagal"
+            value={summary.failed}
+            tone={summary.failed > 0 ? "danger" : "neutral"}
+          />
+          <StatTile label="Total ukuran" value={formatBytes(summary.totalBytes)} />
+        </div>
 
          {storage !== null && storage.quotaBytes > 0 ? (
-           <p className="mt-3 text-xs text-slate-500 dark:text-slate-400">
+          <p className="mt-3 text-xs text-muted">
              Penyimpanan perangkat terpakai {formatBytes(storage.usageBytes)} dari{" "}
              {formatBytes(storage.quotaBytes)}.
              {persistent === true ? " Penyimpanan permanen aktif." : null}
@@ -109,46 +116,44 @@ export function UploadQueuePage(): ReactNode {
              description="Semua foto sudah terunggah."
            />
          ) : (
-           <ul className="divide-y divide-slate-200 dark:divide-slate-700">
+           <ul className="divide-y divide-line">
              {items.map((item) => (
                <li key={item.id} className="flex flex-wrap items-center justify-between gap-3 py-3">
                  <div className="min-w-0">
-                   <p className="text-sm font-medium text-slate-900 dark:text-white">
+                  <p className="text-sm font-medium text-body">
                      <Link to={`/inspections/${item.serialNumber}`} className="hover:underline">
                        {item.serialNumber}
                      </Link>{" "}
                      · {item.positionLabel}
                    </p>
-                   <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+                  <p className="mt-0.5 text-xs text-subtle">
                      {formatBytes(item.byteSize)} · ditambahkan {formatRelative(item.createdAt)}
                      {item.attempts > 0 ? ` · ${item.attempts} percobaan` : ""}
                    </p>
                    {item.lastError !== null ? (
-                     <p className="mt-1 text-xs text-red-700 dark:text-red-400">{item.lastError}</p>
+                    <p className="mt-1 text-xs text-danger-text">{item.lastError}</p>
                    ) : null}
                  </div>
 
                  <div className="flex items-center gap-2">
-                   <span
-                     className={
-                       item.status === "failed"
-                         ? "rounded-full border border-red-300 dark:border-red-700 bg-red-50 dark:bg-red-900/20 px-2 py-0.5 text-xs text-red-800 dark:text-red-200"
-                         : "rounded-full border border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-900/20 px-2 py-0.5 text-xs text-amber-800 dark:text-amber-200"
-                     }
-                   >
-                     {item.status === "failed"
-                       ? "Gagal"
-                       : item.status === "uploading"
-                         ? "Mengunggah"
-                         : "Menunggu"}
-                   </span>
+                  <Badge tone={item.status === "failed" ? "danger" : "warning"}>
+                    {item.status === "failed"
+                      ? "Gagal"
+                      : item.status === "uploading"
+                        ? "Mengunggah"
+                        : "Menunggu"}
+                  </Badge>
 
                    {item.status === "failed" ? (
                      <>
-                       <Button variant="secondary" onClick={() => void retryQueueItem(item.id)}>
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => void retryQueueItem(item.id)}
+                      >
                          Coba lagi
                        </Button>
-                       <Button variant="ghost" onClick={() => void removeQueueItem(item.id)}>
+                      <Button variant="ghost" size="sm" onClick={() => void removeQueueItem(item.id)}>
                          Buang
                        </Button>
                      </>
@@ -163,27 +168,3 @@ export function UploadQueuePage(): ReactNode {
   );
 }
 
-function Stat({
-   label,
-   value,
-   tone,
- }: {
-   label: string;
-   value: string;
-   tone?: "bad";
- }): ReactNode {
-   return (
-     <div>
-       <dt className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">{label}</dt>
-       <dd
-         className={
-           tone === "bad"
-             ? "mt-0.5 text-xl font-semibold text-red-700 dark:text-red-400"
-             : "mt-0.5 text-xl font-semibold text-slate-900 dark:text-white"
-         }
-       >
-         {value}
-       </dd>
-     </div>
-   );
- }
