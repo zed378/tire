@@ -41,6 +41,7 @@ COPY --from=build /app/packages/contracts/dist ./packages/contracts/dist
 COPY --from=build /app/apps/api/dist ./dist
 COPY --from=build /app/apps/api/src/generated/prisma ./dist/generated/prisma
 COPY --from=build /app/apps/api/src ./apps/api/src
+COPY --from=build /app/apps/api/src/scripts ./apps/api/src/scripts
 
 # Create symlink so commands running inside apps/api (like pnpm db:migrate) resolve dist/ correctly
 RUN mkdir -p ./apps/api && ln -s /app/dist ./apps/api/dist
