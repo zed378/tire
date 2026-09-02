@@ -66,6 +66,25 @@ interface Meta {
   bytes: number;
 }
 
+/**
+ * A polite GET.
+ *
+ * Commons rate-limits, and it is entitled to: this is a free service being
+ * asked for multi-megabyte files. On a 429 it says how long to wait, so the
+ * script waits that long rather than hammering — and pauses between files even
+ * when nothing has complained.
+ */
+async function politeFetch(url: string, attempt = 1): Promise<Response> {
+  const response = await fetch(url, { headers: { "User-Agent": UA } });
+  if (response.status !== 429 || attempt > 4) return response;
+
+  const header = Number(response.headers.get("retry-after"));
+  const waitMs = Number.isFinite(header) && header > 0 ? header * 1000 : attempt * 5000;
+  console.log(`  rate limited, waiting ${String(Math.round(waitMs / 1000))}s…`);
+  await new Promise((resolve) => setTimeout(resolve, waitMs));
+  return politeFetch(url, attempt + 1);
+}
+
 function plain(html: string | undefined): string {
   if (html === undefined) return "";
   return html
@@ -81,7 +100,7 @@ async function fetchOne(wanted: Wanted): Promise<Meta> {
     `${API}?action=query&format=json&titles=${encodeURIComponent(wanted.title)}` +
     `&prop=imageinfo&iiprop=url|size|extmetadata`;
 
-  const response = await fetch(url, { headers: { "User-Agent": UA } });
+  const response = await politeFetch(url);
   if (!response.ok) throw new Error(`${wanted.title}: API ${String(response.status)}`);
 
   const json = (await response.json()) as {
@@ -109,7 +128,7 @@ async function fetchOne(wanted: Wanted): Promise<Meta> {
     throw new Error(`${wanted.title}: no licence in metadata — refusing to use it`);
   }
 
-  const binary = await fetch(info.url, { headers: { "User-Agent": UA } });
+  const binary = await politeFetch(info.url);
   if (!binary.ok) throw new Error(`${wanted.title}: download ${String(binary.status)}`);
   const buffer = Buffer.from(await binary.arrayBuffer());
   await writeFile(path.join(SOURCE_DIR, wanted.file), buffer);
@@ -131,7 +150,10 @@ async function fetchOne(wanted: Wanted): Promise<Meta> {
 await mkdir(SOURCE_DIR, { recursive: true });
 
 const collected: Meta[] = [];
-for (const wanted of WANTED) {
+for (const [index, wanted] of WANTED.entries()) {
+  // A second between files. Nothing here is urgent, and the alternative is
+  // being rate-limited into a retry that takes far longer.
+  if (index > 0) await new Promise((resolve) => setTimeout(resolve, 1200));
   const meta = await fetchOne(wanted);
   collected.push(meta);
   console.log(

@@ -93,7 +93,20 @@ async function build(asset: Asset): Promise<string[]> {
   const sh = meta.height ?? 0;
   if (sw === 0 || sh === 0) throw new Error(`${asset.source}: no dimensions`);
 
-  for (const width of WIDTHS) {
+  /*
+   * Never ask for more pixels than the source has.
+   *
+   * The tread macro is 1280px wide on Commons. Resizing it to 1920 does not
+   * recover detail that was never there — it produces a soft image in a larger
+   * file, and `srcset` would then hand that larger file to the very devices
+   * best able to see how soft it is. The widths are capped at the source, and
+   * the component's `srcset` lists only what actually exists.
+   */
+  const cropWidth = asset.crop === undefined ? sw : Math.round(asset.crop.width * sw);
+  const widths = WIDTHS.filter((w) => w <= cropWidth);
+  if (widths.length === 0) throw new Error(`${asset.source}: narrower than ${String(WIDTHS[0])}px`);
+
+  for (const width of widths) {
     const height = Math.round(width / asset.aspect);
 
     for (const format of ["avif", "webp", "jpeg"] as const) {
@@ -110,12 +123,27 @@ async function build(asset: Asset): Promise<string[]> {
 
       pipeline = grade(pipeline).resize(width, height, { fit: "cover", position: "centre" });
 
+      /*
+       * Quality falls as the image grows.
+       *
+       * A tread macro is almost entirely fine grain, which is the worst case
+       * for every codec — at a flat quality the 1280 file came out at 227 KB in
+       * WebP. Larger renditions are also seen at lower magnification, so they
+       * tolerate more compression: the artefacts land in texture that was
+       * already noise. Every one of these photographs is desaturated and sits
+       * behind type or a scrim, which buys more room again.
+       */
+      const step = width >= 1920 ? 2 : width >= 1280 ? 1 : 0;
       const buffer =
         format === "avif"
-          ? await pipeline.avif({ quality: 52, effort: 6 }).toBuffer()
+          ? await pipeline
+              .avif({ quality: [46, 38, 32][step] ?? 38, effort: 7 })
+              .toBuffer()
           : format === "webp"
-            ? await pipeline.webp({ quality: 74 }).toBuffer()
-            : await pipeline.jpeg({ quality: 78, mozjpeg: true }).toBuffer();
+            ? await pipeline.webp({ quality: [70, 62, 56][step] ?? 62 }).toBuffer()
+            : await pipeline
+                .jpeg({ quality: [74, 66, 60][step] ?? 66, mozjpeg: true })
+                .toBuffer();
 
       const ext = format === "jpeg" ? "jpg" : format;
       const file = `${asset.name}-${String(width)}.${ext}`;
@@ -124,7 +152,7 @@ async function build(asset: Asset): Promise<string[]> {
       const kb = buffer.byteLength / 1024;
       lines.push(`  ${file.padEnd(28)} ${kb.toFixed(1).padStart(7)} KB`);
 
-      if (format === "avif" && width === 1920 && kb > asset.budgetKb) {
+      if (format === "avif" && width === widths[widths.length - 1] && kb > asset.budgetKb) {
         throw new Error(
           `${file} is ${kb.toFixed(1)} KB, over the ${String(asset.budgetKb)} KB budget`,
         );
