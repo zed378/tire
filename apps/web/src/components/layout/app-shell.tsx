@@ -47,7 +47,7 @@ export function AppShell({ children }: { children: ReactNode }): ReactNode {
               </svg>
             </button>
 
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 ml-auto">
               {queuedCount > 0 ? (
                 <a
                   href="/upload-queue"

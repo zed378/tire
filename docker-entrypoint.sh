@@ -35,7 +35,7 @@ node ./node_modules/prisma/build/index.js migrate deploy 2>&1
 echo "  Migration output above"
 
 echo "Running database seeding (master data + CSV data)..."
-node dist/scripts/db-init-seed.js 2>&1
+cd /app && tsx apps/api/prisma/db-init-seed.ts 2>&1
 echo "  Seeding completed"
 
 echo "Running full queue setup..."

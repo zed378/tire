@@ -1,15 +1,14 @@
-import { loadEnvFile } from "../kernel/load-env.ts";
+import { loadEnvFile } from "../src/kernel/load-env.ts";
 
 // Must run before anything reads process.env.
 loadEnvFile();
 
-import { existsSync, readFileSync } from "node:fs";
-import { mkdir, readdir } from "node:fs/promises";
+import { mkdir } from "node:fs/promises";
 import { resolve } from "node:path";
-import { PrismaClient } from "../generated/prisma/index.js";
-import { loadConfig } from "../kernel/config.ts";
-import { seedMasterData } from "../../prisma/seed/master-data.ts";
-import { seedCsvData } from "../../prisma/seed/csv-data.ts";
+import { PrismaClient } from "../src/generated/prisma/index.js";
+import { loadConfig } from "../src/kernel/config.ts";
+import { seedMasterData } from "./seed/master-data.ts";
+import { seedCsvData } from "./seed/csv-data.ts";
 
 /**
  * Database Initialization with Seeding
@@ -33,6 +32,7 @@ async function ensureUploadDirectory(): Promise<void> {
 }
 
 async function checkCsvFiles(): Promise<{ exists: boolean; files: string[] }> {
+  const { existsSync } = await import("node:fs");
   const requirementsDir = resolve(process.cwd(), "requirements");
 
   const expectedFiles = [

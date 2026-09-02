@@ -119,31 +119,6 @@ function parseSizeCsv(filePath: string): { group: string; size: string }[] {
   return sizes;
 }
 
-/**
- * Parse Vehicle Brand CSV file.
- * Format: BRAND with one brand per row
- */
-function parseVehicleBrandCsv(filePath: string): string[] {
-  const content = readFileSync(filePath, "utf-8");
-  const lines = content.split("\n").map((line) => line.trim());
-
-  const brands: string[] = [];
-
-  for (const line of lines) {
-    if (!line) continue;
-
-    // Skip header (BRAND)
-    if (line === "BRAND") continue;
-
-    // Add brand
-    if (line) {
-      brands.push(line);
-    }
-  }
-
-  return brands;
-}
-
 export async function seedCsvData(prisma: PrismaClient): Promise<void> {
   const requirementsDir = resolve(process.cwd(), "../../requirements");
 

@@ -81,14 +81,13 @@ EXPOSE 3000
 # ── Database initialization happens automatically on container start ───────
 # docker-entrypoint.sh runs:
 #   1. prisma migrate deploy (creates schema)
-#   2. db-init-seed (seeds master data + CSV data) — automatic
+#   2. tsx apps/api/prisma/db-init-seed.ts (seeds master data + CSV data) — automatic
 #   3. queue setup (initializes job queues)
 #
 # Admin account setup is MANUAL-ONLY and must be run separately:
 #   docker exec <container> node dist/scripts/seed-prod-admin.js "password"
 #
 # This separation ensures credentials are never automated in deployment.
-COPY --from=build /app/apps/api/src/scripts ./apps/api/src/scripts
 
 # ── Entrypoint: API server ───────────────────────────────────────────────────
 CMD ["node", "dist/server.js"]

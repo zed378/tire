@@ -643,7 +643,6 @@ export async function seedMasterData(prisma: PrismaClient): Promise<void> {
   }
 
   // Output summary
-  const totalCreated = provinceCreated + cityCreated + vehicleBrandCreated + tireBrandCreated;
   const totalSkipped = provinceSkipped + citySkipped + vehicleBrandSkipped + tireBrandSkipped;
 
   process.stdout.write(
