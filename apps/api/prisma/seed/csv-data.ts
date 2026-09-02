@@ -91,6 +91,59 @@ function parseVehicleBrandCsv(filePath: string): string[] {
   return brands;
 }
 
+/**
+ * Parse Size CSV file.
+ * Format: Group,SIZE with rows like "TB,10.00-20" or "LT,215/75R17.5"
+ */
+function parseSizeCsv(filePath: string): { group: string; size: string }[] {
+  const content = readFileSync(filePath, "utf-8");
+  const lines = content.split("\n").map((line) => line.trim());
+
+  const sizes: { group: string; size: string }[] = [];
+
+  for (const line of lines) {
+    if (!line) continue;
+
+    // Skip header row (,Group,SIZE or empty first column)
+    if (line.startsWith(",") || line.startsWith("Group,")) continue;
+
+    const parts = line.split(",").map((part) => part.trim());
+    if (parts.length >= 2 && parts[0] && parts[1]) {
+      sizes.push({
+        group: parts[0],
+        size: parts[1],
+      });
+    }
+  }
+
+  return sizes;
+}
+
+/**
+ * Parse Vehicle Brand CSV file.
+ * Format: BRAND with one brand per row
+ */
+function parseVehicleBrandCsv(filePath: string): string[] {
+  const content = readFileSync(filePath, "utf-8");
+  const lines = content.split("\n").map((line) => line.trim());
+
+  const brands: string[] = [];
+
+  for (const line of lines) {
+    if (!line) continue;
+
+    // Skip header (BRAND)
+    if (line === "BRAND") continue;
+
+    // Add brand
+    if (line) {
+      brands.push(line);
+    }
+  }
+
+  return brands;
+}
+
 export async function seedCsvData(prisma: PrismaClient): Promise<void> {
   const requirementsDir = resolve(process.cwd(), "../../requirements");
 

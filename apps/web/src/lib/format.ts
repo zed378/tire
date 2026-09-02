@@ -27,7 +27,11 @@ export function formatDateTime(value: string | Date | number | null | undefined)
     year: "numeric",
     hour: "2-digit",
     minute: "2-digit",
-  }).format(new Date(value));
+    hour12: false,
+  })
+    .format(new Date(value))
+    .replace(",", "")
+    .replace(".", ":");
 }
 
 /** Accepts an epoch number too: the offline queue timestamps its items that way. */

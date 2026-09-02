@@ -113,18 +113,18 @@ export function Field({
 
   return (
     <div className="space-y-1.5">
-      <label htmlFor={htmlFor} className="block text-sm font-medium text-slate-700">
+      <label htmlFor={htmlFor} className="block text-sm font-medium text-slate-300">
         {label}
-        {required ? <span className="ml-1 text-red-600">*</span> : null}
+        {required ? <span className="ml-1 text-red-400">*</span> : null}
       </label>
       {children}
       {hint !== undefined && error === undefined ? (
-        <p id={hintId} className="text-xs text-slate-500">
+        <p id={hintId} className="text-xs text-slate-400">
           {hint}
         </p>
       ) : null}
       {error !== undefined ? (
-        <p id={errorId} role="alert" className="text-sm text-red-700">
+        <p id={errorId} role="alert" className="text-sm font-medium text-red-400">
           {error}
         </p>
       ) : null}
