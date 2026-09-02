@@ -21,3 +21,8 @@ test-results/
 # Local photo storage (STORAGE_DRIVER=local). The volume is the evidence;
 # it belongs in the backup job, not in the repository.
 apps/api/uploads
+
+# Photographic originals. Several MB each, nothing serves them; the
+# derivatives in public/img/ are what ships. Refetch with `pnpm --filter
+# @c26/web images:fetch`.
+apps/web/public/img/source/

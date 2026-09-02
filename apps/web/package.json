@@ -11,7 +11,9 @@
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
     "test:e2e": "playwright test",
-    "check:budget": "tsx scripts/check-bundle-budget.ts"
+    "check:budget": "tsx scripts/check-bundle-budget.ts",
+    "images:fetch": "tsx scripts/fetch-images.ts",
+    "images": "tsx scripts/process-images.ts"
   },
   "dependencies": {
     "@c26/contracts": "workspace:*",
