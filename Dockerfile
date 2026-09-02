@@ -41,6 +41,8 @@ COPY --from=build /app/apps/api/prisma ./prisma
 COPY --from=build /app/apps/api/prisma.config.ts ./prisma.config.ts
 # The client, served by this same process (see kernel/http/static-spa.ts).
 COPY --from=build /app/apps/web/dist ./web
+# CSV seed data for production deployment
+COPY requirements/ ./requirements/
 # Photos land here when STORAGE_DRIVER=local; the compose file mounts a volume
 # over it. Created with the right owner so the unprivileged user can write.
 RUN mkdir -p /app/uploads && chown -R node:node /app/uploads
