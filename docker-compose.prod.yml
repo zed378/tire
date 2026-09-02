@@ -20,7 +20,7 @@ services:
     volumes:
       - postgres-data:/var/lib/postgresql/18/docker
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER:-c26} -d $${POSTGRES_DB:-c26}"]
       interval: 10s
       timeout: 5s
       retries: 10
@@ -59,56 +59,19 @@ services:
       retries: 3
 
   db-init:
-    image: commercial2026-api:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: api
     restart: "no"
     env_file: .env.prod
     volumes:
       # CSV files for seed data (optional)
       - ./requirements:/app/requirements:ro
-    command: |
-      sh -c '
-        echo "Waiting for PostgreSQL to be ready..." &&
-        until pg_isready -h postgres -U $${POSTGRES_USER:-c26} -d $${POSTGRES_DB:-c26} > /dev/null 2>&1; do
-          echo "  PostgreSQL not ready yet, waiting 2s..."
-          sleep 2
-        done &&
-        echo "PostgreSQL is ready!" &&
-        echo "Running Prisma migrations..." &&
-        cd /app &&
-        npx prisma migrate deploy --schema=./apps/api/prisma/schema.prisma 2>&1 &&
-        echo "Running queue setup..." &&
-        node -e "
-          var PgBoss = require('pg-boss');
-          (async function() {
-            var boss = new PgBoss({ connectionString: process.env.DATABASE_URL, schema: 'pgboss' });
-            await boss.start();
-            var queues = [
-              'outbox.dispatch', 'notification.send', 'photo.thumbnail',
-              'export.build', 'upload.orphan-cleanup', 'report.refresh',
-              'notification.archive', 'queue.health', 'metrics.daily',
-              'inspection.draft-expiry', 'photo.retention-sweep'
-            ];
-            var policies = {
-              'outbox.dispatch': { retryLimit: 3, retryBackoff: true },
-              'notification.send': { retryLimit: 5, retryBackoff: true },
-              'photo.thumbnail': { retryLimit: 3, retryBackoff: true },
-              'export.build': { retryLimit: 2, retryBackoff: true },
-              'upload.orphan-cleanup': { retryLimit: 1, retryBackoff: false },
-              'report.refresh': { retryLimit: 1, retryBackoff: false },
-              'notification.archive': { retryLimit: 1, retryBackoff: false },
-              'queue.health': { retryLimit: 0, retryBackoff: false },
-              'metrics.daily': { retryLimit: 2, retryBackoff: true },
-              'inspection.draft-expiry': { retryLimit: 1, retryBackoff: false },
-              'photo.retention-sweep': { retryLimit: 1, retryBackoff: false }
-            };
-            for (var i = 0; i < queues.length; i++) {
-              await boss.createQueue(queues[i], { name: queues[i], retryLimit: policies[queues[i]].retryLimit, retryBackoff: policies[queues[i]].retryBackoff });
-            }
-            await boss.stop({ graceful: false });
-            console.log('  queue schema pgboss ready, ' + String(queues.length) + ' queues registered');
-            process.exit(0);
-          })();
-        "
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: ["sh", "-c", "pnpm db:migrate"]
 
   worker:
     build:
