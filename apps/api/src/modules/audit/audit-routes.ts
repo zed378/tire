@@ -24,6 +24,9 @@ async function queryAudit(query: AuditQuery): Promise<Paginated<AuditEntry>> {
     ...(query.entityId !== undefined ? { entityId: BigInt(query.entityId) } : {}),
     ...(query.actorId !== undefined ? { actorId: BigInt(query.actorId) } : {}),
     ...(query.action !== undefined ? { action: { contains: query.action } } : {}),
+    // Exact match, not `contains`: a requestId is quoted verbatim off a screen,
+    // and a partial match would return another request's rows beside it.
+    ...(query.requestId !== undefined ? { requestId: query.requestId } : {}),
     ...(query.from !== undefined || query.to !== undefined
       ? {
           createdAt: {

@@ -1,16 +1,29 @@
 import { useState, type ReactNode } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { TireBrandPattern, CreateTireBrandPatternInput } from "@c26/contracts";
+import type {
+  CreateTireBrandPatternInput,
+  TireBrandPattern,
+  TireBrandPatternListResponse,
+} from "@c26/contracts";
 import { api } from "../../lib/api-client.ts";
 import { ErrorBanner, useToast } from "../../components/ui/feedback.tsx";
-import { Button, Card, Field, Input, Spinner } from "../../components/ui/primitives.tsx";
+import { Button, Card, EmptyState, Field, Input, SkeletonRows } from "../../components/ui/primitives.tsx";
+import { Pagination } from "../../components/ui/pagination.tsx";
 
 type Tab = "TB" | "LT";
+
+/**
+ * The seed loads 1,551 patterns, and this screen used to ask for the first
+ * hundred and render them with no pager — so 1,451 of them simply did not
+ * exist as far as an admin was concerned, with nothing on screen to say so.
+ */
+const PER_PAGE = 25;
 
 export function TireBrandPatternsPage(): ReactNode {
   const queryClient = useQueryClient();
   const toast = useToast();
   const [tab, setTab] = useState<Tab>("TB");
+  const [page, setPage] = useState(1);
   const [error, setError] = useState<unknown>(null);
   const [creating, setCreating] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
@@ -19,10 +32,25 @@ export function TireBrandPatternsPage(): ReactNode {
   const [deletingId, setDeletingId] = useState<number | null>(null);
 
   const patterns = useQuery({
-    queryKey: ["tire-brand-patterns", tab],
+    queryKey: ["tire-brand-patterns", tab, page],
     queryFn: () =>
-      api.get<{ items: TireBrandPattern[] }>(`/api/tire-brand-patterns/${tab.toLowerCase()}`, { perPage: 100 }),
+      api.get<TireBrandPatternListResponse>(`/api/tire-brand-patterns/${tab.toLowerCase()}`, {
+        page,
+        perPage: PER_PAGE,
+      }),
   });
+
+  const total = patterns.data?.total ?? 0;
+  // The endpoint reports `total` and `perPage` but not a page count, so it is
+  // derived here rather than trusted from a second source.
+  const totalPages = Math.max(1, Math.ceil(total / PER_PAGE));
+
+  const switchTab = (next: Tab): void => {
+    setTab(next);
+    // Page 3 of TB is rarely page 3 of LT, and reading a new result set at an
+    // old offset shows the user a blank card.
+    setPage(1);
+  };
 
   const create = useMutation({
     mutationFn: (body: CreateTireBrandPatternInput) =>
@@ -89,7 +117,7 @@ export function TireBrandPatternsPage(): ReactNode {
        <nav className="flex border-b border-line">
          <button
            type="button"
-           onClick={() => setTab("TB")}
+           onClick={() => switchTab("TB")}
            className={
              tab === "TB"
                ? "border-b-2 border-accent px-4 py-2 text-sm font-medium text-accent-text"
@@ -100,7 +128,7 @@ export function TireBrandPatternsPage(): ReactNode {
          </button>
          <button
            type="button"
-           onClick={() => setTab("LT")}
+           onClick={() => switchTab("LT")}
            className={
              tab === "LT"
                ? "border-b-2 border-accent px-4 py-2 text-sm font-medium text-accent-text"
@@ -112,12 +140,18 @@ export function TireBrandPatternsPage(): ReactNode {
        </nav>
 
        <Card>
-         {patterns.isLoading ? (
-           <div className="flex justify-center py-10 text-muted">
-             <Spinner className="h-5 w-5" />
-           </div>
-         ) : (
-           <ul className="divide-y divide-line">
+        {patterns.isLoading ? (
+          <div role="status" aria-live="polite">
+            <span className="sr-only">Memuat pattern ban…</span>
+            <SkeletonRows rows={5} />
+          </div>
+        ) : total === 0 ? (
+          <EmptyState
+            title="Belum ada pattern ban"
+            description={`Tidak ada pattern untuk kategori ${tab}.`}
+          />
+        ) : (
+          <ul className="divide-y divide-line">
             {(patterns.data?.items ?? []).map((pattern) => (
               <li key={pattern.id} className="flex flex-wrap items-center justify-between gap-3 py-3">
                 {editingId === pattern.id ? (
@@ -178,6 +212,14 @@ export function TireBrandPatternsPage(): ReactNode {
             ))}
           </ul>
         )}
+
+        <Pagination
+          page={page}
+          totalPages={totalPages}
+          totalItems={total}
+          onPageChange={setPage}
+          disabled={patterns.isFetching}
+        />
       </Card>
 
       {creating ? (

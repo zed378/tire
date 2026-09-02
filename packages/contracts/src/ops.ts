@@ -123,6 +123,16 @@ export const auditQuerySchema = paginationQuerySchema.extend({
   entityId: z.coerce.number().int().positive().optional(),
   actorId: z.coerce.number().int().positive().optional(),
   action: z.string().trim().max(60).optional(),
+  /**
+   * Look up everything one request did.
+   *
+   * This is the support flow in PLAN/10 §3.3: a user quotes the code from a 500
+   * banner and the operator finds every row that request touched. The audit
+   * screen has offered the field since it was built, but never sent it — it
+   * filtered the page it happened to be showing, so an id on page 7 came back
+   * as "not found".
+   */
+  requestId: z.string().trim().max(64).optional(),
   from: z.string().datetime({ offset: true }).optional(),
   to: z.string().datetime({ offset: true }).optional(),
 });

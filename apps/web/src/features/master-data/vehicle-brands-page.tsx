@@ -5,9 +5,17 @@ import { api } from "../../lib/api-client.ts";
 import { ErrorBanner, useToast } from "../../components/ui/feedback.tsx";
 import { Button, Card, Field, Input, Spinner } from "../../components/ui/primitives.tsx";
 
+/**
+ * Master data grows without anyone deciding to grow it — the CSV seed alone
+ * loads hundreds of rows. A list with no pager silently stops at whatever
+ * `perPage` happens to be, and nothing on screen admits it.
+ */
+const PER_PAGE = 25;
+
 export function VehicleBrandsPage(): ReactNode {
   const queryClient = useQueryClient();
   const toast = useToast();
+  const [page, setPage] = useState(1);
   const [error, setError] = useState<unknown>(null);
   const [creating, setCreating] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
@@ -15,9 +23,13 @@ export function VehicleBrandsPage(): ReactNode {
   const [deletingId, setDeletingId] = useState<number | null>(null);
 
   const brands = useQuery({
-    queryKey: ["vehicle-brands"],
-    queryFn: () => api.get<{ items: VehicleBrand[] }>("/api/vehicle-brands", { perPage: 100 }),
+    queryKey: ["vehicle-brands", page],
+    queryFn: () =>
+      api.get<VehicleBrandListResponse>("/api/vehicle-brands", { page, perPage: PER_PAGE }),
   });
+
+  const total = brands.data?.total ?? 0;
+  const totalPages = Math.max(1, Math.ceil(total / PER_PAGE));
 
   const create = useMutation({
     mutationFn: (body: CreateVehicleBrandInput) => api.post("/api/vehicle-brands", body),

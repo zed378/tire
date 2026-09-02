@@ -29,13 +29,17 @@ export function AuditPage(): ReactNode {
       api.get<Paginated<AuditEntry>>("/api/audit", {
         entity: entity === "" ? undefined : entity,
         action: action === "" ? undefined : action,
+        // Sent to the server, where it can see every row. This used to be
+        // filtered here, over whichever page happened to be loaded, so looking
+        // up a requestId that lived on page 7 answered "tidak ada hasil" while
+        // the pager underneath said there were twelve pages. That is the same
+        // shape as D-01: a filter that appears to work and does not.
+        requestId: requestId === "" ? undefined : requestId,
         page,
       }),
   });
 
-  const rows = (audit.data?.items ?? []).filter(
-    (entry) => requestId === "" || entry.requestId === requestId,
-  );
+  const rows = audit.data?.items ?? [];
 
   return (
      <div className="space-y-4">
@@ -74,7 +78,10 @@ export function AuditPage(): ReactNode {
               id="audit-request"
               value={requestId}
               placeholder="req_20260901_143022_a91f"
-              onChange={(event) => setRequestId(event.target.value)}
+              onChange={(event) => {
+                setRequestId(event.target.value);
+                setPage(1);
+              }}
             />
           </Field>
         </div>
