@@ -5,6 +5,9 @@
 # The image also carries the built SPA at /app/web. There is no reverse proxy in
 # front of it — Cloudflare Tunnel connects straight to this process — so the api
 # serves the static client itself (WEB_DIST_DIR=./web).
+#
+# Seeding: The image includes Prisma schema, migrations, and seed scripts for
+# production deployment. CSV data is optional but included if available.
 
 FROM node:24-alpine AS base
 RUN corepack enable && apk add --no-cache openssl
@@ -37,15 +40,35 @@ COPY --from=build /app/packages/contracts/dist ./node_modules/@c26/contracts
 COPY --from=build /app/packages/contracts/dist ./packages/contracts/dist
 COPY --from=build /app/apps/api/dist ./dist
 COPY --from=build /app/apps/api/src/generated/prisma ./dist/generated/prisma
+
+# ── Prisma files for seeding ─────────────────────────────────────────────────
+# Include schema, migrations, and seed scripts for production database setup
 COPY --from=build /app/apps/api/prisma ./prisma
 COPY --from=build /app/apps/api/prisma.config.ts ./prisma.config.ts
+
+# Copy package.json files needed for seed scripts
+COPY --from=build /app/apps/api/package.json ./apps/api/package.json
+COPY --from=build /app/packages/contracts/package.json ./packages/contracts/package.json
+
 # The client, served by this same process (see kernel/http/static-spa.ts).
 COPY --from=build /app/apps/web/dist ./web
-# CSV seed data for production deployment
-COPY requirements/ ./requirements/
+
+# ── Optional: CSV seed data for production deployment ──────────────────────
+# Place CSV files in requirements/ directory for tire brands and patterns
+# Files: req-TB Brand Pattern.csv, req-LT Brand Pattern.csv, req-Size.csv, req-Vehicle Brand.csv
+COPY requirements/ ./requirements/ 2>/dev/null || true
+
+# ── Storage directory ────────────────────────────────────────────────────────
 # Photos land here when STORAGE_DRIVER=local; the compose file mounts a volume
 # over it. Created with the right owner so the unprivileged user can write.
 RUN mkdir -p /app/uploads && chown -R node:node /app/uploads
+
 USER node
 EXPOSE 3000
+
+# ── Entrypoint: API server ───────────────────────────────────────────────────
+# For seeding, use docker exec to run scripts:
+#   docker exec <container> pnpm db:migrate
+#   docker exec <container> node dist/scripts/seed-prod-admin.js "password"
+#   docker exec <container> node dist/scripts/seed-csv-prod.js
 CMD ["node", "dist/server.js"]

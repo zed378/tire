@@ -220,78 +220,71 @@ node dist/scripts/seed-csv-prod.js
 
 ## Troubleshooting
 
-### Main seed script runs on production
+### Prisma schema not found
 
-**Error**: `Refusing to seed a production database`
+**Error**: `Could not find Prisma Schema that is required for this command`
 
-**Solution**: This is intentional protection. Use separate production scripts instead:
-```bash
-node dist/scripts/seed-prod-admin.js "password"
-node dist/prisma/seed.js
+**Solution**: Ensure `prisma/schema.prisma` is included in Docker image:
+```dockerfile
+# In Dockerfile
+COPY apps/api/prisma ./apps/api/prisma
 ```
 
-### Script not found
-
-**Error**: `Cannot find module '/app/dist/scripts/seed-csv-prod.js'`
-
-**Solution**: Build the API first:
+Or rebuild with correct schema:
 ```bash
+# Rebuild locally first
 pnpm build
-# Or just the API:
-pnpm build --filter=@c26/api
+
+# Then push to production with built files
+docker build -t myapp:latest .
 ```
 
-### Database connection fails
+### Module not found: dist/prisma/seed.js
 
-**Error**: `Can't reach database server at localhost:5433`
+**Error**: `Cannot find module '/app/dist/prisma/seed.js'`
 
-**Solution**: Ensure database is running:
+**Solution**: The seed script needs to be built. Ensure:
+1. Build happens before deployment: `pnpm build`
+2. `dist/` directory is included in Docker image
+3. Alternatively, use TypeScript version directly:
+
 ```bash
-# Check if containers are running
-docker-compose ps
+# Instead of:
+node dist/prisma/seed.js
 
-# Start containers
-docker-compose up -d
-
-# Wait for database to be ready
-docker-compose logs postgres
+# Use with tsx (if available):
+tsx prisma/seed.ts
 ```
 
-### CSV files not found
+### Module type warning for seed-csv-prod.js
 
-**Error**: `ENOENT: no such file or directory, open 'requirements/req-TB Brand Pattern.csv'`
+**Warning**: `Module type of file is not specified and it doesn't parse as CommonJS`
 
-**Solution**: Place CSV files in `requirements/` directory:
-```
-project-root/
-├── requirements/
-│   ├── req-TB Brand Pattern.csv
-│   ├── req-LT Brand Pattern.csv
-│   └── req-Size.csv
-```
+**Solution**: Add `"type": "module"` to `package.json` (already present in root)
 
-### Duplicate data in database
+The warning is non-blocking and doesn't affect functionality.
 
-**Status**: Multiple entries for same province/city/brand
+### Script not found during db:migrate
 
-**Solution**: The upsert logic prevents new duplicates. For existing duplicates:
-```sql
--- Check for duplicates
-SELECT name, COUNT(*) FROM provinces 
-GROUP BY name HAVING COUNT(*) > 1;
+**Error**: `prisma migrate deploy && tsx prisma/queue-setup.ts` fails
 
--- Manual cleanup may be needed
--- Contact database administrator
+**Solution**: Ensure migrations are available:
+```bash
+# In Dockerfile, copy migrations
+COPY apps/api/prisma/migrations ./apps/api/prisma/migrations
+
+# Then run migrations
+pnpm db:migrate
 ```
 
-### Permission denied during pnpm install
+If migrations don't exist, create them:
+```bash
+# Locally
+cd apps/api
+npx prisma migrate dev --name init
 
-**Error**: `EACCES: permission denied, open '/app/_tmp_*'`
-
-**Solution**: This happens when installing dependencies as non-root in container. Ensure:
-- Build happens before deployment
-- Dependencies are installed with `pnpm install` before building
-- Production container has pre-built `dist/` directory
+# Then commit and rebuild
+```
 
 ## Data Quality
 
@@ -312,6 +305,135 @@ All province and city codes follow official **Badan Pusat Statistik** standards:
 - **Idempotent**: Safe to run multiple times without data corruption
 - **Non-destructive**: Won't delete or overwrite user data
 - **Audit Trail**: All operations logged via Prisma
+
+## Docker Production Setup
+
+### Dockerfile Best Practices
+
+Ensure your Dockerfile includes all required files for seeding:
+
+```dockerfile
+FROM node:22-alpine AS builder
+
+WORKDIR /app
+
+# Install dependencies
+COPY pnpm-lock.yaml pnpm-workspace.yaml package.json ./
+RUN npm install -g pnpm && pnpm install --frozen-lockfile
+
+# Copy source code
+COPY . .
+
+# Build everything
+RUN pnpm build
+
+# Production image
+FROM node:22-alpine
+
+WORKDIR /app
+
+# Install pnpm in production image too
+RUN npm install -g pnpm
+
+# Copy package files
+COPY pnpm-lock.yaml pnpm-workspace.yaml package.json ./
+
+# Install production dependencies only
+RUN pnpm install --frozen-lockfile --prod
+
+# Copy built dist directory
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/apps/api/dist ./apps/api/dist
+
+# Copy Prisma schema and migrations (IMPORTANT for seeding!)
+COPY apps/api/prisma ./apps/api/prisma
+
+# Copy requirements directory if using CSV seeding
+COPY requirements ./requirements
+
+# Expose port
+EXPOSE 3000
+
+# Start application
+CMD ["node", "apps/api/dist/server.js"]
+```
+
+### Production Deployment Steps
+
+1. **Build locally**:
+   ```bash
+   pnpm build
+   docker build -t myapp:latest .
+   ```
+
+2. **Push to registry**:
+   ```bash
+   docker tag myapp:latest registry.example.com/myapp:latest
+   docker push registry.example.com/myapp:latest
+   ```
+
+3. **Deploy and initialize database**:
+   ```bash
+   # Run container
+   docker run -d --name myapp \
+     -e APP_ENV=production \
+     -e DATABASE_URL="postgresql://..." \
+     registry.example.com/myapp:latest
+
+   # Run migrations
+   docker exec myapp pnpm db:migrate
+
+   # Create admin
+   docker exec myapp node dist/scripts/seed-prod-admin.js "AdminPassword123"
+
+   # Seed master data
+   docker exec myapp node dist/scripts/seed-csv-prod.js
+   ```
+
+### Environment Variables Required
+
+```env
+# Database
+DATABASE_URL=postgresql://user:password@host:5432/dbname
+
+# Storage
+STORAGE_DRIVER=local
+STORAGE_SIGNING_KEY=long-random-key-32-characters-minimum
+UPLOAD_DIR=/app/uploads
+
+# Security
+MFA_ENCRYPTION_KEY=base64-32-byte-key
+
+# Application
+APP_ENV=production
+APP_VERSION=0.1.0
+API_HOST=0.0.0.0
+API_PORT=3000
+
+# Seed (production)
+SEED_ADMIN_USERNAME=admin
+SEED_ADMIN_PASSWORD=SecurePassword123
+```
+
+### Verify Deployment
+
+After seeding, verify everything is working:
+
+```bash
+# Check database connection
+docker exec myapp node -e "const { PrismaClient } = require('@prisma/client'); new PrismaClient().\$queryRaw\`SELECT 1\`"
+
+# Check master data was seeded
+docker exec myapp node -e "const { PrismaClient } = require('@prisma/client'); const p = new PrismaClient(); p.province.count().then(c => console.log('Provinces:', c))"
+
+# Check API is responding
+curl http://localhost:3000/api/health
+
+# Check admin can login
+curl -X POST http://localhost:3000/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"username":"admin","password":"YourPassword123"}'
+```
 
 ## Support & Documentation
 

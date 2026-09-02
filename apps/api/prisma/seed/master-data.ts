@@ -570,40 +570,91 @@ const TIRE_BRANDS = [
 ];
 
 export async function seedMasterData(prisma: PrismaClient): Promise<void> {
-  let provinceCount = 0;
-  let cityCount = 0;
+  let provinceCreated = 0;
+  let provinceSkipped = 0;
+  let cityCreated = 0;
+  let citySkipped = 0;
+  let vehicleBrandCreated = 0;
+  let vehicleBrandSkipped = 0;
+  let tireBrandCreated = 0;
+  let tireBrandSkipped = 0;
 
+  // Seed provinces and cities
   for (const region of REGIONS) {
-    const province = await prisma.province.upsert({
+    // Check if province already exists
+    const existingProvince = await prisma.province.findUnique({
       where: { code: region.code },
-      create: { code: region.code, name: region.name },
-      update: { name: region.name },
     });
 
-    provinceCount++;
+    let province;
+    if (existingProvince === null) {
+      province = await prisma.province.create({
+        data: { code: region.code, name: region.name },
+      });
+      provinceCreated++;
+    } else {
+      province = existingProvince;
+      provinceSkipped++;
+    }
 
+    // Seed cities for this province
     for (const city of region.cities) {
-      await prisma.city.upsert({
+      const existingCity = await prisma.city.findUnique({
         where: { code: city.code },
-        create: { code: city.code, name: city.name, provinceId: province.id },
-        update: { name: city.name, provinceId: province.id },
       });
 
-      cityCount++;
+      if (existingCity === null) {
+        await prisma.city.create({
+          data: { code: city.code, name: city.name, provinceId: province.id },
+        });
+        cityCreated++;
+      } else {
+        citySkipped++;
+      }
     }
   }
 
+  // Seed vehicle brands
   for (const name of VEHICLE_BRANDS) {
-    await prisma.vehicleBrand.upsert({ where: { name }, create: { name }, update: {} });
+    const existing = await prisma.vehicleBrand.findUnique({
+      where: { name },
+    });
+
+    if (existing === null) {
+      await prisma.vehicleBrand.create({ data: { name } });
+      vehicleBrandCreated++;
+    } else {
+      vehicleBrandSkipped++;
+    }
   }
 
+  // Seed tire brands
   for (const name of TIRE_BRANDS) {
-    await prisma.tireBrand.upsert({ where: { name }, create: { name }, update: {} });
+    const existing = await prisma.tireBrand.findUnique({
+      where: { name },
+    });
+
+    if (existing === null) {
+      await prisma.tireBrand.create({ data: { name } });
+      tireBrandCreated++;
+    } else {
+      tireBrandSkipped++;
+    }
   }
+
+  // Output summary
+  const totalCreated = provinceCreated + cityCreated + vehicleBrandCreated + tireBrandCreated;
+  const totalSkipped = provinceSkipped + citySkipped + vehicleBrandSkipped + tireBrandSkipped;
 
   process.stdout.write(
-    `  master data: ${provinceCount} provinces, ` +
-      `${cityCount} cities, ` +
-      `${VEHICLE_BRANDS.length} vehicle brands, ${TIRE_BRANDS.length} tire brands\n`,
+    `  master data: ` +
+      `${provinceCreated} provinces created (${provinceSkipped} skipped), ` +
+      `${cityCreated} cities created (${citySkipped} skipped), ` +
+      `${vehicleBrandCreated} vehicle brands created (${vehicleBrandSkipped} skipped), ` +
+      `${tireBrandCreated} tire brands created (${tireBrandSkipped} skipped)\n`,
   );
+
+  if (totalSkipped > 0) {
+    process.stdout.write(`  (${totalSkipped} existing records were not re-imported to avoid duplicates)\n`);
+  }
 }

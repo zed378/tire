@@ -94,58 +94,90 @@ function parseVehicleBrandCsv(filePath: string): string[] {
 export async function seedCsvData(prisma: PrismaClient): Promise<void> {
   const requirementsDir = resolve(process.cwd(), "../../requirements");
 
-  // Parse TB Brand Pattern
+  // Parse CSV files
   const tbBrandPatterns = parseBrandPatternCsv(
     resolve(requirementsDir, "req-TB Brand Pattern.csv"),
   );
 
-  // Parse LT Brand Pattern
   const ltBrandPatterns = parseBrandPatternCsv(
     resolve(requirementsDir, "req-LT Brand Pattern.csv"),
   );
 
-  // Parse Sizes
   const sizes = parseSizeCsv(resolve(requirementsDir, "req-Size.csv"));
 
-  // Parse Vehicle Brands
   const vehicleBrands = parseVehicleBrandCsv(
     resolve(requirementsDir, "req-Vehicle Brand.csv"),
   );
 
-  // Seed Vehicle Brands
-  let vehicleBrandCount = 0;
+  // Track created vs skipped for each type
+  let vehicleBrandCreated = 0;
+  let vehicleBrandSkipped = 0;
+  let tbBrandCreated = 0;
+  let tbBrandSkipped = 0;
+  let ltBrandCreated = 0;
+  let ltBrandSkipped = 0;
+
+  // Seed Vehicle Brands - only import new ones
   for (const brand of vehicleBrands) {
-    await prisma.vehicleBrand.upsert({
+    const existing = await prisma.vehicleBrand.findUnique({
       where: { name: brand },
-      create: { name: brand },
-      update: {},
     });
-    vehicleBrandCount++;
+
+    if (existing === null) {
+      await prisma.vehicleBrand.create({ data: { name: brand } });
+      vehicleBrandCreated++;
+    } else {
+      vehicleBrandSkipped++;
+    }
   }
 
-  // Seed TB Tire Brands with Patterns
-  let tbBrandCount = 0;
+  // Seed TB Tire Brands - only import new ones
   for (const brandPattern of tbBrandPatterns) {
-    const brand = await prisma.tireBrand.upsert({
+    const existing = await prisma.tireBrand.findUnique({
       where: { name: brandPattern.brand },
-      create: { name: brandPattern.brand },
-      update: {},
     });
-    tbBrandCount++;
+
+    if (existing === null) {
+      await prisma.tireBrand.create({ data: { name: brandPattern.brand } });
+      tbBrandCreated++;
+    } else {
+      tbBrandSkipped++;
+    }
   }
 
-  // Seed LT Tire Brands with Patterns
-  let ltBrandCount = 0;
+  // Seed LT Tire Brands - only import new ones
   for (const brandPattern of ltBrandPatterns) {
-    const brand = await prisma.tireBrand.upsert({
+    const existing = await prisma.tireBrand.findUnique({
       where: { name: brandPattern.brand },
-      create: { name: brandPattern.brand },
-      update: {},
     });
-    ltBrandCount++;
+
+    if (existing === null) {
+      await prisma.tireBrand.create({ data: { name: brandPattern.brand } });
+      ltBrandCreated++;
+    } else {
+      ltBrandSkipped++;
+    }
   }
+
+  // Output summary with created vs skipped breakdown
+  const totalCreated = vehicleBrandCreated + tbBrandCreated + ltBrandCreated;
+  const totalSkipped = vehicleBrandSkipped + tbBrandSkipped + ltBrandSkipped;
 
   process.stdout.write(
-    `  CSV data: ${vehicleBrandCount} vehicle brands, ${tbBrandCount} TB brands, ${ltBrandCount} LT brands, ${sizes.length} tire sizes\n`,
+    `  CSV data: ` +
+      `${vehicleBrandCreated} vehicle brands created (${vehicleBrandSkipped} skipped), ` +
+      `${tbBrandCreated} TB brands created (${tbBrandSkipped} skipped), ` +
+      `${ltBrandCreated} LT brands created (${ltBrandSkipped} skipped), ` +
+      `${sizes.length} tire sizes\n`,
   );
+
+  if (totalSkipped > 0) {
+    process.stdout.write(
+      `  (${totalSkipped} existing brands were not re-imported to avoid duplicates)\n`,
+    );
+  }
+
+  if (totalCreated === 0 && totalSkipped > 0) {
+    process.stdout.write(`  (All CSV data already exists in database - no new records imported)\n`);
+  }
 }
