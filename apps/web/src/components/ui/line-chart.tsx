@@ -80,7 +80,7 @@ export function LineChart({
   }, [data, series, height]);
 
   if (data.length === 0) {
-    return <p className="py-10 text-center text-sm text-slate-500">{emptyMessage}</p>;
+    return <p className="py-10 text-center text-sm text-muted">{emptyMessage}</p>;
   }
 
   // On a phone, labelling every day turns the axis into a smudge.
@@ -181,7 +181,7 @@ export function LineChart({
         ))}
       </svg>
 
-      <figcaption className="mt-2 flex flex-wrap items-center gap-4 text-xs text-slate-600">
+      <figcaption className="mt-2 flex flex-wrap items-center gap-4 text-xs text-muted">
         {series.map((line) => (
           <span key={line.key} className="flex items-center gap-1.5">
             <svg width="12" height="12" aria-hidden="true">
@@ -192,7 +192,7 @@ export function LineChart({
         ))}
 
         {hoverIndex !== null ? (
-          <span className="font-medium text-slate-800">
+          <span className="font-medium text-body">
             {String(data[hoverIndex]?.[categoryKey] ?? "")}:{" "}
             {series
               .map((line) => `${line.label} ${String(data[hoverIndex]?.[line.key] ?? 0)}`)

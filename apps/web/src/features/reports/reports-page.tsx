@@ -177,7 +177,7 @@ export function ReportsPage(): ReactNode {
                    <th className="py-2 text-right">Total</th>
                  </tr>
                </thead>
-               <tbody className="divide-y divide-slate-100">
+               <tbody className="divide-y divide-line">
                 {progress.data.points.map((point) => (
                   <tr key={`${point.period}-${point.cityId}`}>
                     <td className="py-2 pr-3">{formatDate(point.period)}</td>
@@ -305,7 +305,7 @@ function ExportPanel(): ReactNode {
              Biasanya ini berarti pekerjaan latar tidak sedang berjalan.
            </p>
            <p className="mt-1 text-xs">
-             Saat pengembangan, jalankan <code className="font-mono text-slate-100">pnpm dev</code> (yang kini
+             Saat pengembangan, jalankan <code className="rounded bg-current/10 px-1 font-mono">pnpm dev</code> (yang kini
              menjalankan worker juga). Di produksi, periksa Panel Operasional — bagian antrean
              pekerjaan menunjukkan kedalamannya.
            </p>

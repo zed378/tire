@@ -21,9 +21,10 @@ import { cn } from "../../lib/cn.ts";
  * defect D-08, the thing this rewrite exists to remove, and both a lint rule and
  * a CI gate check that they stay gone.
  *
- * Colours come from the semantic tokens in index.css — `bg-surface`, not
- * `bg-white dark:bg-slate-900`. Each token already carries its dark value, so a
- * `dark:` variant here is a sign something is being said twice.
+ * Colours come from the semantic tokens in index.css: a component asks for
+ * `bg-surface` and the theme decides what that means. Each token already
+ * carries its dark value, so a `dark:` variant in this file is a sign that
+ * something is being said twice.
  */
 
 // ── Button ──────────────────────────────────────────────────────────────────

@@ -117,7 +117,7 @@ export function TireSizesPage(): ReactNode {
                   <th className="py-2.5 px-3 text-right">Aksi</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-line">
                 {sizes.data.items.length === 0 ? (
                   <tr>
                     <td colSpan={3} className="py-6 text-center text-muted">
@@ -126,7 +126,7 @@ export function TireSizesPage(): ReactNode {
                   </tr>
                 ) : (
                   sizes.data.items.map((item) => (
-                    <tr key={item.id} className="hover:bg-surface-sunken/50">
+                    <tr key={item.id} className="hover:bg-surface-sunken">
                       <td className="py-2.5 px-3 font-medium text-body">
                         {editingId === item.id ? (
                           <Input

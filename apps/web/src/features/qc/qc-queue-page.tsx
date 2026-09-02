@@ -196,10 +196,10 @@ function StatCard({
   tone: "pending" | "pass" | "revision" | "drop";
 }): ReactNode {
   const tones = {
-    pending: "border-amber-200 bg-warning-soft text-warning-text",
-    pass: "border-green-200 bg-success-soft text-green-900",
+    pending: "border-warning-line bg-warning-soft text-warning-text",
+    pass: "border-success-line bg-success-soft text-success-text",
     revision: "border-warning-line bg-warning-soft text-warning-text",
-    drop: "border-danger-line bg-danger-soft text-red-900",
+    drop: "border-danger-line bg-danger-soft text-danger-text",
   } as const;
 
   return (

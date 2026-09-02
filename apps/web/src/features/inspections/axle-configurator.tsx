@@ -175,8 +175,8 @@ export function AxleConfigurator({
           </ul>
         </Banner>
       ) : (
-        <div className="rounded-md border border-green-200 bg-success-soft p-3">
-          <p className="text-sm font-medium text-green-900">
+        <div className="rounded-md border border-success-line bg-success-soft p-3">
+          <p className="text-sm font-medium text-success-text">
             Total {totalTires(configs)} ban pada {positions.length} posisi
           </p>
           {/* The derived names, shown before submission. These same strings
@@ -186,7 +186,7 @@ export function AxleConfigurator({
             {positions.map((position) => (
               <li
                 key={position.positionCode}
-                className="rounded border border-success-line bg-surface px-2 py-0.5 text-xs text-green-900"
+                className="rounded border border-success-line bg-surface px-2 py-0.5 text-xs text-success-text"
                 title={position.positionCode}
               >
                 {position.positionLabel}
