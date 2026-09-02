@@ -62,8 +62,8 @@ export function ReportsPage(): ReactNode {
     .map((row) => ({ ...row, label: formatDate(row.period) }));
 
   return (
-    <div className="space-y-4">
-      <h1 className="text-lg font-semibold text-slate-900">Pelaporan</h1>
+     <div className="space-y-4">
+       <h1 className="text-lg font-semibold text-slate-900 dark:text-slate-100">Pelaporan</h1>
 
       <Card>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -118,24 +118,24 @@ export function ReportsPage(): ReactNode {
 
       {progress.error !== null ? <ErrorBanner error={progress.error} /> : null}
 
-      <div className="grid gap-3 sm:grid-cols-3">
-        <Total label="Total TB" value={progress.data?.totals.tb} />
-        <Total label="Total LT" value={progress.data?.totals.lt} />
-        <Total label="Total Keseluruhan" value={progress.data?.totals.total} />
-      </div>
+       <div className="grid gap-3 sm:grid-cols-3">
+         <Total label="Total TB" value={progress.data?.totals.tb} />
+         <Total label="Total LT" value={progress.data?.totals.lt} />
+         <Total label="Total Keseluruhan" value={progress.data?.totals.total} />
+       </div>
 
-      <Card
-        title="Progres per Hari"
-        description="Hanya pengajuan berstatus Pass QC yang dihitung."
-      >
-        {progress.isLoading ? (
-          <div className="flex justify-center py-16 text-slate-500">
-            <Spinner className="h-5 w-5" />
-          </div>
-        ) : chartData.length === 0 ? (
-          <p className="py-10 text-center text-sm text-slate-500">
-            Belum ada data pada filter ini.
-          </p>
+       <Card
+         title="Progres per Hari"
+         description="Hanya pengajuan berstatus Pass QC yang dihitung."
+       >
+         {progress.isLoading ? (
+           <div className="flex justify-center py-16 text-slate-500 dark:text-slate-400">
+             <Spinner className="h-5 w-5" />
+           </div>
+         ) : chartData.length === 0 ? (
+           <p className="py-10 text-center text-sm text-slate-500 dark:text-slate-400">
+             Belum ada data pada filter ini.
+           </p>
         ) : (
           <LineChart
             data={chartData}
@@ -149,35 +149,35 @@ export function ReportsPage(): ReactNode {
           />
         )}
 
-        {/* Stated, not implied. The materialised view refreshes every ten
-            minutes, and a dashboard that presents ten-minute-old numbers as live
-            invites the wrong kind of trust. */}
-        {progress.data?.refreshedAt !== null && progress.data?.refreshedAt !== undefined ? (
-          <p className="mt-2 text-xs text-slate-500">
-            Agregat terakhir disegarkan {formatDateTime(progress.data.refreshedAt)}.
-          </p>
-        ) : null}
+         {/* Stated, not implied. The materialised view refreshes every ten
+             minutes, and a dashboard that presents ten-minute-old numbers as live
+             invites the wrong kind of trust. */}
+         {progress.data?.refreshedAt !== null && progress.data?.refreshedAt !== undefined ? (
+           <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+             Agregat terakhir disegarkan {formatDateTime(progress.data.refreshedAt)}.
+           </p>
+         ) : null}
       </Card>
 
       {/* The companion table. A chart alone cannot be checked against a manual
           count, which is exactly what the F5 acceptance list asks for. */}
-      <Card title="Rincian per Kota">
-        {progress.data === undefined || progress.data.points.length === 0 ? (
-          <p className="py-6 text-center text-sm text-slate-500">Belum ada data.</p>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-slate-200 text-left text-xs uppercase tracking-wide text-slate-500">
-                  <th className="py-2 pr-3">Tanggal</th>
-                  <th className="py-2 pr-3">Provinsi</th>
-                  <th className="py-2 pr-3">Kota</th>
-                  <th className="py-2 pr-3 text-right">TB</th>
-                  <th className="py-2 pr-3 text-right">LT</th>
-                  <th className="py-2 text-right">Total</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
+       <Card title="Rincian per Kota">
+         {progress.data === undefined || progress.data.points.length === 0 ? (
+           <p className="py-6 text-center text-sm text-slate-500 dark:text-slate-400">Belum ada data.</p>
+         ) : (
+           <div className="overflow-x-auto">
+             <table className="w-full text-sm">
+               <thead>
+                 <tr className="border-b border-slate-200 dark:border-slate-700 text-left text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                   <th className="py-2 pr-3">Tanggal</th>
+                   <th className="py-2 pr-3">Provinsi</th>
+                   <th className="py-2 pr-3">Kota</th>
+                   <th className="py-2 pr-3 text-right">TB</th>
+                   <th className="py-2 pr-3 text-right">LT</th>
+                   <th className="py-2 text-right">Total</th>
+                 </tr>
+               </thead>
+               <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                 {progress.data.points.map((point) => (
                   <tr key={`${point.period}-${point.cityId}`}>
                     <td className="py-2 pr-3">{formatDate(point.period)}</td>
@@ -199,16 +199,16 @@ export function ReportsPage(): ReactNode {
   );
 }
 
-function Total({ label, value }: { label: string; value: number | undefined }): ReactNode {
-  return (
-    <div className="rounded-lg border border-slate-200 bg-white p-3">
-      <p className="text-xs uppercase tracking-wide text-slate-500">{label}</p>
-      <p className="mt-1 text-2xl font-semibold text-slate-900">
-        {value === undefined ? "—" : formatNumber(value)}
-      </p>
-    </div>
-  );
-}
+ function Total({ label, value }: { label: string; value: number | undefined }): ReactNode {
+   return (
+     <div className="rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/50 p-3">
+       <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">{label}</p>
+       <p className="mt-1 text-2xl font-semibold text-slate-900 dark:text-slate-100">
+         {value === undefined ? "—" : formatNumber(value)}
+       </p>
+     </div>
+   );
+ }
 
 /**
  * Export with visible progress (PLAN/05 §8) — closes D-09.
@@ -298,59 +298,59 @@ function ExportPanel(): ReactNode {
         </Button>
       </div>
 
-      {stalled ? (
-        <Banner tone="warning" title="Berkas belum mulai disusun">
-          <p>
-            Permintaan sudah masuk antrean {stalledSeconds} detik lalu tetapi belum diproses.
-            Biasanya ini berarti pekerjaan latar tidak sedang berjalan.
-          </p>
-          <p className="mt-1 text-xs">
-            Saat pengembangan, jalankan <code className="font-mono">pnpm dev</code> (yang kini
-            menjalankan worker juga). Di produksi, periksa Panel Operasional — bagian antrean
-            pekerjaan menunjukkan kedalamannya.
-          </p>
-          <p className="mt-1 text-xs">
-            Permintaan Anda tidak hilang: ia tetap di antrean dan akan diproses begitu worker
-            berjalan.
-          </p>
-        </Banner>
-      ) : null}
+       {stalled ? (
+         <Banner tone="warning" title="Berkas belum mulai disusun">
+           <p>
+             Permintaan sudah masuk antrean {stalledSeconds} detik lalu tetapi belum diproses.
+             Biasanya ini berarti pekerjaan latar tidak sedang berjalan.
+           </p>
+           <p className="mt-1 text-xs">
+             Saat pengembangan, jalankan <code className="font-mono text-slate-100 dark:text-slate-300">pnpm dev</code> (yang kini
+             menjalankan worker juga). Di produksi, periksa Panel Operasional — bagian antrean
+             pekerjaan menunjukkan kedalamannya.
+           </p>
+           <p className="mt-1 text-xs">
+             Permintaan Anda tidak hilang: ia tetap di antrean dan akan diproses begitu worker
+             berjalan.
+           </p>
+         </Banner>
+       ) : null}
 
-      {job !== undefined ? (
-        <div className="mt-4">
-          {job.status === "done" ? (
-            <Banner tone="success" title="Berkas siap">
-              <p>{formatNumber(job.rowCount ?? 0)} baris.</p>
-              {job.downloadUrl !== null ? (
-                <a href={job.downloadUrl} className="mt-1 inline-block font-medium underline" download>
-                  Unduh berkas
-                </a>
-              ) : null}
-            </Banner>
-          ) : job.status === "failed" ? (
-            <Banner tone="error" title="Export gagal">
-              {job.error ?? "Silakan coba lagi."}
-            </Banner>
-          ) : (
-            <div>
-              <p className="text-sm text-slate-600">
-                {job.status === "queued" ? "Menunggu giliran…" : "Menyusun berkas…"} ({job.progress}
-                %)
-              </p>
-              {/* A native <progress>: an inline width style would be blocked
-                  by the CSP, which carries no 'unsafe-inline' (PLAN/13 §7). */}
-              <progress
-                className="mt-2 h-2 w-full"
-                max={100}
-                value={job.progress}
-                aria-label="Progres penyusunan berkas"
-              >
-                {job.progress}%
-              </progress>
-            </div>
-          )}
-        </div>
-      ) : null}
+       {job !== undefined ? (
+         <div className="mt-4">
+           {job.status === "done" ? (
+             <Banner tone="success" title="Berkas siap">
+               <p>{formatNumber(job.rowCount ?? 0)} baris.</p>
+               {job.downloadUrl !== null ? (
+                 <a href={job.downloadUrl} className="mt-1 inline-block font-medium underline text-slate-900 dark:text-slate-100" download>
+                   Unduh berkas
+                 </a>
+               ) : null}
+             </Banner>
+           ) : job.status === "failed" ? (
+             <Banner tone="error" title="Export gagal">
+               {job.error ?? "Silakan coba lagi."}
+             </Banner>
+           ) : (
+             <div>
+               <p className="text-sm text-slate-600 dark:text-slate-300">
+                 {job.status === "queued" ? "Menunggu giliran…" : "Menyusun berkas…"} ({job.progress}
+                 %)
+               </p>
+               {/* A native <progress>: an inline width style would be blocked
+                   by the CSP, which carries no 'unsafe-inline' (PLAN/13 §7). */}
+               <progress
+                 className="mt-2 h-2 w-full"
+                 max={100}
+                 value={job.progress}
+                 aria-label="Progres penyusunan berkas"
+               >
+                 {job.progress}%
+               </progress>
+             </div>
+           )}
+         </div>
+       ) : null}
     </Card>
   );
 }

@@ -111,53 +111,53 @@ export function UsersPage(): ReactNode {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <h1 className="text-lg font-semibold text-slate-900">Manajemen Pengguna</h1>
+       <div className="flex flex-wrap items-center justify-between gap-2">
+         <h1 className="text-lg font-semibold text-slate-900 dark:text-slate-100">Manajemen Pengguna</h1>
         <Button onClick={() => setCreating(true)}>Tambah Pengguna</Button>
       </div>
 
       {error !== null ? <ErrorBanner error={error} onDismiss={() => setError(null)} /> : null}
 
-      {temporaryPassword !== null ? (
-        <Banner
-          tone="warning"
-          title="Password sementara — hanya ditampilkan sekali"
-          onDismiss={() => setTemporaryPassword(null)}
-        >
-          <p>
-            Sampaikan kepada pengguna melalui kanal yang sudah ada. Pengguna akan diminta
-            menggantinya saat login pertama.
-          </p>
-          <code className="mt-2 inline-block select-all rounded bg-white px-2 py-1 font-mono text-sm">
-            {temporaryPassword}
-          </code>
-        </Banner>
-      ) : null}
+       {temporaryPassword !== null ? (
+         <Banner
+           tone="warning"
+           title="Password sementara — hanya ditampilkan sekali"
+           onDismiss={() => setTemporaryPassword(null)}
+         >
+           <p>
+             Sampaikan kepada pengguna melalui kanal yang sudah ada. Pengguna akan diminta
+             menggantinya saat login pertama.
+           </p>
+           <code className="mt-2 inline-block select-all rounded bg-white dark:bg-slate-900 px-2 py-1 font-mono text-sm text-slate-900 dark:text-slate-100">
+             {temporaryPassword}
+           </code>
+         </Banner>
+       ) : null}
 
-      <Card>
-        {users.isLoading ? (
-          <div className="flex justify-center py-10 text-slate-500">
-            <Spinner className="h-5 w-5" />
-          </div>
-        ) : (
-          <ul className="divide-y divide-slate-200">
-            {(users.data?.items ?? []).map((row) => {
-              const isSelf = currentUser?.id === row.id;
+       <Card>
+         {users.isLoading ? (
+           <div className="flex justify-center py-10 text-slate-500 dark:text-slate-400">
+             <Spinner className="h-5 w-5" />
+           </div>
+         ) : (
+           <ul className="divide-y divide-slate-200 dark:divide-slate-700">
+             {(users.data?.items ?? []).map((row) => {
+               const isSelf = currentUser?.id === row.id;
 
-              return (
-                <li key={row.id} className="flex flex-wrap items-center justify-between gap-3 py-3">
-                  <div className="min-w-0">
-                    <p className="font-medium text-slate-900">
-                      {row.displayName}{" "}
-                      <span className="font-normal text-slate-500">({row.username})</span>
-                    </p>
-                    <p className="mt-0.5 text-sm text-slate-600">
-                      {USER_ROLE_LABELS[row.role]}
-                      {row.regions.length > 0
-                        ? ` · ${row.regions.map((region) => region.name).join(", ")}`
-                        : " · seluruh wilayah"}
-                    </p>
-                    <p className="mt-0.5 text-xs text-slate-500">
+               return (
+                 <li key={row.id} className="flex flex-wrap items-center justify-between gap-3 py-3">
+                   <div className="min-w-0">
+                     <p className="font-medium text-slate-900 dark:text-slate-100">
+                       {row.displayName}{" "}
+                       <span className="font-normal text-slate-500 dark:text-slate-400">({row.username})</span>
+                     </p>
+                     <p className="mt-0.5 text-sm text-slate-600 dark:text-slate-300">
+                       {USER_ROLE_LABELS[row.role]}
+                       {row.regions.length > 0
+                         ? ` · ${row.regions.map((region) => region.name).join(", ")}`
+                         : " · seluruh wilayah"}
+                     </p>
+                     <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
                       {row.isActive ? "Aktif" : "Nonaktif"}
                       {row.mfaEnrolled ? " · 2FA aktif" : ""}
                       {row.mustChangePassword ? " · wajib ganti password" : ""}

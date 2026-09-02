@@ -38,8 +38,8 @@ export function AuditPage(): ReactNode {
   );
 
   return (
-    <div className="space-y-4">
-      <h1 className="text-lg font-semibold text-slate-900">Jejak Audit</h1>
+     <div className="space-y-4">
+       <h1 className="text-lg font-semibold text-slate-900 dark:text-slate-100">Jejak Audit</h1>
 
       <Card>
         <div className="grid gap-3 sm:grid-cols-3">
@@ -82,57 +82,57 @@ export function AuditPage(): ReactNode {
 
       {audit.error !== null ? <ErrorBanner error={audit.error} /> : null}
 
-      <Card>
-        {audit.isLoading ? (
-          <div className="flex justify-center py-10 text-slate-500">
-            <Spinner className="h-5 w-5" />
-          </div>
-        ) : rows.length === 0 ? (
-          <EmptyState title="Tidak ada catatan" description="Ubah filter di atas." />
-        ) : (
-          <>
-            <ul className="divide-y divide-slate-200">
-              {rows.map((entry) => (
-                <li key={entry.id} className="py-3">
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <p className="text-sm font-medium text-slate-900">
-                      {entry.action} · {entry.entity}#{entry.entityId}
-                    </p>
-                    <p className="text-xs text-slate-500">{formatDateTime(entry.createdAt)}</p>
-                  </div>
+       <Card>
+         {audit.isLoading ? (
+           <div className="flex justify-center py-10 text-slate-500 dark:text-slate-400">
+             <Spinner className="h-5 w-5" />
+           </div>
+         ) : rows.length === 0 ? (
+           <EmptyState title="Tidak ada catatan" description="Ubah filter di atas." />
+         ) : (
+           <>
+             <ul className="divide-y divide-slate-200 dark:divide-slate-700">
+               {rows.map((entry) => (
+                 <li key={entry.id} className="py-3">
+                   <div className="flex flex-wrap items-center justify-between gap-2">
+                     <p className="text-sm font-medium text-slate-900 dark:text-slate-100">
+                       {entry.action} · {entry.entity}#{entry.entityId}
+                     </p>
+                     <p className="text-xs text-slate-500 dark:text-slate-400">{formatDateTime(entry.createdAt)}</p>
+                   </div>
 
-                  <p className="mt-0.5 text-xs text-slate-500">
+                   <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
                     {entry.actorName ?? "sistem"}
                     {entry.actorRole !== null ? ` (${entry.actorRole})` : ""}
                     {entry.requestId !== null ? ` · ${entry.requestId}` : ""}
                   </p>
 
-                  {/* Only the columns that changed, never a whole row and never
-                      a secret — not even hashed (PLAN/04 §6.2). */}
-                  {entry.before !== null || entry.after !== null ? (
-                    <dl className="mt-2 grid gap-2 rounded border border-slate-200 bg-slate-50 p-2 text-xs sm:grid-cols-2">
-                      <div>
-                        <dt className="font-medium text-slate-600">Sebelum</dt>
-                        <dd className="mt-0.5 break-all font-mono text-slate-700">
-                          {JSON.stringify(entry.before ?? {})}
-                        </dd>
-                      </div>
-                      <div>
-                        <dt className="font-medium text-slate-600">Sesudah</dt>
-                        <dd className="mt-0.5 break-all font-mono text-slate-700">
-                          {JSON.stringify(entry.after ?? {})}
-                        </dd>
-                      </div>
-                    </dl>
-                  ) : null}
+                   {/* Only the columns that changed, never a whole row and never
+                       a secret — not even hashed (PLAN/04 §6.2). */}
+                   {entry.before !== null || entry.after !== null ? (
+                     <dl className="mt-2 grid gap-2 rounded border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 p-2 text-xs sm:grid-cols-2">
+                       <div>
+                         <dt className="font-medium text-slate-600 dark:text-slate-400">Sebelum</dt>
+                         <dd className="mt-0.5 break-all font-mono text-slate-700 dark:text-slate-300">
+                           {JSON.stringify(entry.before ?? {})}
+                         </dd>
+                       </div>
+                       <div>
+                         <dt className="font-medium text-slate-600 dark:text-slate-400">Sesudah</dt>
+                         <dd className="mt-0.5 break-all font-mono text-slate-700 dark:text-slate-300">
+                           {JSON.stringify(entry.after ?? {})}
+                         </dd>
+                       </div>
+                     </dl>
+                   ) : null}
                 </li>
               ))}
             </ul>
 
-            <nav className="mt-4 flex items-center justify-between">
-              <p className="text-sm text-slate-500">
-                Halaman {audit.data?.page} dari {audit.data?.totalPages}
-              </p>
+             <nav className="mt-4 flex items-center justify-between">
+               <p className="text-sm text-slate-500 dark:text-slate-400">
+                 Halaman {audit.data?.page} dari {audit.data?.totalPages}
+               </p>
               <div className="flex gap-2">
                 <Button
                   variant="secondary"

@@ -199,33 +199,33 @@ export function LoginPage(): ReactNode {
             >
               {error !== null ? <ErrorSummary error={error} onDismiss={() => setError(null)} /> : null}
 
-              <Field label="User ID" htmlFor="username" error={errors.username?.message} required>
-                <Input
-                  id="username"
-                  autoComplete="username"
-                  autoCapitalize="none"
-                  autoFocus
-                  invalid={errors.username !== undefined}
-                  className="border-slate-300 bg-white text-slate-900 placeholder:text-slate-400 focus:border-brand-500 focus:ring-brand-500/30 dark:border-slate-800 dark:bg-slate-950/80 dark:text-white dark:placeholder:text-slate-500 dark:focus:border-cyan-500 dark:focus:ring-cyan-500/30"
-                  {...register("username")}
-                />
-              </Field>
+               <Field label="User ID" htmlFor="username" error={errors.username?.message} required>
+                 <Input
+                   id="username"
+                   autoComplete="username"
+                   autoCapitalize="none"
+                   autoFocus
+                   invalid={errors.username !== undefined}
+                   className="border-slate-300 bg-white text-slate-900 placeholder:text-slate-400 focus:border-brand-500 focus:ring-brand-500/30 dark:border-slate-700 dark:bg-slate-950/80 dark:text-white dark:placeholder:text-slate-500 dark:focus:border-cyan-500 dark:focus:ring-cyan-500/30"
+                   {...register("username")}
+                 />
+               </Field>
 
-              <Field label="Password" htmlFor="password" error={errors.password?.message} required>
-                <div className="relative">
-                  <Input
-                    id="password"
-                    type={showPassword ? "text" : "password"}
-                    autoComplete="current-password"
-                    invalid={errors.password !== undefined}
-                    className="pr-10 border-slate-300 bg-white text-slate-900 placeholder:text-slate-400 focus:border-brand-500 focus:ring-brand-500/30 dark:border-slate-800 dark:bg-slate-950/80 dark:text-white dark:placeholder:text-slate-500 dark:focus:border-cyan-500 dark:focus:ring-cyan-500/30"
-                    {...register("password")}
-                  />
-                  <span
-                    onClick={() => setShowPassword((prev) => !prev)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer text-slate-400 hover:text-slate-200 transition-colors"
-                    title={showPassword ? "Sembunyikan password" : "Tampilkan password"}
-                  >
+               <Field label="Password" htmlFor="password" error={errors.password?.message} required>
+                 <div className="relative">
+                   <Input
+                     id="password"
+                     type={showPassword ? "text" : "password"}
+                     autoComplete="current-password"
+                     invalid={errors.password !== undefined}
+                     className="pr-10 border-slate-300 bg-white text-slate-900 placeholder:text-slate-400 focus:border-brand-500 focus:ring-brand-500/30 dark:border-slate-700 dark:bg-slate-950/80 dark:text-white dark:placeholder:text-slate-500 dark:focus:border-cyan-500 dark:focus:ring-cyan-500/30"
+                     {...register("password")}
+                   />
+                   <span
+                     onClick={() => setShowPassword((prev) => !prev)}
+                     className="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer text-slate-400 hover:text-slate-200 dark:text-slate-500 dark:hover:text-slate-300 transition-colors"
+                     title={showPassword ? "Sembunyikan password" : "Tampilkan password"}
+                   >
                     {showPassword ? (
                       <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                         <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
@@ -241,41 +241,41 @@ export function LoginPage(): ReactNode {
                 </div>
               </Field>
 
-              {needsTotp ? (
-                useRecoveryCode ? (
-                  <Field
-                    label="Kode pemulihan"
-                    htmlFor="recoveryCode"
-                    error={errors.recoveryCode?.message}
-                    hint="Gunakan salah satu kode sekali pakai yang Anda simpan saat mendaftarkan autentikasi dua faktor."
-                  >
-                    <Input
-                      id="recoveryCode"
-                      autoComplete="one-time-code"
-                      invalid={errors.recoveryCode !== undefined}
-                      className="border-slate-800 bg-slate-950/80 text-white placeholder:text-slate-500 focus:border-cyan-500 focus:ring-cyan-500/30"
-                      {...register("recoveryCode")}
-                    />
-                  </Field>
-                ) : (
-                  <Field
-                    label="Kode autentikasi"
-                    htmlFor="totpCode"
-                    error={errors.totpCode?.message}
-                    hint="Enam angka dari aplikasi authenticator Anda. Kode ini bekerja tanpa sinyal."
-                  >
-                    <Input
-                      id="totpCode"
-                      inputMode="numeric"
-                      autoComplete="one-time-code"
-                      maxLength={6}
-                      invalid={errors.totpCode !== undefined}
-                      className="border-slate-800 bg-slate-950/80 text-center font-mono text-lg tracking-widest text-white placeholder:text-slate-500 focus:border-cyan-500 focus:ring-cyan-500/30"
-                      {...register("totpCode")}
-                    />
-                  </Field>
-                )
-              ) : null}
+               {needsTotp ? (
+                 useRecoveryCode ? (
+                   <Field
+                     label="Kode pemulihan"
+                     htmlFor="recoveryCode"
+                     error={errors.recoveryCode?.message}
+                     hint="Gunakan salah satu kode sekali pakai yang Anda simpan saat mendaftarkan autentikasi dua faktor."
+                   >
+                     <Input
+                       id="recoveryCode"
+                       autoComplete="one-time-code"
+                       invalid={errors.recoveryCode !== undefined}
+                       className="border-slate-800 dark:border-slate-700 bg-slate-950/80 dark:bg-slate-900/80 text-white dark:text-slate-100 placeholder:text-slate-500 dark:placeholder:text-slate-400 focus:border-cyan-500 focus:ring-cyan-500/30"
+                       {...register("recoveryCode")}
+                     />
+                   </Field>
+                 ) : (
+                   <Field
+                     label="Kode autentikasi"
+                     htmlFor="totpCode"
+                     error={errors.totpCode?.message}
+                     hint="Enam angka dari aplikasi authenticator Anda. Kode ini bekerja tanpa sinyal."
+                   >
+                     <Input
+                       id="totpCode"
+                       inputMode="numeric"
+                       autoComplete="one-time-code"
+                       maxLength={6}
+                       invalid={errors.totpCode !== undefined}
+                       className="border-slate-800 dark:border-slate-700 bg-slate-950/80 dark:bg-slate-900/80 text-center font-mono text-lg tracking-widest text-white dark:text-slate-100 placeholder:text-slate-500 dark:placeholder:text-slate-400 focus:border-cyan-500 focus:ring-cyan-500/30"
+                       {...register("totpCode")}
+                     />
+                   </Field>
+                 )
+               ) : null}
 
               <Button
                 type="submit"
@@ -298,9 +298,9 @@ export function LoginPage(): ReactNode {
               ) : null}
             </form>
 
-            <p className="mt-5 text-center text-xs text-slate-400">
-              Lupa password? Hubungi admin untuk mengatur ulang.
-            </p>
+             <p className="mt-5 text-center text-xs text-slate-400 dark:text-slate-500">
+               Lupa password? Hubungi admin untuk mengatur ulang.
+             </p>
           </div>
         </div>
 
