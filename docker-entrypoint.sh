@@ -35,7 +35,16 @@ node ./node_modules/prisma/build/index.js migrate deploy 2>&1
 echo "  Migration output above"
 
 echo "Running database seeding (master data + CSV data)..."
+echo "  Checking tsx availability..."
+which tsx || echo "  ERROR: tsx not found in PATH"
+echo "  Checking seed script existence..."
+ls -la apps/api/prisma/db-init-seed.ts 2>&1 || echo "  ERROR: db-init-seed.ts not found"
 cd /app && tsx apps/api/prisma/db-init-seed.ts 2>&1
+SEED_EXIT_CODE=$?
+if [ $SEED_EXIT_CODE -ne 0 ]; then
+  echo "  ERROR: Seeding failed with exit code $SEED_EXIT_CODE"
+  exit $SEED_EXIT_CODE
+fi
 echo "  Seeding completed"
 
 echo "Running full queue setup..."

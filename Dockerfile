@@ -55,6 +55,11 @@ COPY --from=build /app/apps/api/prisma.config.ts ./apps/api/prisma.config.ts
 # Copy seed subdirectory (master-data, csv-data, demo-data, sample-photos)
 COPY --from=build /app/apps/api/prisma/seed ./apps/api/prisma/seed
 
+# ── Source .ts files for tsx execution (db-init-seed.ts) ────────────────────
+# The build stage only has compiled .js files. We need source .ts files for
+# tsx to execute db-init-seed.ts at runtime. Copy only the files needed.
+COPY --from=build /app/apps/api/prisma/db-init-seed.ts ./apps/api/prisma/db-init-seed.ts
+
 # Copy package.json files needed for seed scripts and pnpm db:migrate
 COPY --from=build /app/apps/api/package.json ./apps/api/package.json
 COPY --from=build /app/packages/contracts/package.json ./packages/contracts/package.json
