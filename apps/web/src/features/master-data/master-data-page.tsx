@@ -6,6 +6,7 @@ import { api } from "../../lib/api-client.ts";
 import { formatDate } from "../../lib/format.ts";
 import { Banner, ErrorBanner, useToast } from "../../components/ui/feedback.tsx";
 import { Button, Card, EmptyState, Field, Input, Select } from "../../components/ui/primitives.tsx";
+import { Pagination } from "../../components/ui/pagination.tsx";
 
 /**
  * Master data (PLAN/02 §5) — closes Q-07.
@@ -29,8 +30,27 @@ const TAB_LABELS: Record<Tab, string> = {
   reviews: "Merk Menunggu Tinjauan",
 };
 
+/**
+ * Rows per tab.
+ *
+ * The seed alone loads 290 cities, and the Kota tab rendered every one of them
+ * in a single list. These arrive together in one master-data bundle — the same
+ * bundle the vehicle form's dropdowns need whole — so the list is paged here
+ * rather than by asking the server for it again a slice at a time.
+ */
+const PER_PAGE = 25;
+
+function pageOf<T>(rows: readonly T[], page: number): T[] {
+  return rows.slice((page - 1) * PER_PAGE, page * PER_PAGE);
+}
+
+function pageCount(rows: readonly unknown[]): number {
+  return Math.max(1, Math.ceil(rows.length / PER_PAGE));
+}
+
 export function MasterDataPage(): ReactNode {
   const [tab, setTab] = useState<Tab>("provinces");
+  const [page, setPage] = useState(1);
   const queryClient = useQueryClient();
   const toast = useToast();
   const [error, setError] = useState<unknown>(null);
@@ -104,7 +124,10 @@ export function MasterDataPage(): ReactNode {
           <button
             key={value}
             type="button"
-            onClick={() => setTab(value)}
+            onClick={() => {
+              setTab(value);
+              setPage(1);
+            }}
             className={
               tab === value
                 ? "border-b-2 border-accent px-3 py-2 text-sm font-medium text-accent-text"
@@ -128,7 +151,7 @@ export function MasterDataPage(): ReactNode {
           />
 
           <ul className="mt-4 divide-y divide-line">
-            {(master.data?.provinces ?? []).map((province) => (
+            {pageOf(master.data?.provinces ?? [], page).map((province) => (
               <li key={province.id} className="flex items-center justify-between py-2">
                 <span className="text-sm text-body">
                   {province.code} · {province.name}{" "}
@@ -149,6 +172,13 @@ export function MasterDataPage(): ReactNode {
               </li>
             ))}
           </ul>
+
+          <Pagination
+            page={page}
+            totalPages={pageCount(master.data?.provinces ?? [])}
+            totalItems={(master.data?.provinces ?? []).length}
+            onPageChange={setPage}
+          />
         </Card>
       ) : null}
 
@@ -178,7 +208,7 @@ export function MasterDataPage(): ReactNode {
           />
 
           <ul className="mt-4 divide-y divide-line">
-            {(master.data?.cities ?? []).map((city) => (
+            {pageOf(master.data?.cities ?? [], page).map((city) => (
               <li key={city.id} className="flex items-center justify-between py-2">
                 <span className="text-sm text-body">
                   {city.code} · {city.name}{" "}
@@ -195,6 +225,13 @@ export function MasterDataPage(): ReactNode {
               </li>
             ))}
           </ul>
+
+          <Pagination
+            page={page}
+            totalPages={pageCount(master.data?.cities ?? [])}
+            totalItems={(master.data?.cities ?? []).length}
+            onPageChange={setPage}
+          />
         </Card>
       ) : null}
 
@@ -207,9 +244,11 @@ export function MasterDataPage(): ReactNode {
           />
 
           <ul className="mt-4 divide-y divide-line">
-            {(tab === "vehicle-brands"
-              ? (master.data?.vehicleBrands ?? [])
-              : (master.data?.tireBrands ?? [])
+            {pageOf(
+              tab === "vehicle-brands"
+                ? (master.data?.vehicleBrands ?? [])
+                : (master.data?.tireBrands ?? []),
+              page,
             ).map((brand) => (
               <li key={brand.id} className="flex items-center justify-between py-2">
                 <span className="text-sm text-body">{brand.name}</span>
@@ -224,6 +263,17 @@ export function MasterDataPage(): ReactNode {
               </li>
             ))}
           </ul>
+
+          <Pagination
+            page={page}
+            totalPages={pageCount(tab === "vehicle-brands"
+                ? (master.data?.vehicleBrands ?? [])
+                : (master.data?.tireBrands ?? []))}
+            totalItems={(tab === "vehicle-brands"
+                ? (master.data?.vehicleBrands ?? [])
+                : (master.data?.tireBrands ?? [])).length}
+            onPageChange={setPage}
+          />
         </Card>
       ) : null}
 
