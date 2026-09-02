@@ -65,12 +65,13 @@ describe('secondsUntilSendingWindow', () => {
   });
 
   it('returns the seconds until next 07:00 WIB when outside window', () => {
-    // WIB 20:00 = UTC 13:00
+    // 20:00 WIB, the moment the window closes (PLAN/12 §5.1).
     const evening = new Date('2026-01-01T13:00:00Z');
     const seconds = secondsUntilSendingWindow(evening);
-    // Should be ~14 hours = ~50400 seconds
-    expect(seconds).toBeGreaterThan(40000);
-    expect(seconds).toBeLessThan(60000);
+    // 20:00 to 07:00 the next morning is eleven hours. The previous assertion
+    // was a range around "~14 hours", which is simply the wrong subtraction —
+    // it excluded the correct answer, so this test could never have passed.
+    expect(seconds).toBe(11 * 60 * 60);
   });
 });
 

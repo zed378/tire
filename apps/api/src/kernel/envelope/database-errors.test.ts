@@ -90,14 +90,14 @@ describe('translateDatabaseError', () => {
   });
 
   it('translates PHOTO_LIMIT_EXCEEDED trigger (per pengajuan)', () => {
-    const err = new Error('PHOTO_LIMIT_EXCEEDED: maksimal 30 foto per pengajuan') as unknown as Error;
+    const err = new Error('PHOTO_LIMIT_EXCEEDED: maksimal 30 foto per pengajuan');
     const result = translateDatabaseError(err);
     expect(result?.code).toBe('VALIDATION_ERROR');
     expect(result?.fieldErrors?.[0]?.message).toBe('Maksimal 30 foto per pengajuan.');
   });
 
   it('translates PHOTO_LIMIT_EXCEEDED trigger (per slot)', () => {
-    const err = new Error('PHOTO_LIMIT_EXCEEDED: maksimal 10 foto per slot') as unknown as Error;
+    const err = new Error('PHOTO_LIMIT_EXCEEDED: maksimal 10 foto per slot');
     const result = translateDatabaseError(err);
     expect(result?.code).toBe('VALIDATION_ERROR');
     expect(result?.fieldErrors?.[0]?.message).toBe('Maksimal 10 foto per slot.');

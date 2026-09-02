@@ -15,7 +15,7 @@ describe('changedFields', () => {
   });
 
   it('ignores undefined values in after', () => {
-    const result = changedFields({ name: 'Alice' }, { name: undefined as unknown as string });
+    const result = changedFields({ name: 'Alice' }, { name: undefined });
     expect(result.before).toEqual({});
     expect(result.after).toEqual({});
   });

@@ -12,8 +12,8 @@ describe('zodErrorToAppError', () => {
     expect(result).toBeInstanceOf(AppError);
     expect(result.code).toBe('VALIDATION_ERROR');
     expect(result.fieldErrors).toHaveLength(1);
-    expect(result.fieldErrors?.[0].field).toBe('username');
-    expect(result.fieldErrors?.[0].code).toBe('TOO_SHORT');
+    expect(result.fieldErrors?.[0]?.field).toBe('username');
+    expect(result.fieldErrors?.[0]?.code).toBe('TOO_SHORT');
   });
 
   it('converts a ZodError with multiple issues across different paths', () => {
@@ -23,7 +23,7 @@ describe('zodErrorToAppError', () => {
     ]);
     const result = zodErrorToAppError(zodErr);
     expect(result.fieldErrors).toHaveLength(2);
-    const fields = result.fieldErrors!.map((f) => f.field);
+    const fields = result.fieldErrors.map((f) => f.field);
     expect(fields).toContain('password');
     expect(fields).toContain('email');
   });
@@ -34,14 +34,14 @@ describe('zodErrorToAppError', () => {
     expect(result.fieldErrors).toHaveLength(0);
   });
 
-  it('maps not_an_integer to NOT_ALLOWED via fieldCodeFor', () => {
-    const zodErr = new ZodError([{ code: 'not_an_integer', path: ['quantity'], message: 'bukan integer' }]);
+  it('maps an unrecognised issue code to NOT_ALLOWED via fieldCodeFor', () => {
+    const zodErr = new ZodError([{ code: 'not_finite', path: ['quantity'], message: 'bukan angka terbatas' }]);
     const result = zodErrorToAppError(zodErr);
     expect(result.fieldErrors?.[0]?.code).toBe('NOT_ALLOWED');
   });
 
   it('maps unrecognized_keys to root NOT_ALLOWED', () => {
-    const zodErr = new ZodError([{ code: 'unrecognized_keys', path: [], message: 'field tidak dikenal', unrecognized: ['extra_field'] }]);
+    const zodErr = new ZodError([{ code: 'unrecognized_keys', path: [], message: 'field tidak dikenal', keys: ['extra_field'] }]);
     const result = zodErrorToAppError(zodErr);
     expect(result.fieldErrors?.[0]?.field).toBe('root');
     expect(result.fieldErrors?.[0]?.code).toBe('NOT_ALLOWED');
@@ -60,7 +60,15 @@ describe('zodErrorToAppError', () => {
   });
 
   it('maps invalid_enum_value to INVALID_FORMAT', () => {
-    const zodErr = new ZodError([{ code: 'invalid_enum_value', path: ['segment'], message: 'invalid', options: ['bus', 'truck'] }]);
+    const zodErr = new ZodError([
+      {
+        code: 'invalid_enum_value',
+        path: ['segment'],
+        message: 'invalid',
+        options: ['bus', 'truck'],
+        received: 'sedan',
+      },
+    ]);
     const result = zodErrorToAppError(zodErr);
     expect(result.fieldErrors?.[0]?.code).toBe('INVALID_FORMAT');
   });
@@ -75,7 +83,7 @@ describe('errorEnvelope integration', () => {
     const envelope = errorEnvelope(appErr, 'req_test');
     expect(envelope.ok).toBe(false);
     expect(envelope.errors).toHaveLength(1);
-    expect(envelope.errors?.[0].field).toBe('username');
+    expect(envelope.errors?.[0]?.field).toBe('username');
   });
 
   it('omits errors array for non-validation AppErrors', () => {
