@@ -183,7 +183,13 @@ export function Field({
           <label htmlFor={htmlFor} className="block text-sm font-medium text-body">
             {label}
             {required ? (
-              <span className="ml-1 text-danger" aria-hidden="true">
+              /*
+                `danger-text`, not `danger`. The latter is a fill token — a
+                colour chosen to sit behind white text — and as a glyph on the
+                dark card it reaches only 3.1:1. `danger-text` is the token
+                meant for text and carries a readable value in both themes.
+              */
+              <span className="ml-1 text-danger-text" aria-hidden="true">
                 *
               </span>
             ) : null}
