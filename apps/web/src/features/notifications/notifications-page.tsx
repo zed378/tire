@@ -65,7 +65,7 @@ export function NotificationsPage(): ReactNode {
   return (
     <div className="space-y-4">
        <div className="flex flex-wrap items-center justify-between gap-2">
-         <h1 className="text-lg font-semibold text-slate-900 dark:text-slate-100">Notifikasi</h1>
+         <h1 className="text-lg font-semibold text-body">Notifikasi</h1>
         <div className="flex gap-2">
           <Button variant="secondary" onClick={() => setShowPreferences((open) => !open)}>
             {showPreferences ? "Tutup Preferensi" : "Preferensi"}
@@ -81,26 +81,26 @@ export function NotificationsPage(): ReactNode {
       {showPreferences ? (
         <Card title="Preferensi Notifikasi">
            {preferences.data === undefined ? (
-             <div className="flex justify-center py-6 text-slate-500 dark:text-slate-400">
+             <div className="flex justify-center py-6 text-muted">
                <Spinner className="h-5 w-5" />
              </div>
            ) : (
-             <ul className="divide-y divide-slate-200 dark:divide-slate-700">
+             <ul className="divide-y divide-line">
               {preferences.data.map((preference) => (
                 <li
                   key={`${preference.eventType}-${preference.channel}`}
                   className="flex flex-wrap items-center justify-between gap-2 py-2"
                 >
                    <div className="min-w-0">
-                     <p className="text-sm text-slate-800 dark:text-slate-100">
+                     <p className="text-sm text-body">
                        {NOTIFICATION_TEMPLATES[preference.eventType].title}
                      </p>
-                     <p className="text-xs text-slate-500 dark:text-slate-400">
+                     <p className="text-xs text-muted">
                        {preference.channel === "in_app" ? "Dalam aplikasi" : "Email"}
                        {preference.lockedReason !== null ? ` · ${preference.lockedReason}` : ""}
                      </p>
                    </div>
-                   <label className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300">
+                   <label className="flex items-center gap-2 text-sm text-body">
                     <input
                       type="checkbox"
                       checked={preference.enabled}
@@ -118,7 +118,7 @@ export function NotificationsPage(): ReactNode {
 
        <Card>
          {inbox.isLoading ? (
-           <div className="flex justify-center py-10 text-slate-500 dark:text-slate-400">
+           <div className="flex justify-center py-10 text-muted">
              <Spinner className="h-5 w-5" />
            </div>
          ) : inbox.data === undefined || inbox.data.items.length === 0 ? (
@@ -127,23 +127,23 @@ export function NotificationsPage(): ReactNode {
              description="Kabar tentang pengajuan dan export Anda akan muncul di sini."
            />
          ) : (
-           <ul className="divide-y divide-slate-200 dark:divide-slate-700">
+           <ul className="divide-y divide-line">
             {inbox.data.items.map((notification) => (
                <li
                  key={notification.id}
                  className={
                    notification.readAt === null
-                     ? "border-l-2 border-brand-600 bg-brand-50/40 dark:bg-brand-900/20 py-3 pl-3"
+                     ? "border-l-2 border-accent bg-accent-soft/40 py-3 pl-3"
                      : "py-3 pl-3"
                  }
                >
-                 <p className="text-sm font-medium text-slate-900 dark:text-slate-100">{notification.title}</p>
-                 <p className="mt-0.5 text-sm text-slate-600 dark:text-slate-300">{notification.body}</p>
-                 <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                 <p className="text-sm font-medium text-body">{notification.title}</p>
+                 <p className="mt-0.5 text-sm text-muted">{notification.body}</p>
+                 <p className="mt-1 text-xs text-muted">
                   {formatRelative(notification.createdAt)}
                   {notification.link !== null ? " · " : ""}
                   {notification.link !== null ? (
-                    <Link to={notification.link} className="text-brand-700 underline">
+                    <Link to={notification.link} className="text-accent-text underline">
                       Buka
                     </Link>
                   ) : null}

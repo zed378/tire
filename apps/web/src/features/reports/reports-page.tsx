@@ -63,7 +63,7 @@ export function ReportsPage(): ReactNode {
 
   return (
      <div className="space-y-4">
-       <h1 className="text-lg font-semibold text-slate-900 dark:text-slate-100">Pelaporan</h1>
+       <h1 className="text-lg font-semibold text-body">Pelaporan</h1>
 
       <Card>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -129,11 +129,11 @@ export function ReportsPage(): ReactNode {
          description="Hanya pengajuan berstatus Pass QC yang dihitung."
        >
          {progress.isLoading ? (
-           <div className="flex justify-center py-16 text-slate-500 dark:text-slate-400">
+           <div className="flex justify-center py-16 text-muted">
              <Spinner className="h-5 w-5" />
            </div>
          ) : chartData.length === 0 ? (
-           <p className="py-10 text-center text-sm text-slate-500 dark:text-slate-400">
+           <p className="py-10 text-center text-sm text-muted">
              Belum ada data pada filter ini.
            </p>
         ) : (
@@ -153,7 +153,7 @@ export function ReportsPage(): ReactNode {
              minutes, and a dashboard that presents ten-minute-old numbers as live
              invites the wrong kind of trust. */}
          {progress.data?.refreshedAt !== null && progress.data?.refreshedAt !== undefined ? (
-           <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+           <p className="mt-2 text-xs text-muted">
              Agregat terakhir disegarkan {formatDateTime(progress.data.refreshedAt)}.
            </p>
          ) : null}
@@ -163,12 +163,12 @@ export function ReportsPage(): ReactNode {
           count, which is exactly what the F5 acceptance list asks for. */}
        <Card title="Rincian per Kota">
          {progress.data === undefined || progress.data.points.length === 0 ? (
-           <p className="py-6 text-center text-sm text-slate-500 dark:text-slate-400">Belum ada data.</p>
+           <p className="py-6 text-center text-sm text-muted">Belum ada data.</p>
          ) : (
            <div className="overflow-x-auto">
              <table className="w-full text-sm">
                <thead>
-                 <tr className="border-b border-slate-200 dark:border-slate-700 text-left text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                 <tr className="border-b border-line text-left text-xs uppercase tracking-wide text-muted">
                    <th className="py-2 pr-3">Tanggal</th>
                    <th className="py-2 pr-3">Provinsi</th>
                    <th className="py-2 pr-3">Kota</th>
@@ -177,7 +177,7 @@ export function ReportsPage(): ReactNode {
                    <th className="py-2 text-right">Total</th>
                  </tr>
                </thead>
-               <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+               <tbody className="divide-y divide-slate-100">
                 {progress.data.points.map((point) => (
                   <tr key={`${point.period}-${point.cityId}`}>
                     <td className="py-2 pr-3">{formatDate(point.period)}</td>
@@ -201,9 +201,9 @@ export function ReportsPage(): ReactNode {
 
  function Total({ label, value }: { label: string; value: number | undefined }): ReactNode {
    return (
-     <div className="rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/50 p-3">
-       <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">{label}</p>
-       <p className="mt-1 text-2xl font-semibold text-slate-900 dark:text-slate-100">
+     <div className="rounded-lg border border-line bg-surface/50 p-3">
+       <p className="text-xs uppercase tracking-wide text-muted">{label}</p>
+       <p className="mt-1 text-2xl font-semibold text-body">
          {value === undefined ? "—" : formatNumber(value)}
        </p>
      </div>
@@ -305,7 +305,7 @@ function ExportPanel(): ReactNode {
              Biasanya ini berarti pekerjaan latar tidak sedang berjalan.
            </p>
            <p className="mt-1 text-xs">
-             Saat pengembangan, jalankan <code className="font-mono text-slate-100 dark:text-slate-300">pnpm dev</code> (yang kini
+             Saat pengembangan, jalankan <code className="font-mono text-slate-100">pnpm dev</code> (yang kini
              menjalankan worker juga). Di produksi, periksa Panel Operasional — bagian antrean
              pekerjaan menunjukkan kedalamannya.
            </p>
@@ -322,7 +322,7 @@ function ExportPanel(): ReactNode {
              <Banner tone="success" title="Berkas siap">
                <p>{formatNumber(job.rowCount ?? 0)} baris.</p>
                {job.downloadUrl !== null ? (
-                 <a href={job.downloadUrl} className="mt-1 inline-block font-medium underline text-slate-900 dark:text-slate-100" download>
+                 <a href={job.downloadUrl} className="mt-1 inline-block font-medium underline text-body" download>
                    Unduh berkas
                  </a>
                ) : null}
@@ -333,7 +333,7 @@ function ExportPanel(): ReactNode {
              </Banner>
            ) : (
              <div>
-               <p className="text-sm text-slate-600 dark:text-slate-300">
+               <p className="text-sm text-muted">
                  {job.status === "queued" ? "Menunggu giliran…" : "Menyusun berkas…"} ({job.progress}
                  %)
                </p>

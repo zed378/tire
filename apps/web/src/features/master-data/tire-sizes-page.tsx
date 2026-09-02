@@ -69,20 +69,20 @@ export function TireSizesPage(): ReactNode {
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h1 className="text-lg font-semibold text-slate-900 dark:text-white">Manajemen Ukuran Ban</h1>
+        <h1 className="text-lg font-semibold text-body">Manajemen Ukuran Ban</h1>
         <Button onClick={() => setCreating(true)}>Tambah Ukuran</Button>
       </div>
 
       {error !== null ? <ErrorBanner error={error} onDismiss={() => setError(null)} /> : null}
 
-      <nav className="flex border-b border-slate-200 dark:border-slate-700">
+      <nav className="flex border-b border-line">
         <button
           type="button"
           onClick={() => setTab("TB")}
           className={
             tab === "TB"
-              ? "border-b-2 border-brand-600 px-4 py-2 text-sm font-medium text-brand-700 dark:text-brand-400"
-              : "px-4 py-2 text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+              ? "border-b-2 border-accent px-4 py-2 text-sm font-medium text-accent-text"
+              : "px-4 py-2 text-sm text-muted hover:text-body"
           }
         >
           TB (Truck/Bus)
@@ -92,8 +92,8 @@ export function TireSizesPage(): ReactNode {
           onClick={() => setTab("LT")}
           className={
             tab === "LT"
-              ? "border-b-2 border-brand-600 px-4 py-2 text-sm font-medium text-brand-700 dark:text-brand-400"
-              : "px-4 py-2 text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+              ? "border-b-2 border-accent px-4 py-2 text-sm font-medium text-accent-text"
+              : "px-4 py-2 text-sm text-muted hover:text-body"
           }
         >
           LT (Light Truck)
@@ -101,7 +101,7 @@ export function TireSizesPage(): ReactNode {
       </nav>
 
       {sizes.isLoading ? (
-        <div className="flex justify-center py-16 text-slate-500">
+        <div className="flex justify-center py-16 text-muted">
           <Spinner className="h-6 w-6" />
         </div>
       ) : null}
@@ -110,24 +110,24 @@ export function TireSizesPage(): ReactNode {
         <Card>
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm">
-              <thead className="border-b border-slate-200 dark:border-slate-700 text-xs font-semibold uppercase text-slate-600 dark:text-slate-400">
+              <thead className="border-b border-line text-xs font-semibold uppercase text-muted">
                 <tr>
                   <th className="py-2.5 px-3">Ukuran</th>
                   <th className="py-2.5 px-3">Kategori</th>
                   <th className="py-2.5 px-3 text-right">Aksi</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+              <tbody className="divide-y divide-slate-100">
                 {sizes.data.items.length === 0 ? (
                   <tr>
-                    <td colSpan={3} className="py-6 text-center text-slate-500 dark:text-slate-400">
+                    <td colSpan={3} className="py-6 text-center text-muted">
                       Belum ada ukuran ban untuk kategori {tab}.
                     </td>
                   </tr>
                 ) : (
                   sizes.data.items.map((item) => (
-                    <tr key={item.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/50">
-                      <td className="py-2.5 px-3 font-medium text-slate-900 dark:text-white">
+                    <tr key={item.id} className="hover:bg-surface-sunken/50">
+                      <td className="py-2.5 px-3 font-medium text-body">
                         {editingId === item.id ? (
                           <Input
                             value={editSize}
@@ -138,7 +138,7 @@ export function TireSizesPage(): ReactNode {
                           item.size
                         )}
                       </td>
-                      <td className="py-2.5 px-3 text-slate-600 dark:text-slate-400">
+                      <td className="py-2.5 px-3 text-muted">
                         {item.type}
                       </td>
                       <td className="py-2.5 px-3 text-right">
@@ -224,9 +224,9 @@ function CreateSizeDialog({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="w-full max-w-lg rounded-lg bg-white dark:bg-slate-900 shadow-xl">
-        <div className="border-b border-slate-200 dark:border-slate-700 px-4 py-3">
-          <h2 className="text-base font-semibold text-slate-900 dark:text-white">
+      <div className="w-full max-w-lg rounded-lg bg-surface shadow-xl">
+        <div className="border-b border-line px-4 py-3">
+          <h2 className="text-base font-semibold text-body">
             Tambah Ukuran Ban ({type})
           </h2>
         </div>
@@ -241,7 +241,7 @@ function CreateSizeDialog({
             />
           </Field>
         </div>
-        <div className="flex justify-end gap-2 border-t border-slate-200 dark:border-slate-700 px-4 py-3">
+        <div className="flex justify-end gap-2 border-t border-line px-4 py-3">
           <Button variant="secondary" onClick={onClose} disabled={submitting}>
             Batal
           </Button>
@@ -269,12 +269,12 @@ function ConfirmDeleteDialog({
 }): ReactNode {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="w-full max-w-lg rounded-lg bg-white dark:bg-slate-900 shadow-xl">
-        <div className="border-b border-slate-200 dark:border-slate-700 px-4 py-3">
-          <h2 className="text-base font-semibold text-slate-900 dark:text-white">{title}</h2>
-          <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">{description}</p>
+      <div className="w-full max-w-lg rounded-lg bg-surface shadow-xl">
+        <div className="border-b border-line px-4 py-3">
+          <h2 className="text-base font-semibold text-body">{title}</h2>
+          <p className="mt-0.5 text-sm text-muted">{description}</p>
         </div>
-        <div className="flex justify-end gap-2 border-t border-slate-200 dark:border-slate-700 px-4 py-3">
+        <div className="flex justify-end gap-2 border-t border-line px-4 py-3">
           <Button variant="secondary" onClick={onClose} disabled={submitting}>
             Batal
           </Button>

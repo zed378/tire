@@ -90,11 +90,11 @@ export function StepUpDialog(): ReactNode {
         role="dialog"
         aria-modal="true"
         aria-label="Verifikasi ulang diperlukan"
-        className="w-full max-w-lg rounded-lg bg-white dark:bg-slate-900 shadow-xl"
+        className="w-full max-w-lg rounded-lg bg-surface shadow-xl"
       >
-        <header className="border-b border-slate-200 dark:border-slate-700 px-4 py-3">
-          <h2 className="text-base font-semibold text-slate-900 dark:text-white">Verifikasi ulang diperlukan</h2>
-          <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">Tindakan ini menyentuh akun atau sistem, sehingga memerlukan kode autentikasi terbaru. Verifikasi berlaku 15 menit.</p>
+        <header className="border-b border-line px-4 py-3">
+          <h2 className="text-base font-semibold text-body">Verifikasi ulang diperlukan</h2>
+          <p className="mt-0.5 text-sm text-muted">Tindakan ini menyentuh akun atau sistem, sehingga memerlukan kode autentikasi terbaru. Verifikasi berlaku 15 menit.</p>
         </header>
         <div className="p-4">
           <form

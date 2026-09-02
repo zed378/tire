@@ -51,7 +51,7 @@ export function QcQueuePage(): ReactNode {
 
   return (
     <div className="space-y-4">
-      <h1 className="text-lg font-semibold text-slate-900 dark:text-slate-100">Quality Control</h1>
+      <h1 className="text-lg font-semibold text-body">Quality Control</h1>
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <StatCard label="Menunggu QC" value={stats.data?.pending} tone="pending" />
@@ -121,7 +121,7 @@ export function QcQueuePage(): ReactNode {
 
       <Card title="Antrean kerja">
         {queue.isLoading ? (
-          <div className="flex justify-center py-10 text-slate-500 dark:text-slate-400">
+          <div className="flex justify-center py-10 text-muted">
             <Spinner className="h-5 w-5" />
           </div>
         ) : queue.data === undefined || queue.data.items.length === 0 ? (
@@ -131,18 +131,18 @@ export function QcQueuePage(): ReactNode {
           />
         ) : (
           <>
-            <ul className="divide-y divide-slate-200 dark:divide-slate-700">
+            <ul className="divide-y divide-line">
               {queue.data.items.map((item) => (
                 <li key={item.id} className="flex flex-wrap items-center justify-between gap-3 py-3">
                   <div className="min-w-0">
-                    <p className="font-medium text-slate-900 dark:text-slate-100">
+                    <p className="font-medium text-body">
                       {item.serialNumber} · {item.plateDisplay}
                     </p>
-                    <p className="mt-0.5 text-sm text-slate-600 dark:text-slate-400">
+                    <p className="mt-0.5 text-sm text-muted">
                       {item.cityName}, {item.provinceName} · {item.category} · {item.totalTires} ban
                       · {item.photoCount} foto
                     </p>
-                    <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-500">
+                    <p className="mt-0.5 text-xs text-subtle">
                       {item.submittedByName} ·{" "}
                       {item.submittedAt === null ? "belum dikirim" : formatDate(item.submittedAt)}
                     </p>
@@ -159,7 +159,7 @@ export function QcQueuePage(): ReactNode {
             </ul>
 
             <nav className="mt-4 flex items-center justify-between">
-              <p className="text-sm text-slate-500 dark:text-slate-400">
+              <p className="text-sm text-muted">
                 Halaman {queue.data.page} dari {queue.data.totalPages} · {queue.data.total} data
               </p>
               <div className="flex gap-2">
@@ -196,10 +196,10 @@ function StatCard({
   tone: "pending" | "pass" | "revision" | "drop";
 }): ReactNode {
   const tones = {
-    pending: "border-amber-200 bg-amber-50 text-amber-900 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-200",
-    pass: "border-green-200 bg-green-50 text-green-900 dark:border-green-800 dark:bg-green-950/40 dark:text-green-200",
-    revision: "border-orange-200 bg-orange-50 text-orange-900 dark:border-orange-800 dark:bg-orange-950/40 dark:text-orange-200",
-    drop: "border-red-200 bg-red-50 text-red-900 dark:border-red-800 dark:bg-red-950/40 dark:text-red-200",
+    pending: "border-amber-200 bg-warning-soft text-warning-text",
+    pass: "border-green-200 bg-success-soft text-green-900",
+    revision: "border-warning-line bg-warning-soft text-warning-text",
+    drop: "border-danger-line bg-danger-soft text-red-900",
   } as const;
 
   return (

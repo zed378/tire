@@ -79,7 +79,7 @@ export function TireSpecPage(): ReactNode {
 
   if (sheet.isLoading) {
     return (
-      <div className="flex justify-center py-16 text-slate-500">
+      <div className="flex justify-center py-16 text-muted">
         <Spinner className="h-6 w-6" />
       </div>
     );
@@ -105,10 +105,10 @@ export function TireSpecPage(): ReactNode {
   return (
     <div className="space-y-4">
       <div>
-        <h1 className="text-lg font-semibold text-slate-900">
+        <h1 className="text-lg font-semibold text-body">
           Spesifikasi Ban · {sheet.data.serialNumber}
         </h1>
-        <p className="text-sm text-slate-600">
+        <p className="text-sm text-muted">
           {sheet.data.plateDisplay} · terisi {filled} dari {rows.length} posisi
         </p>
       </div>
@@ -164,11 +164,11 @@ export function TireSpecPage(): ReactNode {
           <Card key={row.tirePositionId}>
             <div className="mb-3 flex items-baseline justify-between gap-2">
               <div className="min-w-0">
-                <p className="truncate text-sm font-medium text-slate-900">{row.positionLabel}</p>
-                <p className="font-mono text-xs text-slate-400">{row.positionCode}</p>
+                <p className="truncate text-sm font-medium text-body">{row.positionLabel}</p>
+                <p className="font-mono text-xs text-subtle">{row.positionCode}</p>
               </div>
               {row.isComplete ? (
-                <span className="rounded-full border border-green-300 bg-green-50 px-2 py-0.5 text-xs text-green-800">
+                <span className="rounded-full border border-success-line bg-success-soft px-2 py-0.5 text-xs text-success-text">
                   Lengkap
                 </span>
               ) : null}
@@ -257,7 +257,7 @@ export function TireSpecPage(): ReactNode {
                 </Field>
 
                 <div className="flex items-end pb-2">
-                  <label className="flex items-center gap-2 text-sm text-slate-700">
+                  <label className="flex items-center gap-2 text-sm text-body">
                     <input
                       type="checkbox"
                       checked={row.isRetread}
@@ -276,7 +276,7 @@ export function TireSpecPage(): ReactNode {
       </div>
 
       {sheet.data.editable ? (
-        <div className="sticky bottom-0 border-t border-slate-200 bg-white/95 py-3 safe-bottom">
+        <div className="sticky bottom-0 border-t border-line bg-surface/95 py-3 safe-bottom">
           <Button
             className="w-full"
             loading={save.isPending}

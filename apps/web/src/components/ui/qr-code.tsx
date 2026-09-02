@@ -18,7 +18,7 @@ export function QRCodeSVG({ value, size = 200, className }: QRCodeSVGProps): Rea
   const qr = generateQRCodeMatrix(value);
   if (!qr) {
     return (
-      <div className="flex h-48 w-48 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-xs text-slate-500">
+      <div className="flex h-48 w-48 items-center justify-center rounded-xl border border-line bg-surface-sunken text-xs text-muted">
         Gagal memuat Kode QR
       </div>
     );
@@ -43,7 +43,7 @@ export function QRCodeSVG({ value, size = 200, className }: QRCodeSVGProps): Rea
 
   return (
     <div
-      className={`inline-flex flex-col items-center justify-center rounded-2xl border border-slate-200 bg-white p-4 shadow-md dark:border-slate-800 dark:bg-slate-900 ${
+      className={`inline-flex flex-col items-center justify-center rounded-2xl border border-line bg-surface p-4 shadow-md ${
         className ?? ""
       }`}
     >

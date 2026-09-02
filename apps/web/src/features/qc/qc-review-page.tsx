@@ -85,7 +85,7 @@ export function QcReviewPage(): ReactNode {
 
    if (detail.isLoading) {
      return (
-       <div className="flex justify-center py-16 text-slate-500 dark:text-slate-400">
+       <div className="flex justify-center py-16 text-muted">
          <Spinner className="h-6 w-6" />
        </div>
      );
@@ -128,8 +128,8 @@ export function QcReviewPage(): ReactNode {
     <div className="space-y-4">
        <div className="flex flex-wrap items-start justify-between gap-2">
          <div>
-           <h1 className="text-lg font-semibold text-slate-900 dark:text-slate-100">{inspection.serialNumber}</h1>
-           <p className="text-sm text-slate-600 dark:text-slate-300">
+           <h1 className="text-lg font-semibold text-body">{inspection.serialNumber}</h1>
+           <p className="text-sm text-muted">
             {inspection.plateDisplay} · {inspection.cityName} · {inspection.totalTires} ban ·{" "}
             dikirim {formatDateTime(inspection.submittedAt)}
           </p>
@@ -150,21 +150,21 @@ export function QcReviewPage(): ReactNode {
 
        <Card title="Galeri Foto" description="Periksa setiap posisi ban sebelum memutuskan.">
          {photoList.length === 0 ? (
-           <p className="text-sm text-slate-500 dark:text-slate-400">Tidak ada foto pada pengajuan ini.</p>
+           <p className="text-sm text-muted">Tidak ada foto pada pengajuan ini.</p>
          ) : (
            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
              {photoList.map((photo) => (
-               <figure key={photo.id} className="rounded-md border border-slate-200 dark:border-slate-700 p-2">
+               <figure key={photo.id} className="rounded-md border border-line p-2">
                  <img
                    src={photo.url}
                    alt={photo.tirePositionLabel ?? photo.slot}
                    loading="lazy"
                    className="h-40 w-full rounded object-cover"
                  />
-                 <figcaption className="mt-2 text-sm font-medium text-slate-800 dark:text-slate-200">
+                 <figcaption className="mt-2 text-sm font-medium text-body">
                    {photo.tirePositionLabel ?? photo.slot}
                  </figcaption>
-                 <p className="text-xs text-slate-500 dark:text-slate-400">
+                 <p className="text-xs text-muted">
                   {photo.capturedAt === null
                     ? "Waktu pengambilan tidak tersedia"
                     : `Diambil ${formatDateTime(photo.capturedAt)}`}
@@ -192,11 +192,11 @@ export function QcReviewPage(): ReactNode {
        {inspection.status === "pending_qc" ? (
          <Card title="Keputusan QC">
            <fieldset className="space-y-2">
-             <legend className="text-sm font-medium text-slate-700 dark:text-slate-300">Pilih keputusan</legend>
+             <legend className="text-sm font-medium text-body">Pilih keputusan</legend>
              {QC_DECISIONS.map((value) => (
                <label
                  key={value}
-                 className="flex cursor-pointer items-start gap-2 rounded-md border border-slate-200 dark:border-slate-700 p-3 hover:bg-slate-50 dark:hover:bg-slate-800/50"
+                 className="flex cursor-pointer items-start gap-2 rounded-md border border-line p-3 hover:bg-surface-sunken/50"
                >
                  <input
                    type="radio"
@@ -209,7 +209,7 @@ export function QcReviewPage(): ReactNode {
                    }}
                    className="mt-1"
                  />
-                 <span className="text-sm text-slate-800 dark:text-slate-200">{QC_DECISION_LABELS[value]}</span>
+                 <span className="text-sm text-body">{QC_DECISION_LABELS[value]}</span>
               </label>
             ))}
           </fieldset>

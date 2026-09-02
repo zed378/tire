@@ -80,20 +80,20 @@ export function TireBrandPatternsPage(): ReactNode {
    return (
      <div className="space-y-4">
        <div className="flex flex-wrap items-center justify-between gap-2">
-         <h1 className="text-lg font-semibold text-slate-900 dark:text-white">Manajemen Pattern Ban</h1>
+         <h1 className="text-lg font-semibold text-body">Manajemen Pattern Ban</h1>
          <Button onClick={() => setCreating(true)}>Tambah Pattern</Button>
        </div>
 
       {error !== null ? <ErrorBanner error={error} onDismiss={() => setError(null)} /> : null}
 
-       <nav className="flex border-b border-slate-200 dark:border-slate-700">
+       <nav className="flex border-b border-line">
          <button
            type="button"
            onClick={() => setTab("TB")}
            className={
              tab === "TB"
-               ? "border-b-2 border-brand-600 px-4 py-2 text-sm font-medium text-brand-700"
-               : "px-4 py-2 text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+               ? "border-b-2 border-accent px-4 py-2 text-sm font-medium text-accent-text"
+               : "px-4 py-2 text-sm text-muted hover:text-body"
            }
          >
            TB (Truck/Bus)
@@ -103,8 +103,8 @@ export function TireBrandPatternsPage(): ReactNode {
            onClick={() => setTab("LT")}
            className={
              tab === "LT"
-               ? "border-b-2 border-brand-600 px-4 py-2 text-sm font-medium text-brand-700"
-               : "px-4 py-2 text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+               ? "border-b-2 border-accent px-4 py-2 text-sm font-medium text-accent-text"
+               : "px-4 py-2 text-sm text-muted hover:text-body"
            }
          >
            LT (Light Truck)
@@ -113,11 +113,11 @@ export function TireBrandPatternsPage(): ReactNode {
 
        <Card>
          {patterns.isLoading ? (
-           <div className="flex justify-center py-10 text-slate-500 dark:text-slate-400">
+           <div className="flex justify-center py-10 text-muted">
              <Spinner className="h-5 w-5" />
            </div>
          ) : (
-           <ul className="divide-y divide-slate-200 dark:divide-slate-700">
+           <ul className="divide-y divide-line">
             {(patterns.data?.items ?? []).map((pattern) => (
               <li key={pattern.id} className="flex flex-wrap items-center justify-between gap-3 py-3">
                 {editingId === pattern.id ? (
@@ -154,13 +154,13 @@ export function TireBrandPatternsPage(): ReactNode {
                  ) : (
                    <>
                      <div className="min-w-0">
-                       <p className="font-medium text-slate-900 dark:text-white">
+                       <p className="font-medium text-body">
                          {pattern.pattern}{" "}
-                         <span className="text-xs font-normal text-slate-500 dark:text-slate-400">
+                         <span className="text-xs font-normal text-muted">
                            ({pattern.brand})
                          </span>
                        </p>
-                       <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+                       <p className="mt-0.5 text-xs text-muted">
                          {pattern.isActive ? "Aktif" : "Nonaktif"}
                        </p>
                      </div>
@@ -223,9 +223,9 @@ function CreatePatternDialog({
 
    return (
      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-       <div className="w-full max-w-lg rounded-lg bg-white dark:bg-slate-900 shadow-xl">
-         <div className="border-b border-slate-200 dark:border-slate-700 px-4 py-3">
-           <h2 className="text-base font-semibold text-slate-900 dark:text-white">
+       <div className="w-full max-w-lg rounded-lg bg-surface shadow-xl">
+         <div className="border-b border-line px-4 py-3">
+           <h2 className="text-base font-semibold text-body">
              Tambah Pattern Ban ({type})
            </h2>
          </div>
@@ -248,7 +248,7 @@ function CreatePatternDialog({
             />
           </Field>
         </div>
-         <div className="flex justify-end gap-2 border-t border-slate-200 dark:border-slate-700 px-4 py-3">
+         <div className="flex justify-end gap-2 border-t border-line px-4 py-3">
            <Button variant="secondary" onClick={onClose} disabled={submitting}>
              Batal
            </Button>
@@ -276,12 +276,12 @@ function ConfirmDeleteDialog({
 }): ReactNode {
    return (
      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-       <div className="w-full max-w-lg rounded-lg bg-white dark:bg-slate-900 shadow-xl">
-         <div className="border-b border-slate-200 dark:border-slate-700 px-4 py-3">
-           <h2 className="text-base font-semibold text-slate-900 dark:text-white">{title}</h2>
-           <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">{description}</p>
+       <div className="w-full max-w-lg rounded-lg bg-surface shadow-xl">
+         <div className="border-b border-line px-4 py-3">
+           <h2 className="text-base font-semibold text-body">{title}</h2>
+           <p className="mt-0.5 text-sm text-muted">{description}</p>
          </div>
-         <div className="flex justify-end gap-2 border-t border-slate-200 dark:border-slate-700 px-4 py-3">
+         <div className="flex justify-end gap-2 border-t border-line px-4 py-3">
           <Button variant="secondary" onClick={onClose} disabled={submitting}>
             Batal
           </Button>

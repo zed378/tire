@@ -84,7 +84,7 @@ export function MfaEnrollPage(): ReactNode {
             {recoveryCodes.map((recoveryCode) => (
               <li
                 key={recoveryCode}
-                className="select-all rounded border border-slate-200 bg-slate-50 px-3 py-2 text-center font-mono text-sm dark:border-slate-800 dark:bg-slate-900"
+                className="select-all rounded border border-line bg-surface-sunken px-3 py-2 text-center font-mono text-sm"
               >
                 {recoveryCode}
               </li>
@@ -107,7 +107,7 @@ export function MfaEnrollPage(): ReactNode {
       <div className="mx-auto max-w-lg">
         <Card title="Autentikasi Dua Faktor">
           <Banner tone="success">Autentikasi dua faktor sudah aktif untuk akun Anda.</Banner>
-          <p className="mt-3 text-sm text-slate-600 dark:text-slate-400">
+          <p className="mt-3 text-sm text-muted">
             Sisa kode pemulihan: {status.data.remainingRecoveryCodes}. Kalau Anda kehilangan akses ke
             aplikasi authenticator dan kehabisan kode pemulihan, admin lain harus mengatur ulang —
             proses itu tercatat di jejak audit dan mengakhiri seluruh sesi Anda.
@@ -143,33 +143,33 @@ export function MfaEnrollPage(): ReactNode {
         ) : (
           <div className="space-y-5">
             <div>
-              <p className="text-sm font-medium text-slate-800 dark:text-slate-200">
+              <p className="text-sm font-medium text-body">
                 1. Pindai Kode QR ini dari aplikasi authenticator Anda:
               </p>
 
               {/* Scannable QR Code SVG Container */}
               <div className="mt-3 flex flex-col items-center justify-center">
                 <QRCodeSVG value={enrollment.data.otpauthUri} size={190} />
-                <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+                <p className="mt-2 text-xs text-muted">
                   Google Authenticator &bull; Authy &bull; Microsoft &bull; 1Password
                 </p>
               </div>
 
               {/* Manual Secret Key Fallback */}
-              <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-900/60">
+              <div className="mt-4 rounded-xl border border-line bg-surface-sunken p-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                  <span className="text-xs font-semibold uppercase tracking-wider text-muted">
                     Kunci Manual (Opsional)
                   </span>
                   <button
                     type="button"
                     onClick={() => void handleCopySecret(enrollment.data!.secretForManualEntry)}
-                    className="text-xs font-medium text-brand-600 hover:text-brand-700 dark:text-cyan-400 dark:hover:text-cyan-300"
+                    className="text-xs font-medium text-accent-text hover:text-accent-text"
                   >
                     {copiedKey ? "✓ Tersalin" : "Salin Kunci"}
                   </button>
                 </div>
-                <p className="mt-1 select-all break-all font-mono text-sm font-semibold tracking-wider text-slate-900 dark:text-slate-100">
+                <p className="mt-1 select-all break-all font-mono text-sm font-semibold tracking-wider text-body">
                   {enrollment.data.secretForManualEntry}
                 </p>
               </div>

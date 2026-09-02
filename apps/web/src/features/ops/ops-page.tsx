@@ -90,7 +90,7 @@ export function OpsPage(): ReactNode {
 
   return (
      <div className="space-y-4">
-       <h1 className="text-lg font-semibold text-slate-900 dark:text-slate-100">Panel Operasional</h1>
+       <h1 className="text-lg font-semibold text-body">Panel Operasional</h1>
 
       {error !== null ? <ErrorBanner error={error} onDismiss={() => setError(null)} /> : null}
 
@@ -110,7 +110,7 @@ export function OpsPage(): ReactNode {
 
        <Card title="Kesehatan Sistem">
          {report === undefined ? (
-           <div className="flex justify-center py-6 text-slate-500 dark:text-slate-400">
+           <div className="flex justify-center py-6 text-muted">
              <Spinner className="h-5 w-5" />
            </div>
          ) : (
@@ -119,10 +119,10 @@ export function OpsPage(): ReactNode {
                <span
                  className={
                    report.status === "ok"
-                     ? "rounded-full border border-green-300 bg-green-50 dark:border-green-800 dark:bg-green-900/30 px-3 py-1 text-sm text-green-800 dark:text-green-200"
+                     ? "rounded-full border border-success-line bg-success-soft px-3 py-1 text-sm text-success-text"
                      : report.status === "degraded"
-                       ? "rounded-full border border-amber-300 bg-amber-50 dark:border-amber-800 dark:bg-amber-900/30 px-3 py-1 text-sm text-amber-800 dark:text-amber-200"
-                       : "rounded-full border border-red-300 bg-red-50 dark:border-red-800 dark:bg-red-900/30 px-3 py-1 text-sm text-red-800 dark:text-red-200"
+                       ? "rounded-full border border-warning-line bg-warning-soft px-3 py-1 text-sm text-warning-text"
+                       : "rounded-full border border-danger-line bg-danger-soft px-3 py-1 text-sm text-danger-text"
                  }
                >
                  {report.status === "ok"
@@ -131,14 +131,14 @@ export function OpsPage(): ReactNode {
                      ? "Terganggu"
                      : "Tidak berjalan"}
                </span>
-               <span className="text-sm text-slate-500 dark:text-slate-400">versi {report.version}</span>
+               <span className="text-sm text-muted">versi {report.version}</span>
              </div>
 
-             <ul className="divide-y divide-slate-200 dark:divide-slate-700">
+             <ul className="divide-y divide-line">
                {report.checks.map((check) => (
                  <li key={check.name} className="flex items-center justify-between py-2 text-sm">
-                   <span className="text-slate-800 dark:text-slate-200">{check.name}</span>
-                   <span className="text-slate-600 dark:text-slate-400">
+                   <span className="text-body">{check.name}</span>
+                   <span className="text-muted">
                     {check.detail}
                     {check.latencyMs !== null ? ` · ${check.latencyMs} ms` : ""}
                   </span>
@@ -185,19 +185,19 @@ export function OpsPage(): ReactNode {
 
          {searchedRequestId !== "" ? (
            logs.data === undefined ? (
-             <div className="mt-3 flex justify-center py-4 text-slate-500 dark:text-slate-400">
+             <div className="mt-3 flex justify-center py-4 text-muted">
                <Spinner className="h-5 w-5" />
              </div>
            ) : logs.data.length === 0 ? (
-             <p className="mt-3 text-sm text-slate-500 dark:text-slate-400">
+             <p className="mt-3 text-sm text-muted">
                Tidak ada catatan untuk kode ini. Eskalasi ke pemilik sistem dengan menyertakan kodenya.
              </p>
            ) : (
-             <ul className="mt-3 divide-y divide-slate-200 dark:divide-slate-700">
+             <ul className="mt-3 divide-y divide-line">
                {logs.data.map((entry, index) => (
                  <li key={`${entry.timestamp}-${String(index)}`} className="py-2 text-sm">
-                   <p className="text-slate-800 dark:text-slate-200">{entry.message}</p>
-                   <p className="text-xs text-slate-500 dark:text-slate-400">
+                   <p className="text-body">{entry.message}</p>
+                   <p className="text-xs text-muted">
                     {formatDateTime(entry.timestamp)}
                     {entry.role !== null ? ` · ${entry.role}` : ""}
                   </p>
@@ -224,7 +224,7 @@ export function OpsPage(): ReactNode {
         }
       >
          {jobs.data === undefined ? (
-           <div className="flex justify-center py-6 text-slate-500 dark:text-slate-400">
+           <div className="flex justify-center py-6 text-muted">
              <Spinner className="h-5 w-5" />
            </div>
          ) : jobs.data.length === 0 ? (
@@ -233,17 +233,17 @@ export function OpsPage(): ReactNode {
              description="Semua pekerjaan latar berjalan normal."
            />
          ) : (
-           <ul className="divide-y divide-slate-200 dark:divide-slate-700">
+           <ul className="divide-y divide-line">
              {jobs.data.map((job) => (
                <li key={job.id} className="flex flex-wrap items-center justify-between gap-2 py-2">
                  <div className="min-w-0">
-                   <p className="text-sm font-medium text-slate-900 dark:text-slate-100">{job.name}</p>
-                   <p className="text-xs text-slate-500 dark:text-slate-400">
+                   <p className="text-sm font-medium text-body">{job.name}</p>
+                   <p className="text-xs text-muted">
                     {formatDateTime(job.createdAt)} · {job.retryCount} percobaan
                     {job.requestId !== null ? ` · ${job.requestId}` : ""}
                   </p>
                   {job.errorMessage !== null ? (
-                    <p className="mt-1 text-xs text-red-700">{job.errorMessage}</p>
+                    <p className="mt-1 text-xs text-danger-text">{job.errorMessage}</p>
                   ) : null}
                 </div>
                 <Button
@@ -291,11 +291,11 @@ export function OpsPage(): ReactNode {
               Pembersihan ini hanya menyentuh objek yang tidak pernah punya baris foto yang selesai.
               Foto yang sudah tercatat tidak akan terpengaruh.
             </Banner>
-             <ul className="mt-3 divide-y divide-slate-200 dark:divide-slate-700">
+             <ul className="mt-3 divide-y divide-line">
                {orphans.data.slice(0, 20).map((orphan) => (
                  <li key={orphan.storageKey} className="py-2 text-sm">
-                   <p className="break-all font-mono text-xs text-slate-700 dark:text-slate-300">{orphan.storageKey}</p>
-                   <p className="text-xs text-slate-500 dark:text-slate-400">
+                   <p className="break-all font-mono text-xs text-body">{orphan.storageKey}</p>
+                   <p className="text-xs text-muted">
                     {formatBytes(orphan.byteSize)} · {orphan.ageHours} jam
                   </p>
                 </li>
@@ -339,8 +339,8 @@ export function OpsPage(): ReactNode {
 function Metric({ label, value }: { label: string; value: string }): ReactNode {
   return (
     <div>
-      <dt className="text-xs uppercase tracking-wide text-slate-500">{label}</dt>
-      <dd className="mt-0.5 text-lg font-semibold text-slate-900">{value}</dd>
+      <dt className="text-xs uppercase tracking-wide text-muted">{label}</dt>
+      <dd className="mt-0.5 text-lg font-semibold text-body">{value}</dd>
     </div>
   );
 }

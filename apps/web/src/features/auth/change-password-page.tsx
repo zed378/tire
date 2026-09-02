@@ -104,7 +104,7 @@ export function ChangePasswordPage(): ReactNode {
             />
           </Field>
 
-          <p className="text-xs text-slate-500">
+          <p className="text-xs text-muted">
             Mengganti password akan mengakhiri sesi Anda di semua perangkat lain.
           </p>
 

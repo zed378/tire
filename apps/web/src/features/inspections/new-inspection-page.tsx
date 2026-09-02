@@ -91,7 +91,7 @@ export function NewInspectionPage(): ReactNode {
 
   return (
      <div className="mx-auto max-w-2xl space-y-4">
-       <h1 className="text-lg font-semibold text-slate-900 dark:text-slate-100">Pemeriksaan Baru</h1>
+       <h1 className="text-lg font-semibold text-body">Pemeriksaan Baru</h1>
 
       {error !== null ? <ErrorBanner error={error} onDismiss={() => setError(null)} /> : null}
 
@@ -139,17 +139,17 @@ export function NewInspectionPage(): ReactNode {
         >
            <div className="space-y-3">
              {matches.map((vehicle) => (
-               <div key={vehicle.id} className="rounded-md border border-slate-200 dark:border-slate-700 p-3">
-                 <p className="font-medium text-slate-900 dark:text-slate-100">
+               <div key={vehicle.id} className="rounded-md border border-line p-3">
+                 <p className="font-medium text-body">
                    {vehicle.plateDisplay} · {vehicle.vehicleBrandName ?? "Merk lain"} ·{" "}
                    {vehicle.category}-{VEHICLE_SEGMENT_LABELS[vehicle.segment]} ·{" "}
                    {vehicle.totalTires} Ban
                  </p>
-                 <p className="mt-0.5 text-sm text-slate-600 dark:text-slate-300">
+                 <p className="mt-0.5 text-sm text-muted">
                    {vehicle.cityName}, {vehicle.provinceName} · {vehicle.axleCount} poros ·{" "}
                    {vehicle.subSegment}
                  </p>
-                 <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                 <p className="mt-1 text-sm text-muted">
                   {vehicle.lastInspectedAt === null
                     ? "Belum pernah diperiksa."
                     : `Terakhir diperiksa: ${formatDate(vehicle.lastInspectedAt)} (${vehicle.lastInspectionStatus ?? "-"})`}

@@ -74,23 +74,23 @@ export function MasterDataPage(): ReactNode {
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h1 className="text-lg font-semibold text-slate-900 dark:text-white">Master Data</h1>
+        <h1 className="text-lg font-semibold text-body">Master Data</h1>
         <div className="flex flex-wrap gap-2 text-xs">
           <Link
             to="/master-data/vehicle-brands"
-            className="rounded-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-2.5 py-1.5 font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700"
+            className="rounded-md border border-line-strong bg-surface px-2.5 py-1.5 font-medium text-body hover:bg-surface-sunken"
           >
             Merk Kendaraan →
           </Link>
           <Link
             to="/master-data/tire-brand-patterns"
-            className="rounded-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-2.5 py-1.5 font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700"
+            className="rounded-md border border-line-strong bg-surface px-2.5 py-1.5 font-medium text-body hover:bg-surface-sunken"
           >
             Pattern Ban →
           </Link>
           <Link
             to="/master-data/tire-sizes"
-            className="rounded-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-2.5 py-1.5 font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700"
+            className="rounded-md border border-line-strong bg-surface px-2.5 py-1.5 font-medium text-body hover:bg-surface-sunken"
           >
             Ukuran Ban →
           </Link>
@@ -99,7 +99,7 @@ export function MasterDataPage(): ReactNode {
 
       {error !== null ? <ErrorBanner error={error} onDismiss={() => setError(null)} /> : null}
 
-      <nav className="flex flex-wrap gap-1 border-b border-slate-200">
+      <nav className="flex flex-wrap gap-1 border-b border-line">
         {(Object.keys(TAB_LABELS) as Tab[]).map((value) => (
           <button
             key={value}
@@ -107,8 +107,8 @@ export function MasterDataPage(): ReactNode {
             onClick={() => setTab(value)}
             className={
               tab === value
-                ? "border-b-2 border-brand-600 px-3 py-2 text-sm font-medium text-brand-700"
-                : "px-3 py-2 text-sm text-slate-600 hover:text-slate-900"
+                ? "border-b-2 border-accent px-3 py-2 text-sm font-medium text-accent-text"
+                : "px-3 py-2 text-sm text-muted hover:text-body"
             }
           >
             {TAB_LABELS[value]}
@@ -127,12 +127,12 @@ export function MasterDataPage(): ReactNode {
             onSubmit={(values) => create.mutate({ table: "provinces", body: values })}
           />
 
-          <ul className="mt-4 divide-y divide-slate-200">
+          <ul className="mt-4 divide-y divide-line">
             {(master.data?.provinces ?? []).map((province) => (
               <li key={province.id} className="flex items-center justify-between py-2">
-                <span className="text-sm text-slate-800">
+                <span className="text-sm text-body">
                   {province.code} · {province.name}{" "}
-                  <span className="text-slate-500">({province.cityCount} kota)</span>
+                  <span className="text-muted">({province.cityCount} kota)</span>
                 </span>
                 <Button
                   variant="secondary"
@@ -177,12 +177,12 @@ export function MasterDataPage(): ReactNode {
             }
           />
 
-          <ul className="mt-4 divide-y divide-slate-200">
+          <ul className="mt-4 divide-y divide-line">
             {(master.data?.cities ?? []).map((city) => (
               <li key={city.id} className="flex items-center justify-between py-2">
-                <span className="text-sm text-slate-800">
+                <span className="text-sm text-body">
                   {city.code} · {city.name}{" "}
-                  <span className="text-slate-500">({city.provinceName})</span>
+                  <span className="text-muted">({city.provinceName})</span>
                 </span>
                 <Button
                   variant="secondary"
@@ -206,13 +206,13 @@ export function MasterDataPage(): ReactNode {
             onSubmit={(values) => create.mutate({ table: tab, body: values })}
           />
 
-          <ul className="mt-4 divide-y divide-slate-200">
+          <ul className="mt-4 divide-y divide-line">
             {(tab === "vehicle-brands"
               ? (master.data?.vehicleBrands ?? [])
               : (master.data?.tireBrands ?? [])
             ).map((brand) => (
               <li key={brand.id} className="flex items-center justify-between py-2">
-                <span className="text-sm text-slate-800">{brand.name}</span>
+                <span className="text-sm text-body">{brand.name}</span>
                 <Button
                   variant="secondary"
                   onClick={() =>
@@ -246,15 +246,15 @@ export function MasterDataPage(): ReactNode {
               description="Semua merk yang dipakai sudah ada di daftar master."
             />
           ) : (
-            <ul className="mt-3 divide-y divide-slate-200">
+            <ul className="mt-3 divide-y divide-line">
               {reviews.data.map((review) => (
                 <li
                   key={`${review.source}-${review.value}`}
                   className="flex flex-wrap items-center justify-between gap-2 py-2"
                 >
                   <div>
-                    <p className="text-sm font-medium text-slate-900">{review.value}</p>
-                    <p className="text-xs text-slate-500">
+                    <p className="text-sm font-medium text-body">{review.value}</p>
+                    <p className="text-xs text-muted">
                       {review.occurrences}× dipakai · pertama {formatDate(review.firstSeenAt)} ·{" "}
                       {review.source === "tire" ? "merk ban" : "merk kendaraan"}
                     </p>

@@ -97,16 +97,16 @@ export function AxleConfigurator({
         </Select>
       </Field>
 
-      <div className="space-y-3 rounded-md border border-slate-200 p-3">
+      <div className="space-y-3 rounded-md border border-line p-3">
         <div className="flex items-baseline justify-between">
-          <p className="text-sm font-medium text-slate-700">Rincian Poros</p>
+          <p className="text-sm font-medium text-body">Rincian Poros</p>
           {/* The running total, shown before submission rather than after
               rejection. This is the number D-04 let drift unnoticed. */}
           <p
             className={
               declaredSum === axleCount
-                ? "text-sm text-slate-500"
-                : "text-sm font-medium text-red-700"
+                ? "text-sm text-muted"
+                : "text-sm font-medium text-danger-text"
             }
           >
             Terinci {declaredSum} dari {axleCount}
@@ -121,7 +121,7 @@ export function AxleConfigurator({
 
           return (
             <div key={axleType} className="grid grid-cols-1 gap-2 sm:grid-cols-[1fr,7rem,9rem]">
-              <p className="self-center text-sm text-slate-700">{AXLE_TYPE_LABELS[axleType]}</p>
+              <p className="self-center text-sm text-body">{AXLE_TYPE_LABELS[axleType]}</p>
 
               <Select
                 aria-label={`Jumlah ${AXLE_TYPE_LABELS[axleType]}`}
@@ -159,7 +159,7 @@ export function AxleConfigurator({
         })}
 
         {!freeRollingAllowed ? (
-          <p className="text-xs text-slate-500">
+          <p className="text-xs text-muted">
             Poros Free Rolling hanya tersedia untuk kendaraan{" "}
             {AXLE_COUNTS_ALLOWING_FREE_ROLLING.join(" atau ")} poros.
           </p>
@@ -175,7 +175,7 @@ export function AxleConfigurator({
           </ul>
         </Banner>
       ) : (
-        <div className="rounded-md border border-green-200 bg-green-50 p-3">
+        <div className="rounded-md border border-green-200 bg-success-soft p-3">
           <p className="text-sm font-medium text-green-900">
             Total {totalTires(configs)} ban pada {positions.length} posisi
           </p>
@@ -186,14 +186,14 @@ export function AxleConfigurator({
             {positions.map((position) => (
               <li
                 key={position.positionCode}
-                className="rounded border border-green-300 bg-white px-2 py-0.5 text-xs text-green-900"
+                className="rounded border border-success-line bg-surface px-2 py-0.5 text-xs text-green-900"
                 title={position.positionCode}
               >
                 {position.positionLabel}
               </li>
             ))}
           </ul>
-          <p className="mt-2 text-xs text-green-800">
+          <p className="mt-2 text-xs text-success-text">
             Jumlah dan nama posisi ini diturunkan sistem dari konfigurasi poros — tidak diketik
             manual, dan dipakai sama persis untuk slot foto, kartu spesifikasi, dan penyimpanan.
           </p>
