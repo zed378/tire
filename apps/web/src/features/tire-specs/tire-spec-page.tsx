@@ -4,7 +4,7 @@ import { useParams } from "react-router-dom";
 import type { MasterDataBundle, TireSpecRecord, TireSpecSheet } from "@c26/contracts";
 import { api } from "../../lib/api-client.ts";
 import { Banner, ErrorBanner, useToast } from "../../components/ui/feedback.tsx";
-import { Button, Card, Field, Input, Select, Spinner } from "../../components/ui/primitives.tsx";
+import { Button, Card, Field, Input, SearchableSelect, Select, Spinner } from "../../components/ui/primitives.tsx";
 
 /**
  * Tire specifications per position (PLAN/02 §8.2, PLAN/03 §7.3).
@@ -176,23 +176,24 @@ export function TireSpecPage(): ReactNode {
 
             <div className="space-y-3">
               <Field label="Merk Ban" htmlFor={`brand-${row.tirePositionId}`}>
-                <Select
+                <SearchableSelect
                   id={`brand-${row.tirePositionId}`}
-                  value={row.tireBrandId ?? ""}
+                  value={row.tireBrandId}
                   disabled={!sheet.data.editable}
-                  onChange={(event) =>
+                  placeholder="— Pilih merk ban —"
+                  searchPlaceholder="Cari merk ban (Bridgestone, Giti, dll)…"
+                  emptyMessage="Merk ban tidak ditemukan"
+                  clearable
+                  options={(master.data?.tireBrands ?? []).map((brand) => ({
+                    value: brand.id,
+                    label: brand.name,
+                  }))}
+                  onChange={(val) =>
                     update(row.tirePositionId, {
-                      tireBrandId: event.target.value === "" ? null : Number(event.target.value),
+                      tireBrandId: val ?? null,
                     })
                   }
-                >
-                  <option value="">— Pilih merk —</option>
-                  {(master.data?.tireBrands ?? []).map((brand) => (
-                    <option key={brand.id} value={brand.id}>
-                      {brand.name}
-                    </option>
-                  ))}
-                </Select>
+                />
               </Field>
 
               <Field

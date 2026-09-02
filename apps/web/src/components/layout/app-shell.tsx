@@ -49,7 +49,7 @@ export function AppShell({ children }: { children: ReactNode }): ReactNode {
   const unreadCount = unread.data?.total ?? 0;
 
   return (
-    <div className="flex h-dvh w-full overflow-hidden bg-canvas">
+    <div className="min-h-dvh bg-canvas md:flex">
       {/* Accessibility skip link */}
       <a
         href="#konten-utama"
@@ -62,9 +62,9 @@ export function AppShell({ children }: { children: ReactNode }): ReactNode {
       <Sidebar />
 
       {/* Right Main Content Area */}
-      <div className="flex h-full flex-1 flex-col min-w-0 overflow-hidden">
+      <div className="flex min-h-dvh w-full min-w-0 flex-col">
         {/* Sticky Header */}
-        <header className="sticky top-0 z-20 flex-shrink-0 border-b border-line bg-surface/90 backdrop-blur-md">
+        <header className="sticky top-0 z-30 flex-shrink-0 border-b border-line bg-surface/90 backdrop-blur-md">
           <div className="flex h-16 items-center justify-between px-4 sm:px-6">
             {/* Mobile Hamburger Button */}
             <button
@@ -161,7 +161,7 @@ export function AppShell({ children }: { children: ReactNode }): ReactNode {
         <main
           id="konten-utama"
           tabIndex={-1}
-          className="flex-1 overflow-y-auto overflow-x-hidden min-w-0 focus:outline-none"
+          className="w-full min-w-0 flex-1 focus:outline-none"
         >
           <div className="mx-auto max-w-7xl space-y-6 p-4 sm:p-6 lg:p-8">
             {children}

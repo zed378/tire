@@ -6,9 +6,17 @@ import type {
   TireBrandPatternListResponse,
 } from "@c26/contracts";
 import { api } from "../../lib/api-client.ts";
-import { ConfirmDialog, ErrorBanner, useToast } from "../../components/ui/feedback.tsx";
+import {
+  CancelButton,
+  ConfirmDialog,
+  Dialog,
+  DialogFooter,
+  ErrorBanner,
+  useToast,
+} from "../../components/ui/feedback.tsx";
 import { Button, Card, EmptyState, Field, Input, SkeletonRows } from "../../components/ui/primitives.tsx";
 import { Pagination } from "../../components/ui/pagination.tsx";
+import { Tabs } from "../../components/ui/tabs.tsx";
 
 type Tab = "TB" | "LT";
 
@@ -114,30 +122,15 @@ export function TireBrandPatternsPage(): ReactNode {
 
       {error !== null ? <ErrorBanner error={error} onDismiss={() => setError(null)} /> : null}
 
-       <nav className="flex border-b border-line">
-         <button
-           type="button"
-           onClick={() => switchTab("TB")}
-           className={
-             tab === "TB"
-               ? "border-b-2 border-accent px-4 py-2 text-sm font-medium text-accent-text"
-               : "px-4 py-2 text-sm text-muted hover:text-body"
-           }
-         >
-           TB (Truck/Bus)
-         </button>
-         <button
-           type="button"
-           onClick={() => switchTab("LT")}
-           className={
-             tab === "LT"
-               ? "border-b-2 border-accent px-4 py-2 text-sm font-medium text-accent-text"
-               : "px-4 py-2 text-sm text-muted hover:text-body"
-           }
-         >
-           LT (Light Truck)
-         </button>
-       </nav>
+      <Tabs
+        label="Kategori pattern ban"
+        value={tab}
+        onChange={switchTab}
+        items={[
+          { value: "TB", label: "TB (Truck/Bus)" },
+          { value: "LT", label: "LT (Light Truck)" },
+        ]}
+      />
 
        <Card>
         {patterns.isLoading ? (
@@ -267,43 +260,45 @@ function CreatePatternDialog({
     onSubmit({ pattern: pattern.trim(), brand: brand.trim(), type: type.toLowerCase() as "TB" | "LT" });
   };
 
-   return (
-     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-       <div className="w-full max-w-lg rounded-lg bg-surface shadow-xl">
-         <div className="border-b border-line px-4 py-3">
-           <h2 className="text-base font-semibold text-body">
-             Tambah Pattern Ban ({type})
-           </h2>
-         </div>
-        <div className="space-y-3 p-4">
-          <Field label="Pattern" htmlFor="new-pattern-name" required>
-            <Input
-              id="new-pattern-name"
-              value={pattern}
-              onChange={(event) => setPattern(event.target.value)}
-              placeholder="Contoh: Ecopia"
-              autoFocus
-            />
-          </Field>
-          <Field label="Brand" htmlFor="new-pattern-brand" required>
-            <Input
-              id="new-pattern-brand"
-              value={brand}
-              onChange={(event) => setBrand(event.target.value)}
-              placeholder="Contoh: Bridgestone"
-            />
-          </Field>
-        </div>
-         <div className="flex justify-end gap-2 border-t border-line px-4 py-3">
-           <Button variant="secondary" onClick={onClose} disabled={submitting}>
-             Batal
-           </Button>
-           <Button onClick={submit} loading={submitting} loadingText="Menyimpan…">
-             Tambah
-           </Button>
-         </div>
-      </div>
-    </div>
+  return (
+    <Dialog open title={`Tambah Pattern Ban (${type})`} onClose={onClose}>
+      {/* A real <form>. There was none here at all, so pressing Enter after
+          typing a pattern did nothing whatsoever — the only way to submit was
+          to reach for the mouse. */}
+      <form
+        noValidate
+        onSubmit={(event) => {
+          event.preventDefault();
+          submit();
+        }}
+        className="space-y-3"
+      >
+        <Field label="Pattern" htmlFor="new-pattern-name" required>
+          <Input
+            id="new-pattern-name"
+            value={pattern}
+            onChange={(event) => setPattern(event.target.value)}
+            placeholder="Contoh: Ecopia"
+            autoFocus
+          />
+        </Field>
+        <Field label="Brand" htmlFor="new-pattern-brand" required>
+          <Input
+            id="new-pattern-brand"
+            value={brand}
+            onChange={(event) => setBrand(event.target.value)}
+            placeholder="Contoh: Bridgestone"
+          />
+        </Field>
+
+        <DialogFooter>
+          <CancelButton onClick={onClose} />
+          <Button type="submit" loading={submitting} loadingText="Menyimpan…">
+            Tambah
+          </Button>
+        </DialogFooter>
+      </form>
+    </Dialog>
   );
 }
 

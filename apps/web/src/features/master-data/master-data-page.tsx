@@ -7,6 +7,7 @@ import { formatDate } from "../../lib/format.ts";
 import { Banner, ErrorBanner, useToast } from "../../components/ui/feedback.tsx";
 import { Button, Card, EmptyState, Field, Input, Select } from "../../components/ui/primitives.tsx";
 import { Pagination } from "../../components/ui/pagination.tsx";
+import { Tabs, TabPanel } from "../../components/ui/tabs.tsx";
 
 /**
  * Master data (PLAN/02 §5) — closes Q-07.
@@ -119,212 +120,219 @@ export function MasterDataPage(): ReactNode {
 
       {error !== null ? <ErrorBanner error={error} onDismiss={() => setError(null)} /> : null}
 
-      <nav className="flex flex-wrap gap-1 border-b border-line">
-        {(Object.keys(TAB_LABELS) as Tab[]).map((value) => (
-          <button
-            key={value}
-            type="button"
-            onClick={() => {
-              setTab(value);
-              setPage(1);
-            }}
-            className={
-              tab === value
-                ? "border-b-2 border-accent px-3 py-2 text-sm font-medium text-accent-text"
-                : "px-3 py-2 text-sm text-muted hover:text-body"
-            }
-          >
-            {TAB_LABELS[value]}
-          </button>
-        ))}
-      </nav>
+      {/*
+        The shared Tabs. The row of plain buttons this replaces had no
+        `role="tablist"`, no `aria-selected` and no arrow keys, so a screen
+        reader announced five unrelated buttons and gave no hint that choosing
+        one changed the panel below it.
+      */}
+      <Tabs
+        label="Kategori master data"
+        value={tab}
+        onChange={(value) => {
+          setTab(value);
+          setPage(1);
+        }}
+        items={(Object.keys(TAB_LABELS) as Tab[]).map((value) => ({
+          value,
+          label: TAB_LABELS[value],
+        }))}
+      />
 
       {tab === "provinces" ? (
-        <Card title="Provinsi" description="Kode mengikuti kode BPS, dua angka.">
-          <CreateForm
-            fields={[
-              { name: "code", label: "Kode BPS", placeholder: "31" },
-              { name: "name", label: "Nama Provinsi", placeholder: "DKI Jakarta" },
-            ]}
-            submitting={create.isPending}
-            onSubmit={(values) => create.mutate({ table: "provinces", body: values })}
-          />
-
-          <ul className="mt-4 divide-y divide-line">
-            {pageOf(master.data?.provinces ?? [], page).map((province) => (
-              <li key={province.id} className="flex items-center justify-between py-2">
-                <span className="text-sm text-body">
-                  {province.code} · {province.name}{" "}
-                  <span className="text-muted">({province.cityCount} kota)</span>
-                </span>
-                <Button
-                  variant="secondary"
-                  onClick={() =>
-                    toggleActive.mutate({
-                      table: "provinces",
-                      id: province.id,
-                      isActive: !province.isActive,
-                    })
-                  }
-                >
-                  {province.isActive ? "Nonaktifkan" : "Aktifkan"}
-                </Button>
-              </li>
-            ))}
-          </ul>
-
-          <Pagination
-            page={page}
-            totalPages={pageCount(master.data?.provinces ?? [])}
-            totalItems={(master.data?.provinces ?? []).length}
-            onPageChange={setPage}
-          />
-        </Card>
-      ) : null}
-
-      {tab === "cities" ? (
-        <Card title="Kota" description="Kode mengikuti kode BPS, empat angka.">
-          <CreateForm
-            fields={[
-              {
-                name: "provinceId",
-                label: "Provinsi",
-                type: "select",
-                options: (master.data?.provinces ?? []).map((province) => ({
-                  value: String(province.id),
-                  label: province.name,
-                })),
-              },
-              { name: "code", label: "Kode BPS", placeholder: "3172" },
-              { name: "name", label: "Nama Kota", placeholder: "Jakarta Timur" },
-            ]}
-            submitting={create.isPending}
-            onSubmit={(values) =>
-              create.mutate({
-                table: "cities",
-                body: { ...values, provinceId: Number(values.provinceId) },
-              })
-            }
-          />
-
-          <ul className="mt-4 divide-y divide-line">
-            {pageOf(master.data?.cities ?? [], page).map((city) => (
-              <li key={city.id} className="flex items-center justify-between py-2">
-                <span className="text-sm text-body">
-                  {city.code} · {city.name}{" "}
-                  <span className="text-muted">({city.provinceName})</span>
-                </span>
-                <Button
-                  variant="secondary"
-                  onClick={() =>
-                    toggleActive.mutate({ table: "cities", id: city.id, isActive: !city.isActive })
-                  }
-                >
-                  {city.isActive ? "Nonaktifkan" : "Aktifkan"}
-                </Button>
-              </li>
-            ))}
-          </ul>
-
-          <Pagination
-            page={page}
-            totalPages={pageCount(master.data?.cities ?? [])}
-            totalItems={(master.data?.cities ?? []).length}
-            onPageChange={setPage}
-          />
-        </Card>
-      ) : null}
-
-      {tab === "vehicle-brands" || tab === "tire-brands" ? (
-        <Card title={TAB_LABELS[tab]}>
-          <CreateForm
-            fields={[{ name: "name", label: "Nama Merk", placeholder: "Bridgestone" }]}
-            submitting={create.isPending}
-            onSubmit={(values) => create.mutate({ table: tab, body: values })}
-          />
-
-          <ul className="mt-4 divide-y divide-line">
-            {pageOf(
-              tab === "vehicle-brands"
-                ? (master.data?.vehicleBrands ?? [])
-                : (master.data?.tireBrands ?? []),
-              page,
-            ).map((brand) => (
-              <li key={brand.id} className="flex items-center justify-between py-2">
-                <span className="text-sm text-body">{brand.name}</span>
-                <Button
-                  variant="secondary"
-                  onClick={() =>
-                    toggleActive.mutate({ table: tab, id: brand.id, isActive: !brand.isActive })
-                  }
-                >
-                  {brand.isActive ? "Nonaktifkan" : "Aktifkan"}
-                </Button>
-              </li>
-            ))}
-          </ul>
-
-          <Pagination
-            page={page}
-            totalPages={pageCount(tab === "vehicle-brands"
-                ? (master.data?.vehicleBrands ?? [])
-                : (master.data?.tireBrands ?? []))}
-            totalItems={(tab === "vehicle-brands"
-                ? (master.data?.vehicleBrands ?? [])
-                : (master.data?.tireBrands ?? [])).length}
-            onPageChange={setPage}
-          />
-        </Card>
-      ) : null}
-
-      {tab === "reviews" ? (
-        <Card
-          title="Merk yang Diisi Bebas"
-          description="Nilai yang diketik pengguna karena tidak ada di daftar."
-        >
-          {/* PLAN/02 §5 keeps the free-text escape hatch on purpose: a managed
-              list with no way in pushes people to pick the nearest wrong option,
-              which is worse than the spelling variants it was meant to fix. */}
-          <Banner tone="info">
-            Promosikan nilai yang benar menjadi master data, agar laporan tidak lagi memecah satu
-            merk menjadi beberapa ejaan.
-          </Banner>
-
-          {reviews.data === undefined || reviews.data.length === 0 ? (
-            <EmptyState
-              title="Tidak ada merk yang menunggu"
-              description="Semua merk yang dipakai sudah ada di daftar master."
+        <TabPanel value={tab}>
+          <Card title="Provinsi" description="Kode mengikuti kode BPS, dua angka.">
+            <CreateForm
+              fields={[
+                { name: "code", label: "Kode BPS", placeholder: "31" },
+                { name: "name", label: "Nama Provinsi", placeholder: "DKI Jakarta" },
+              ]}
+              submitting={create.isPending}
+              onSubmit={(values) => create.mutate({ table: "provinces", body: values })}
             />
-          ) : (
-            <ul className="mt-3 divide-y divide-line">
-              {reviews.data.map((review) => (
-                <li
-                  key={`${review.source}-${review.value}`}
-                  className="flex flex-wrap items-center justify-between gap-2 py-2"
-                >
-                  <div>
-                    <p className="text-sm font-medium text-body">{review.value}</p>
-                    <p className="text-xs text-muted">
-                      {review.occurrences}× dipakai · pertama {formatDate(review.firstSeenAt)} ·{" "}
-                      {review.source === "tire" ? "merk ban" : "merk kendaraan"}
-                    </p>
-                  </div>
+
+            <ul className="mt-4 divide-y divide-line">
+              {pageOf(master.data?.provinces ?? [], page).map((province) => (
+                <li key={province.id} className="flex items-center justify-between py-2">
+                  <span className="text-sm text-body">
+                    {province.code} · {province.name}{" "}
+                    <span className="text-muted">({province.cityCount} kota)</span>
+                  </span>
                   <Button
                     variant="secondary"
                     onClick={() =>
-                      create.mutate({
-                        table: review.source === "tire" ? "tire-brands" : "vehicle-brands",
-                        body: { name: review.value },
+                      toggleActive.mutate({
+                        table: "provinces",
+                        id: province.id,
+                        isActive: !province.isActive,
                       })
                     }
                   >
-                    Jadikan Master Data
+                    {province.isActive ? "Nonaktifkan" : "Aktifkan"}
                   </Button>
                 </li>
               ))}
             </ul>
-          )}
-        </Card>
+
+            <Pagination
+              page={page}
+              totalPages={pageCount(master.data?.provinces ?? [])}
+              totalItems={(master.data?.provinces ?? []).length}
+              onPageChange={setPage}
+            />
+          </Card>
+        </TabPanel>
+      ) : null}
+
+      {tab === "cities" ? (
+        <TabPanel value={tab}>
+          <Card title="Kota" description="Kode mengikuti kode BPS, empat angka.">
+            <CreateForm
+              fields={[
+                {
+                  name: "provinceId",
+                  label: "Provinsi",
+                  type: "select",
+                  options: (master.data?.provinces ?? []).map((province) => ({
+                    value: String(province.id),
+                    label: province.name,
+                  })),
+                },
+                { name: "code", label: "Kode BPS", placeholder: "3172" },
+                { name: "name", label: "Nama Kota", placeholder: "Jakarta Timur" },
+              ]}
+              submitting={create.isPending}
+              onSubmit={(values) =>
+                create.mutate({
+                  table: "cities",
+                  body: { ...values, provinceId: Number(values.provinceId) },
+                })
+              }
+            />
+
+            <ul className="mt-4 divide-y divide-line">
+              {pageOf(master.data?.cities ?? [], page).map((city) => (
+                <li key={city.id} className="flex items-center justify-between py-2">
+                  <span className="text-sm text-body">
+                    {city.code} · {city.name}{" "}
+                    <span className="text-muted">({city.provinceName})</span>
+                  </span>
+                  <Button
+                    variant="secondary"
+                    onClick={() =>
+                      toggleActive.mutate({ table: "cities", id: city.id, isActive: !city.isActive })
+                    }
+                  >
+                    {city.isActive ? "Nonaktifkan" : "Aktifkan"}
+                  </Button>
+                </li>
+              ))}
+            </ul>
+
+            <Pagination
+              page={page}
+              totalPages={pageCount(master.data?.cities ?? [])}
+              totalItems={(master.data?.cities ?? []).length}
+              onPageChange={setPage}
+            />
+          </Card>
+        </TabPanel>
+      ) : null}
+
+      {tab === "vehicle-brands" || tab === "tire-brands" ? (
+        <TabPanel value={tab}>
+          <Card title={TAB_LABELS[tab]}>
+            <CreateForm
+              fields={[{ name: "name", label: "Nama Merk", placeholder: "Bridgestone" }]}
+              submitting={create.isPending}
+              onSubmit={(values) => create.mutate({ table: tab, body: values })}
+            />
+
+            <ul className="mt-4 divide-y divide-line">
+              {pageOf(
+                tab === "vehicle-brands"
+                  ? (master.data?.vehicleBrands ?? [])
+                  : (master.data?.tireBrands ?? []),
+                page,
+              ).map((brand) => (
+                <li key={brand.id} className="flex items-center justify-between py-2">
+                  <span className="text-sm text-body">{brand.name}</span>
+                  <Button
+                    variant="secondary"
+                    onClick={() =>
+                      toggleActive.mutate({ table: tab, id: brand.id, isActive: !brand.isActive })
+                    }
+                  >
+                    {brand.isActive ? "Nonaktifkan" : "Aktifkan"}
+                  </Button>
+                </li>
+              ))}
+            </ul>
+
+            <Pagination
+              page={page}
+              totalPages={pageCount(tab === "vehicle-brands"
+                  ? (master.data?.vehicleBrands ?? [])
+                  : (master.data?.tireBrands ?? []))}
+              totalItems={(tab === "vehicle-brands"
+                  ? (master.data?.vehicleBrands ?? [])
+                  : (master.data?.tireBrands ?? [])).length}
+              onPageChange={setPage}
+            />
+          </Card>
+        </TabPanel>
+      ) : null}
+
+      {tab === "reviews" ? (
+        <TabPanel value={tab}>
+          <Card
+            title="Merk yang Diisi Bebas"
+            description="Nilai yang diketik pengguna karena tidak ada di daftar."
+          >
+            {/* PLAN/02 §5 keeps the free-text escape hatch on purpose: a managed
+                list with no way in pushes people to pick the nearest wrong option,
+                which is worse than the spelling variants it was meant to fix. */}
+            <Banner tone="info">
+              Promosikan nilai yang benar menjadi master data, agar laporan tidak lagi memecah satu
+              merk menjadi beberapa ejaan.
+            </Banner>
+
+            {reviews.data === undefined || reviews.data.length === 0 ? (
+              <EmptyState
+                title="Tidak ada merk yang menunggu"
+                description="Semua merk yang dipakai sudah ada di daftar master."
+              />
+            ) : (
+              <ul className="mt-3 divide-y divide-line">
+                {reviews.data.map((review) => (
+                  <li
+                    key={`${review.source}-${review.value}`}
+                    className="flex flex-wrap items-center justify-between gap-2 py-2"
+                  >
+                    <div>
+                      <p className="text-sm font-medium text-body">{review.value}</p>
+                      <p className="text-xs text-muted">
+                        {review.occurrences}× dipakai · pertama {formatDate(review.firstSeenAt)} ·{" "}
+                        {review.source === "tire" ? "merk ban" : "merk kendaraan"}
+                      </p>
+                    </div>
+                    <Button
+                      variant="secondary"
+                      onClick={() =>
+                        create.mutate({
+                          table: review.source === "tire" ? "tire-brands" : "vehicle-brands",
+                          body: { name: review.value },
+                        })
+                      }
+                    >
+                      Jadikan Master Data
+                    </Button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </Card>
+        </TabPanel>
       ) : null}
     </div>
   );

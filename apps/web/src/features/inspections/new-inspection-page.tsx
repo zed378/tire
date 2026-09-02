@@ -20,7 +20,7 @@ import {
 import { api } from "../../lib/api-client.ts";
 import { formatDate } from "../../lib/format.ts";
 import { Banner, ErrorBanner, useToast } from "../../components/ui/feedback.tsx";
-import { Button, Card, Field, Input, Select } from "../../components/ui/primitives.tsx";
+import { Button, Card, Field, Input, SearchableSelect, Select } from "../../components/ui/primitives.tsx";
 import { AxleConfigurator } from "./axle-configurator.tsx";
 
 /**
@@ -390,21 +390,20 @@ function NewVehicleForm({
 
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label="Merk Kendaraan" htmlFor="vehicleBrandId" error={fieldErrors.vehicleBrandId}>
-            <Select
+            <SearchableSelect
               id="vehicleBrandId"
-              value={vehicleBrandId ?? ""}
+              value={vehicleBrandId}
               invalid={fieldErrors.vehicleBrandId !== undefined}
-              onChange={(event) =>
-                setVehicleBrandId(event.target.value === "" ? null : Number(event.target.value))
-              }
-            >
-              <option value="">— Pilih merk —</option>
-              {master.vehicleBrands.map((brand) => (
-                <option key={brand.id} value={brand.id}>
-                  {brand.name}
-                </option>
-              ))}
-            </Select>
+              placeholder="— Pilih merk kendaraan —"
+              searchPlaceholder="Cari merk (Hino, Mitsubishi, Scania, dll)…"
+              emptyMessage="Merk tidak ditemukan"
+              clearable
+              options={master.vehicleBrands.map((brand) => ({
+                value: brand.id,
+                label: brand.name,
+              }))}
+              onChange={(val) => setVehicleBrandId(val ?? null)}
+            />
           </Field>
 
           <Field
@@ -431,41 +430,41 @@ function NewVehicleForm({
 
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label="Provinsi" htmlFor="provinceId" error={fieldErrors.provinceId} required>
-            <Select
+            <SearchableSelect
               id="provinceId"
-              value={provinceId ?? ""}
+              value={provinceId}
               invalid={fieldErrors.provinceId !== undefined}
-              onChange={(event) => {
-                setProvinceId(event.target.value === "" ? null : Number(event.target.value));
+              placeholder="— Pilih provinsi —"
+              searchPlaceholder="Ketik nama provinsi (Jawa Barat, DKI Jakarta, dll)…"
+              emptyMessage="Provinsi tidak ditemukan"
+              clearable
+              options={master.provinces.map((province) => ({
+                value: province.id,
+                label: province.name,
+              }))}
+              onChange={(val) => {
+                setProvinceId(val ?? null);
                 setCityId(null);
               }}
-            >
-              <option value="">— Pilih provinsi —</option>
-              {master.provinces.map((province) => (
-                <option key={province.id} value={province.id}>
-                  {province.name}
-                </option>
-              ))}
-            </Select>
+            />
           </Field>
 
           <Field label="Kota" htmlFor="cityId" error={fieldErrors.cityId} required>
-            <Select
+            <SearchableSelect
               id="cityId"
-              value={cityId ?? ""}
+              value={cityId}
               disabled={provinceId === null}
               invalid={fieldErrors.cityId !== undefined}
-              onChange={(event) =>
-                setCityId(event.target.value === "" ? null : Number(event.target.value))
-              }
-            >
-              <option value="">— Pilih kota —</option>
-              {cities.map((city) => (
-                <option key={city.id} value={city.id}>
-                  {city.name}
-                </option>
-              ))}
-            </Select>
+              placeholder={provinceId === null ? "— Pilih provinsi terlebih dahulu —" : "— Pilih kota / kabupaten —"}
+              searchPlaceholder="Ketik nama kota atau kabupaten…"
+              emptyMessage="Kota tidak ditemukan"
+              clearable
+              options={cities.map((city) => ({
+                value: city.id,
+                label: city.name,
+              }))}
+              onChange={(val) => setCityId(val ?? null)}
+            />
           </Field>
         </div>
 

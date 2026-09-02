@@ -2,9 +2,17 @@ import { useState, type ReactNode } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { CreateTireSizeInput, TireSize, TireSizeListResponse } from "@c26/contracts";
 import { api } from "../../lib/api-client.ts";
-import { ConfirmDialog, ErrorBanner, useToast } from "../../components/ui/feedback.tsx";
+import {
+  CancelButton,
+  ConfirmDialog,
+  Dialog,
+  DialogFooter,
+  ErrorBanner,
+  useToast,
+} from "../../components/ui/feedback.tsx";
 import { Button, Card, Field, Input, SkeletonRows } from "../../components/ui/primitives.tsx";
 import { Pagination } from "../../components/ui/pagination.tsx";
+import { Tabs } from "../../components/ui/tabs.tsx";
 
 type Tab = "TB" | "LT";
 
@@ -83,36 +91,18 @@ export function TireSizesPage(): ReactNode {
 
       {error !== null ? <ErrorBanner error={error} onDismiss={() => setError(null)} /> : null}
 
-      <nav className="flex border-b border-line">
-        <button
-          type="button"
-          onClick={() => {
-              setTab("TB");
-              setPage(1);
-            }}
-          className={
-            tab === "TB"
-              ? "border-b-2 border-accent px-4 py-2 text-sm font-medium text-accent-text"
-              : "px-4 py-2 text-sm text-muted hover:text-body"
-          }
-        >
-          TB (Truck/Bus)
-        </button>
-        <button
-          type="button"
-          onClick={() => {
-              setTab("LT");
-              setPage(1);
-            }}
-          className={
-            tab === "LT"
-              ? "border-b-2 border-accent px-4 py-2 text-sm font-medium text-accent-text"
-              : "px-4 py-2 text-sm text-muted hover:text-body"
-          }
-        >
-          LT (Light Truck)
-        </button>
-      </nav>
+      <Tabs
+        label="Kategori ukuran ban"
+        value={tab}
+        onChange={(next) => {
+          setTab(next);
+          setPage(1);
+        }}
+        items={[
+          { value: "TB", label: "TB (Truck/Bus)" },
+          { value: "LT", label: "LT (Light Truck)" },
+        ]}
+      />
 
       {sizes.isLoading ? (
         <Card>
@@ -252,34 +242,38 @@ function CreateSizeDialog({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="w-full max-w-lg rounded-lg bg-surface shadow-xl">
-        <div className="border-b border-line px-4 py-3">
-          <h2 className="text-base font-semibold text-body">
-            Tambah Ukuran Ban ({type})
-          </h2>
-        </div>
-        <div className="space-y-3 p-4">
-          <Field label="Ukuran Ban" htmlFor="new-size-name" hint="Contoh: 10.00R20 atau 7.50-16" required>
-            <Input
-              id="new-size-name"
-              value={size}
-              onChange={(event) => setSize(event.target.value)}
-              placeholder="Contoh: 10.00R20"
-              autoFocus
-            />
-          </Field>
-        </div>
-        <div className="flex justify-end gap-2 border-t border-line px-4 py-3">
-          <Button variant="secondary" onClick={onClose} disabled={submitting}>
-            Batal
-          </Button>
-          <Button onClick={submit} loading={submitting} loadingText="Menyimpan…">
+    <Dialog open title={`Tambah Ukuran Ban (${type})`} onClose={onClose}>
+      <form
+        noValidate
+        onSubmit={(event) => {
+          event.preventDefault();
+          submit();
+        }}
+        className="space-y-3"
+      >
+        <Field
+          label="Ukuran Ban"
+          htmlFor="new-size-name"
+          hint="Contoh: 10.00R20 atau 7.50-16"
+          required
+        >
+          <Input
+            id="new-size-name"
+            value={size}
+            onChange={(event) => setSize(event.target.value)}
+            placeholder="Contoh: 10.00R20"
+            autoFocus
+          />
+        </Field>
+
+        <DialogFooter>
+          <CancelButton onClick={onClose} />
+          <Button type="submit" loading={submitting} loadingText="Menyimpan…">
             Tambah
           </Button>
-        </div>
-      </div>
-    </div>
+        </DialogFooter>
+      </form>
+    </Dialog>
   );
 }
 

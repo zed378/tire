@@ -191,11 +191,11 @@ export function Field({
 
 // ── Inputs ──────────────────────────────────────────────────────────────────
 
-const CONTROL_CLASSES =
+export const CONTROL_CLASSES =
   "w-full min-h-11 rounded-md border px-3 text-body placeholder:text-subtle " +
   "disabled:bg-surface-sunken disabled:text-subtle";
 
-function controlTone(invalid: boolean): string {
+export function controlTone(invalid: boolean): string {
   return invalid ? "border-danger bg-danger-soft" : "border-line-strong bg-surface";
 }
 
@@ -205,7 +205,7 @@ function controlTone(invalid: boolean): string {
  * The `invalid` prop still wins when set explicitly, so a control used outside
  * a `Field` behaves exactly as before.
  */
-function useFieldWiring(invalid: boolean | undefined): {
+export function useFieldWiring(invalid: boolean | undefined): {
   invalid: boolean;
   describedBy: string | undefined;
 } {
@@ -527,3 +527,9 @@ export function StatTile({
     </div>
   );
 }
+
+export {
+  SearchableSelect,
+  type SearchableOption,
+  type SearchableSelectProps,
+} from "./searchable-select.tsx";
