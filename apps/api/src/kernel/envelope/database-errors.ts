@@ -193,8 +193,12 @@ function constraintNameFrom(error: Prisma.PrismaClientKnownRequestError): string
   if (typeof target === "string") return target;
   if (Array.isArray(target) && typeof target[0] === "string") return target[0];
 
+  // Same two shapes as `target` above. Which key Prisma populates, and whether
+  // it holds a string or an array, varies by connector and error code — so both
+  // keys accept both shapes rather than only the one first encountered.
   const constraint = (meta as { constraint?: unknown }).constraint;
   if (typeof constraint === "string") return constraint;
+  if (Array.isArray(constraint) && typeof constraint[0] === "string") return constraint[0];
 
   return null;
 }

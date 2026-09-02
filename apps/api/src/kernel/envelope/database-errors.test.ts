@@ -27,20 +27,20 @@ describe('translateDatabaseError', () => {
   });
 
   it('translates uq_locking_inspection to DUPLICATE_PLATE', () => {
-    const err = makePrismaError('P2002', { target: ['serial_number'] });
+    const err = makePrismaError('P2002', { target: ['uq_locking_inspection'] });
     const result = translateDatabaseError(err);
     expect(result).toBeInstanceOf(AppError);
     expect(result?.code).toBe('DUPLICATE_PLATE');
   });
 
   it('translates uq_vehicle_plate to DUPLICATE_PLATE', () => {
-    const err = makePrismaError('P2002', { target: ['plate_display'] });
+    const err = makePrismaError('P2002', { target: ['uq_vehicle_plate'] });
     const result = translateDatabaseError(err);
     expect(result?.code).toBe('DUPLICATE_PLATE');
   });
 
   it('translates uq_vehicle_chassis to DUPLICATE_CHASSIS', () => {
-    const err = makePrismaError('P2002', { target: ['chassis_number'] });
+    const err = makePrismaError('P2002', { target: ['uq_vehicle_chassis'] });
     const result = translateDatabaseError(err);
     expect(result?.code).toBe('DUPLICATE_CHASSIS');
   });
