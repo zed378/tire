@@ -42,7 +42,7 @@ export function TireBrandPatternsPage(): ReactNode {
   const patterns = useQuery({
     queryKey: ["tire-brand-patterns", tab, page],
     queryFn: () =>
-      api.get<TireBrandPatternListResponse>(`/api/tire-brand-patterns/${tab.toLowerCase()}`, {
+      api.get<TireBrandPatternListResponse>(`/api/tire-brand-patterns/${tab}`, {
         page,
         perPage: PER_PAGE,
       }),
@@ -62,7 +62,7 @@ export function TireBrandPatternsPage(): ReactNode {
 
   const create = useMutation({
     mutationFn: (body: CreateTireBrandPatternInput) =>
-      api.post("/api/tire-brand-patterns", { ...body, type: tab.toLowerCase() }),
+      api.post("/api/tire-brand-patterns", { ...body, type: tab }),
     onSuccess: async () => {
       toast.push({ tone: "success", message: "Pattern ban ditambahkan." });
       setCreating(false);
@@ -257,7 +257,7 @@ function CreatePatternDialog({
 
   const submit = (): void => {
     if (pattern.trim() === "" || brand.trim() === "") return;
-    onSubmit({ pattern: pattern.trim(), brand: brand.trim(), type: type.toLowerCase() as "TB" | "LT" });
+    onSubmit({ pattern: pattern.trim(), brand: brand.trim(), type });
   };
 
   return (

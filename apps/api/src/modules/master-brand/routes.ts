@@ -1,6 +1,7 @@
 import type { FastifyInstance } from "fastify";
 import {
   paginationSchema,
+  tireTypeParamSchema,
   createVehicleBrandSchema,
   updateVehicleBrandSchema,
   createTireBrandPatternSchema,
@@ -136,7 +137,7 @@ export function registerMasterBrandRoutes(app: FastifyInstance): void {
       const actor = requireActor(request);
       requirePermission(actor, "masterdata.manage");
 
-      const type = (request.params as { type: string }).type as "TB" | "LT";
+      const { type } = tireTypeParamSchema.parse(request.params);
       const parsed = paginationSchema.parse(request.query);
 
       return patternService.listTireBrandPatterns(type, parsed.page, parsed.perPage);
@@ -238,7 +239,7 @@ export function registerMasterBrandRoutes(app: FastifyInstance): void {
       const actor = requireActor(request);
       requirePermission(actor, "masterdata.manage");
 
-      const type = (request.params as { type: string }).type as "TB" | "LT";
+      const { type } = tireTypeParamSchema.parse(request.params);
       const parsed = paginationSchema.parse(request.query);
 
       return sizeService.listTireSizes(type, parsed.page, parsed.perPage);

@@ -1,3 +1,4 @@
+import { VEHICLE_CATEGORIES } from "./constants.ts";
 import { z } from "zod";
 
 /**
@@ -64,6 +65,26 @@ export type UpdateTireBrandPatternInput = z.infer<typeof updateTireBrandPatternS
 /**
  * List response with pagination
  */
+
+/**
+ * The `:type` path segment on the master-brand routes.
+ *
+ * Uppercased before validation because a URL segment's casing is a weak
+ * contract — `/tb` and `/TB` are the same resource to anyone typing it, and to
+ * every client that has ever called this. The route used to cast the raw
+ * segment straight to `"TB" | "LT"` with no check at all, so `/tb` sailed past,
+ * matched no rows, and answered `200` with an empty list. The tire brand
+ * pattern screen sent exactly that and therefore never displayed one of the
+ * 1,247 patterns behind it.
+ *
+ * Anything that is not TB or LT is now a 422 rather than a silent empty page.
+ */
+export const tireTypeParamSchema = z.object({
+  type: z
+    .string()
+    .transform((value) => value.toUpperCase())
+    .pipe(z.enum(VEHICLE_CATEGORIES)),
+});
 
 export const paginationSchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
