@@ -9,6 +9,7 @@ import { PrismaClient } from "../src/generated/prisma/index.js";
 import { loadConfig } from "../src/kernel/config.ts";
 import { hashPassword } from "../src/kernel/security/password.ts";
 import { seedMasterData } from "./seed/master-data.ts";
+import { seedCsvData } from "./seed/csv-data.ts";
 import { seedDemoData } from "./seed/demo-data.ts";
 
 /**
@@ -95,6 +96,7 @@ async function main(): Promise<void> {
 
   await ensureUploadDirectory();
   await seedMasterData(prisma);
+  await seedCsvData(prisma);
   await seedFirstAdmin();
 
   const demoPassword = process.env.SEED_DEMO_PASSWORD;
