@@ -1,0 +1,106 @@
+/*
+ * Ornament belonging to the sign-in and registration screens.
+ *
+ * Same rules as `landing.css`: pure CSS, class names toggled from JavaScript at
+ * most, because the CSP carries no `unsafe-inline` (PLAN/13 §7) and gate G-13
+ * fails the build on an inline style.
+ */
+
+/* ── The chalk mark ─────────────────────────────────────────────────────────
+ *
+ * On focus the border goes to `--blue` and a thin `--amber` rule wipes left to
+ * right underneath it. It is the only ornament in the form, and it earns its
+ * place: it is the same gesture as marking a sidewall with chalk, which is what
+ * these users do to a tire they have just looked at.
+ *
+ * It is drawn on a wrapper rather than on the input itself, because an input's
+ * own `::after` does not render — replaced elements have no pseudo-elements.
+ */
+
+.auth-field {
+  position: relative;
+}
+
+.auth-field::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 2px;
+  background-color: rgb(var(--amber));
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform 110ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  pointer-events: none;
+  border-bottom-left-radius: 6px;
+  border-bottom-right-radius: 6px;
+}
+
+.auth-field:focus-within::after {
+  transform: scaleX(1);
+}
+
+/* ── Entrance ───────────────────────────────────────────────────────────────
+ *
+ * Three items, 40ms apart, 300ms in total. That is the whole entrance — nothing
+ * else on these screens moves on load.
+ *
+ * As on the landing page, the finished state is the default and the animation
+ * moves toward it. A form that waits on JavaScript to become visible is a form
+ * that is sometimes invisible.
+ */
+
+@keyframes auth-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.auth-stagger > * {
+  animation: auth-enter 300ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+.auth-stagger > *:nth-child(1) {
+  animation-delay: 0ms;
+}
+.auth-stagger > *:nth-child(2) {
+  animation-delay: 40ms;
+}
+.auth-stagger > *:nth-child(3) {
+  animation-delay: 80ms;
+}
+/* Past the third item the delay stops growing. The brief caps the stagger at
+   three, and a six-field form that ripples for half a second reads as slow. */
+.auth-stagger > *:nth-child(n + 4) {
+  animation-delay: 80ms;
+}
+
+/* ── Tread depth gauge ──────────────────────────────────────────────────────
+ *
+ * Five grooves that fill as the password gets stronger. Colour is never the
+ * only signal: the text label beside it says `Lemah`, `Cukup` or `Kuat`, and
+ * the count of filled grooves is readable on its own.
+ */
+
+.tread-groove {
+  transition:
+    background-color 200ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    transform 200ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  transform-origin: bottom center;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .auth-field::after,
+  .tread-groove {
+    transition: none !important;
+  }
+
+  .auth-stagger > * {
+    animation: none !important;
+  }
+}

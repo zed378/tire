@@ -3,24 +3,22 @@ import { Link } from "react-router-dom";
 import { cn } from "../../lib/cn.ts";
 import { ThemeToggle } from "../../components/ui/theme-toggle.tsx";
 import type { ImageCredit } from "../landing/image-credits.ts";
+import "./auth.css";
 
 /**
  * The frame shared by the sign-in and registration screens.
  *
- * One rounded card, split down the middle: the form on the left, a photograph
- * on the right with a couple of small cards floating over it. Inputs are softly
- * rounded and filled rather than outlined, and the whole card sits on a plain
- * page rather than fighting it.
+ * An asymmetric 5/7 split, edge to edge: a photograph down the left, the form
+ * on the right. Not a centred card, and not an even split screen — both of
+ * those are the layout a framework gives you when nobody decided anything, and
+ * a reader recognises that even without being able to name it (brief §27).
  *
- * WHAT IS OURS AND WHAT IS BORROWED: the arrangement follows a reference the
- * owner chose. The accent stays blue rather than becoming the reference's
- * yellow — the application had just been unified on one accent, and giving two
- * screens a different one would undo that for the sake of two screens. The
- * floating cards carry real examples from this domain (a serial number, a tire
- * position) instead of a generic product's dashboard.
+ * The form sits slightly above true vertical centre. Perfect centring reads as
+ * a default; a few percent of optical offset reads as typeset. It is a small
+ * thing that costs one class.
  *
- * The photograph is served from our own origin: the CSP is `img-src 'self' …`
- * (PLAN/13 §7), so a hot-linked image would simply not render.
+ * Typography, spacing, buttons, accent and motion are the landing page's. There
+ * is no second set of styles here — that is the point of the shared layout.
  */
 export function AuthLayout({
   title,
@@ -28,125 +26,131 @@ export function AuthLayout({
   children,
   footer,
   image,
-  imageCaption,
+  note,
 }: {
   title: string;
   subtitle: string;
   children: ReactNode;
   footer: ReactNode;
   image: ImageCredit;
-  imageCaption: { label: string; detail: string }[];
+  /** One short factual line over the photograph. Never a testimonial. */
+  note: string;
 }): ReactNode {
   return (
-    <div className="flex min-h-dvh flex-col bg-canvas">
-      <div className="mx-auto flex w-full max-w-6xl items-center justify-between px-5 py-5 sm:px-8">
-        <Link to="/" className="flex items-baseline gap-2">
-          <span className="text-base font-semibold tracking-tight text-body">Commercial 2026</span>
-          <span className="hidden text-xs text-subtle sm:inline">Data Ban Bus &amp; Truk</span>
-        </Link>
-        <ThemeToggle />
-      </div>
+    <div className="min-h-dvh bg-canvas lg:grid lg:grid-cols-12">
+      {/* ── Visual panel ───────────────────────────────────────────────────
+          On a phone this is a short strip rather than a half-screen: the form
+          is what the reader came for, and a full-height photograph above it
+          just means scrolling past a picture to reach a password box. */}
+      <aside className="relative isolate h-32 overflow-hidden bg-graphite sm:h-40 lg:col-span-5 lg:h-auto">
+        <img
+          src={image.src}
+          alt=""
+          aria-hidden="true"
+          className="absolute inset-0 h-full w-full object-cover saturate-[0.3]"
+          loading="lazy"
+        />
+        {/*
+          The scrim is opaque enough that the text over it clears 4.5:1 against
+          the darkest and the lightest part of the photograph, not just the part
+          that happened to sit behind the words when it was checked.
+        */}
+        <div aria-hidden="true" className="absolute inset-0 bg-graphite/75" />
 
-      <main className="mx-auto flex w-full max-w-6xl flex-1 items-center px-5 pb-10 sm:px-8">
-        <div className="grid w-full animate-scale-in overflow-hidden rounded-3xl border border-line bg-surface shadow-sm lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)]">
-          <div className="flex flex-col justify-center px-6 py-10 sm:px-10 sm:py-12">
-            <div className="mx-auto w-full max-w-sm animate-fade-up [animation-delay:120ms]">
-              <span className="inline-flex items-center rounded-full border border-line-strong px-3 py-1 text-xs font-medium text-muted">
-                Commercial 2026
-              </span>
+        <div className="relative flex h-full flex-col justify-between p-5 sm:p-8 lg:p-10">
+          <Link
+            to="/"
+            className="font-display text-sm font-bold tracking-tight text-paper"
+          >
+            Commercial 2026
+          </Link>
 
-              <h1 className="mt-8 text-2xl font-semibold tracking-tight text-body">{title}</h1>
-              <p className="mt-1.5 text-sm text-muted">{subtitle}</p>
-
-              <div className="mt-7">{children}</div>
-
-              <div className="mt-6 border-t border-line pt-5 text-center">{footer}</div>
-            </div>
-          </div>
-
-          {/*
-            Decorative on small screens by omission rather than by hiding: it is
-            not rendered at all below `lg`, so a phone never downloads it.
-          */}
-          <div className="relative hidden lg:block">
-            <img
-              src={image.src}
-              alt={image.alt}
-              className="h-full w-full object-cover"
-              loading="lazy"
-            />
-
-            {/* A scrim so the cards below stay legible whatever the photo does. */}
-            <div aria-hidden="true" className="absolute inset-0 bg-black/25" />
-
-            <div className="absolute inset-x-6 bottom-6 animate-fade-up space-y-2.5 [animation-delay:260ms]">
-              {imageCaption.map((item) => (
-                <div
-                  key={item.label}
-                  className="rounded-xl bg-white/90 px-3.5 py-2.5 shadow-sm backdrop-blur-sm"
-                >
-                  <p className="text-xs font-semibold text-slate-900">{item.label}</p>
-                  <p className="mt-0.5 text-xs text-slate-600">{item.detail}</p>
-                </div>
-              ))}
-            </div>
-
-            <p className="absolute right-4 top-4 rounded-full bg-black/45 px-2.5 py-1 text-[11px] text-white/90">
-              Foto: {image.author}
+          <div className="hidden lg:block">
+            <p className="max-w-prose font-display text-lg font-semibold leading-snug text-paper">
+              Sistem pendataan ban untuk armada bus dan truk — dipakai di bengkel, bukan di
+              belakang meja.
+            </p>
+            <p className="mt-5 border-t border-paper/20 pt-4 font-data text-xs text-paper/70">
+              {note}
             </p>
           </div>
         </div>
-      </main>
+      </aside>
 
-      <footer className="mx-auto w-full max-w-6xl px-5 pb-8 text-center text-xs text-subtle sm:px-8">
-        {image.licenseUrl === "" ? (
-          <span>
-            Foto: {image.author}, {image.license}, via{" "}
-            <a
-              href={image.sourceUrl}
-              rel="noopener noreferrer"
-              target="_blank"
-              className="underline underline-offset-2 hover:text-body"
-            >
-              Wikimedia Commons
-            </a>
-            .
-          </span>
-        ) : (
-          <span>
-            Foto: {image.author},{" "}
-            <a
-              href={image.licenseUrl}
-              rel="license noopener noreferrer"
-              target="_blank"
-              className="underline underline-offset-2 hover:text-body"
-            >
-              {image.license}
-            </a>
-            , via{" "}
-            <a
-              href={image.sourceUrl}
-              rel="noopener noreferrer"
-              target="_blank"
-              className="underline underline-offset-2 hover:text-body"
-            >
-              Wikimedia Commons
-            </a>
-            .
-          </span>
-        )}
-      </footer>
+      {/* ── Form panel ─────────────────────────────────────────────────────*/}
+      <main className="relative flex flex-col lg:col-span-7">
+        <div className="flex justify-end p-5 sm:p-6">
+          <ThemeToggle />
+        </div>
+
+        {/* `pb-[8%]` is the optical offset: it lifts the form about 4% above
+            true centre without taking it out of the centring. */}
+        <div className="flex flex-1 items-center justify-center px-5 pb-10 sm:px-8 lg:pb-[8%]">
+          <div className="w-full max-w-[420px]">
+            <h1 className="font-display text-2xl font-bold tracking-tight text-body">{title}</h1>
+            <p className="mt-2 text-sm text-muted">{subtitle}</p>
+
+            <div className="mt-7 rounded-panel border border-line bg-surface p-6 sm:p-7">
+              {children}
+            </div>
+
+            <div className="mt-6 text-sm">{footer}</div>
+          </div>
+        </div>
+
+        <footer className="px-5 pb-6 text-center text-xs text-subtle sm:px-8">
+          <PhotoCredit image={image} />
+        </footer>
+      </main>
     </div>
   );
 }
 
 /**
- * Filled, softly rounded controls, following the reference.
+ * The photograph's attribution.
  *
- * Passed to `Input` as `className`; `cn()` lets these win over the primitive's
- * own border and radius without the primitive having to know about them.
+ * CC BY and CC BY-SA both require the author, the licence, and a link back, so
+ * this is not decoration — it is the condition on which the image may be used
+ * at all. The public-domain case needs none of it and is credited anyway.
  */
-export const AUTH_FIELD = "rounded-xl border-transparent bg-surface-sunken";
+function PhotoCredit({ image }: { image: ImageCredit }): ReactNode {
+  return (
+    <span>
+      Foto: {image.author},{" "}
+      {image.licenseUrl === "" ? (
+        image.license
+      ) : (
+        <a
+          href={image.licenseUrl}
+          rel="license noopener noreferrer"
+          target="_blank"
+          className="underline underline-offset-2 hover:text-muted"
+        >
+          {image.license}
+        </a>
+      )}
+      , via{" "}
+      <a
+        href={image.sourceUrl}
+        rel="noopener noreferrer"
+        target="_blank"
+        className="underline underline-offset-2 hover:text-muted"
+      >
+        Wikimedia Commons
+      </a>
+      .
+    </span>
+  );
+}
+
+/**
+ * The auth screens' input treatment.
+ *
+ * Filled rather than outlined, on the sunken surface, so the field reads as a
+ * slot cut into the card. The chalk-mark rule on focus is drawn by
+ * `.auth-field` in `auth.css`.
+ */
+export const AUTH_FIELD = "rounded-base border-transparent bg-surface-sunken";
 
 export function authFieldClass(extra?: string): string {
   return cn(AUTH_FIELD, extra);
