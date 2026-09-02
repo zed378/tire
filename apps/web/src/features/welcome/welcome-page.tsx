@@ -3,25 +3,13 @@ import { useQuery } from "@tanstack/react-query";
 import { USER_ROLE_LABELS, type DashboardMetrics } from "@c26/contracts";
 import { api } from "../../lib/api-client.ts";
 import { ErrorBanner } from "../../components/ui/feedback.tsx";
-import { PageHeader, SkeletonRows } from "../../components/ui/primitives.tsx";
+import { SkeletonRows } from "../../components/ui/primitives.tsx";
 import { useSession } from "../../lib/session.tsx";
 import { AdminWelcome } from "./admin-welcome.tsx";
 import { ManagerWelcome } from "./manager-welcome.tsx";
 import { OperatorWelcome } from "./operator-welcome.tsx";
 import { SupplierWelcome } from "./supplier-welcome.tsx";
 
-/**
- * The first screen after signing in.
- *
- * Every role gets a different one, because they have different jobs. Before
- * this existed, everyone landed on `/inspections` — a page the manager and
- * operator roles have no permission to read, so two of the four roles opened
- * the application onto a screen that bounced them straight back out.
- *
- * The metrics come from the server already narrowed by role: the client renders
- * whichever shape it is handed rather than asking for the one it expects. If
- * the two ever disagree, the server is right.
- */
 export function WelcomePage(): ReactNode {
   const { user } = useSession();
 
@@ -30,18 +18,43 @@ export function WelcomePage(): ReactNode {
     queryFn: () => api.get<DashboardMetrics>("/api/dashboard/metrics"),
   });
 
+  // Current date formatted in Indonesian locale
+  const todayFormatted = new Intl.DateTimeFormat("id-ID", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  }).format(new Date());
+
   return (
-    <div className="space-y-4">
-      <PageHeader
-        title={user === null ? "Beranda" : `Selamat datang, ${user.displayName}`}
-        description={user === null ? undefined : USER_ROLE_LABELS[user.role]}
-      />
+    <div className="space-y-6">
+      {/* Modern Greeting Hero Banner */}
+      <div className="relative overflow-hidden rounded-2xl border border-line bg-surface p-5 sm:p-6 shadow-sm">
+        <div className="absolute top-0 right-0 -mt-8 -mr-8 h-48 w-48 rounded-full bg-accent/10 blur-3xl pointer-events-none" />
+        <div className="relative flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <div className="flex items-center gap-2 mb-1">
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-accent/20 bg-accent-soft px-2.5 py-0.5 text-xs font-semibold text-accent-text">
+                <span className="h-1.5 w-1.5 rounded-full bg-accent animate-pulse" />
+                {user === null ? "Dashboard" : USER_ROLE_LABELS[user.role]}
+              </span>
+              <span className="text-xs text-muted">• {todayFormatted}</span>
+            </div>
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-body">
+              Selamat datang kembali, {user?.displayName}!
+            </h1>
+            <p className="mt-1 text-xs sm:text-sm text-muted">
+              Monitoring data inspeksi ban, verifikasi QC, dan status armada kendaraan komersial.
+            </p>
+          </div>
+        </div>
+      </div>
 
       {metrics.error !== null ? <ErrorBanner error={metrics.error} /> : null}
 
       {metrics.isPending ? (
-        <div role="status" aria-live="polite">
-          <span className="sr-only">Memuat ringkasan…</span>
+        <div role="status" aria-live="polite" className="space-y-4">
+          <span className="sr-only">Memuat ringkasan dashboard…</span>
           <SkeletonRows rows={4} />
         </div>
       ) : null}
@@ -52,8 +65,6 @@ export function WelcomePage(): ReactNode {
 }
 
 function RoleSummary({ metrics }: { metrics: DashboardMetrics }): ReactNode {
-  // Narrowed on the discriminant, so adding a role to the union stops this
-  // compiling rather than silently rendering nothing.
   switch (metrics.type) {
     case "supplier":
       return <SupplierWelcome metrics={metrics} />;

@@ -20,14 +20,7 @@ import { UploadQueuePage } from "./features/inspections/upload-queue-page.tsx";
 import { QcQueuePage } from "./features/qc/qc-queue-page.tsx";
 import { QcReviewPage } from "./features/qc/qc-review-page.tsx";
 import { TireSpecPage } from "./features/tire-specs/tire-spec-page.tsx";
-import { UsersPage } from "./features/users/users-page.tsx";
-import { MasterDataPage } from "./features/master-data/master-data-page.tsx";
-import { VehicleBrandsPage } from "./features/master-data/vehicle-brands-page.tsx";
-import { TireBrandPatternsPage } from "./features/master-data/tire-brand-patterns-page.tsx";
-import { TireSizesPage } from "./features/master-data/tire-sizes-page.tsx";
 import { NotificationsPage } from "./features/notifications/notifications-page.tsx";
-import { AuditPage } from "./features/audit/audit-page.tsx";
-import { OpsPage } from "./features/ops/ops-page.tsx";
 
 /**
  * Routing (PLAN/01 §4.1).
@@ -40,6 +33,38 @@ import { OpsPage } from "./features/ops/ops-page.tsx";
 
 // Reporting is the heaviest route and the one fewest people open, so it is
 // split out of the initial bundle to protect the 180 KB budget (PLAN/06 §7).
+/*
+ * Administration, master data and operations, split out of the initial
+ * bundle.
+ *
+ * A supplier is the majority user and never opens any of these, yet was
+ * downloading all of them on every visit. The budget is 180 KB gzipped and
+ * enforced (PLAN/06 §7, gate G-12); this is what keeps the field device — a
+ * mid-range phone two or three years old, per PLAN/06 §7 — from paying for
+ * screens it has no permission to see.
+ */
+const UsersPage = lazy(() =>
+  import("./features/users/users-page.tsx").then((module) => ({ default: module.UsersPage })),
+);
+const MasterDataPage = lazy(() =>
+  import("./features/master-data/master-data-page.tsx").then((module) => ({ default: module.MasterDataPage })),
+);
+const VehicleBrandsPage = lazy(() =>
+  import("./features/master-data/vehicle-brands-page.tsx").then((module) => ({ default: module.VehicleBrandsPage })),
+);
+const TireBrandPatternsPage = lazy(() =>
+  import("./features/master-data/tire-brand-patterns-page.tsx").then((module) => ({ default: module.TireBrandPatternsPage })),
+);
+const TireSizesPage = lazy(() =>
+  import("./features/master-data/tire-sizes-page.tsx").then((module) => ({ default: module.TireSizesPage })),
+);
+const AuditPage = lazy(() =>
+  import("./features/audit/audit-page.tsx").then((module) => ({ default: module.AuditPage })),
+);
+const OpsPage = lazy(() =>
+  import("./features/ops/ops-page.tsx").then((module) => ({ default: module.OpsPage })),
+);
+
 const ReportsPage = lazy(() =>
   import("./features/reports/reports-page.tsx").then((module) => ({ default: module.ReportsPage })),
 );

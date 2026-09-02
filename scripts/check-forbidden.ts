@@ -6,6 +6,12 @@
  *        re-enter the new system.
  * G-10 — demo login panels and hardcoded credentials must return zero hits.
  *        Closes D-16: three buttons that logged in without any credentials.
+ * G-13 — no inline `style` attributes in the client. The CSP is `style-src
+ *        'self'` with no `unsafe-inline` (PLAN/13 §7), so an inline style is
+ *        silently dropped by the browser. It works perfectly in `vite dev`,
+ *        where no CSP header is set, and fails only in production — which is
+ *        the worst shape a defect can take. A progress bar reached the
+ *        dashboard this way and would have rendered at zero width.
  */
 import { join } from "node:path";
 import { read, report, ROOT, stripComments, walk } from "./files.ts";

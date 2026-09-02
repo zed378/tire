@@ -163,7 +163,7 @@ export function MfaEnrollPage(): ReactNode {
                   </span>
                   <button
                     type="button"
-                    onClick={() => void handleCopySecret(enrollment.data!.secretForManualEntry)}
+                    onClick={() => void handleCopySecret(enrollment.data.secretForManualEntry)}
                     className="text-xs font-medium text-accent-text hover:text-accent-text"
                   >
                     {copiedKey ? "✓ Tersalin" : "Salin Kunci"}

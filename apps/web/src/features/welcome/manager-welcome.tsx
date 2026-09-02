@@ -6,77 +6,106 @@ import { Card, EmptyState, StatTile } from "../../components/ui/primitives.tsx";
 import { Table, type Column } from "../../components/ui/table.tsx";
 import { formatNumber } from "../../lib/format.ts";
 
-/**
- * The PM/PIC/SPV view: progress, split TB versus LT.
- *
- * That split is the axis the whole management picture is built on (K-04), so it
- * is present in the headline figures and in every regional row rather than
- * being something you drill into.
- *
- * The figures come from the same materialised view the Pelaporan screen reads,
- * which is what keeps the two screens agreeing with each other.
- */
 export function ManagerWelcome({ metrics }: { metrics: ManagerMetrics }): ReactNode {
   const peak = Math.max(...metrics.trend.map((point) => point.count), 1);
 
   const columns: Column<ManagerMetrics["byRegion"][number]>[] = [
-    { key: "region", header: "Wilayah", cell: (row) => row.region },
-    { key: "tb", header: "TB", align: "right", cell: (row) => formatNumber(row.tb) },
-    { key: "lt", header: "LT", align: "right", cell: (row) => formatNumber(row.lt) },
+    {
+      key: "region",
+      header: "Wilayah / Kota",
+      cell: (row) => <span className="font-semibold text-body">{row.region}</span>,
+    },
+    {
+      key: "tb",
+      header: "TB (Truck & Bus)",
+      align: "right",
+      cell: (row) => <span className="tabular-nums">{formatNumber(row.tb)}</span>,
+    },
+    {
+      key: "lt",
+      header: "LT (Light Truck)",
+      align: "right",
+      cell: (row) => <span className="tabular-nums">{formatNumber(row.lt)}</span>,
+    },
     {
       key: "total",
-      header: "Total",
+      header: "Total Lolos QC",
       align: "right",
-      cell: (row) => <span className="font-medium">{formatNumber(row.total)}</span>,
+      cell: (row) => (
+        <span className="font-bold tabular-nums text-accent-text">{formatNumber(row.total)}</span>
+      ),
     },
   ];
 
   return (
-    <div className="space-y-4">
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+    <div className="space-y-6">
+      {/* KPI Stats Grid */}
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4">
         <StatTile
-          label="Bulan Ini"
+          label="Total Lolos QC Bulan Ini"
           value={formatNumber(metrics.thisMonth)}
           tone="accent"
-          hint="Lolos QC"
+          hint="Hasil verifikasi QC terstandarisasi"
         />
-        <StatTile label="TB (Truck & Bus)" value={formatNumber(metrics.byCategory.TB)} />
-        <StatTile label="LT (Light Truck)" value={formatNumber(metrics.byCategory.LT)} />
+        <StatTile
+          label="Kategori TB (Truck &amp; Bus)"
+          value={formatNumber(metrics.byCategory.TB ?? 0)}
+          tone="info"
+          hint="Angkutan berat komersial"
+        />
+        <StatTile
+          label="Kategori LT (Light Truck)"
+          value={formatNumber(metrics.byCategory.LT ?? 0)}
+          tone="success"
+          hint="Armada truk ringan"
+        />
       </div>
 
-      <Card title="Trend 6 Bulan Terakhir">
-        {/*
-          A bar per month rather than the line chart used on the reporting
-          screen. Six points do not need axes, and the reporting screen is one
-          click away for anyone who wants them.
-        */}
-        <ul className="flex items-end gap-2 sm:gap-4">
-          {metrics.trend.map((point) => (
-            <li key={point.month} className="flex flex-1 flex-col items-center gap-1">
-              <span className="text-xs font-medium tabular-nums text-muted">{point.count}</span>
-              {/*
-                Tailwind cannot express a height computed at runtime, and the
-                CSP forbids an inline style attribute (PLAN/13 §7), so the bar
-                is quantised to a fixed set of classes.
-              */}
-              <div
-                className={cn("w-full rounded-t bg-accent", BAR_HEIGHTS[heightStep(point.count, peak)])}
-              />
-              <span className="text-xs text-subtle">{point.month}</span>
-            </li>
-          ))}
-        </ul>
-      </Card>
-
+      {/* 6-Month Trend Chart Card */}
       <Card
-        title="Perincian Wilayah"
-        description="Bulan berjalan, kota dengan aktivitas tertinggi di atas."
+        title="Trend 6 Bulan Terakhir"
+        description="Grafik volume pengajuan lolos QC per bulan berjalan"
         actions={
           <Link
             to="/reports"
-            className="text-sm font-medium text-accent-text underline-offset-2 hover:underline"
+            className="text-xs sm:text-sm font-semibold text-accent-text hover:underline"
           >
-            Buka Pelaporan
+            Laporan Analitik Lengkap →
+          </Link>
+        }
+      >
+        <div className="pt-2">
+          <ul className="flex items-end justify-between gap-2 sm:gap-6 h-48 pb-2">
+            {metrics.trend.map((point) => (
+              <li key={point.month} className="flex flex-1 flex-col items-center gap-2 h-full justify-end group">
+                <span className="text-xs font-bold tabular-nums text-body group-hover:text-accent-text transition-colors">
+                  {formatNumber(point.count)}
+                </span>
+                <div
+                  className={cn(
+                    "w-full max-w-[48px] rounded-t-lg bg-gradient-to-t from-accent to-accent-hover transition-all duration-300 group-hover:opacity-90 shadow-sm",
+                    BAR_HEIGHTS[heightStep(point.count, peak)],
+                  )}
+                />
+                <span className="text-[11px] font-medium text-muted truncate max-w-full text-center">
+                  {point.month}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </Card>
+
+      {/* Regional Breakdown Table Card */}
+      <Card
+        title="Perincian Wilayah Operasional"
+        description="Distribusi pengajuan lolos QC bulan ini per wilayah kota"
+        actions={
+          <Link
+            to="/reports"
+            className="text-xs sm:text-sm font-semibold text-accent-text hover:underline"
+          >
+            Ekspor Data →
           </Link>
         }
       >
@@ -97,24 +126,17 @@ export function ManagerWelcome({ metrics }: { metrics: ManagerMetrics }): ReactN
   );
 }
 
-/**
- * Ten fixed heights.
- *
- * A computed pixel height would need a `style` attribute, and the CSP carries no
- * `unsafe-inline`. Ten steps is more than enough resolution to read a six-month
- * shape at a glance.
- */
 const BAR_HEIGHTS = [
-  "h-1",
-  "h-4",
-  "h-8",
-  "h-12",
+  "h-2",
+  "h-6",
+  "h-10",
   "h-16",
   "h-20",
   "h-24",
   "h-28",
   "h-32",
   "h-36",
+  "h-40",
 ] as const;
 
 function heightStep(value: number, peak: number): number {

@@ -1,5 +1,5 @@
 import { type ReactNode } from "react";
-import { NavLink } from "react-router-dom";
+import { Link, NavLink } from "react-router-dom";
 import type { Permission } from "@c26/contracts";
 import { cn } from "../../lib/cn.ts";
 import { useSession } from "../../lib/session.tsx";
@@ -22,8 +22,9 @@ const NAV_ENTRIES: NavEntry[] = [
     permission: null,
     end: true,
     icon: (
-      <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-        <path d="M10 2 2 8v10h6v-5h4v5h6V8l-8-6z" />
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+        <polyline points="9 22 9 12 15 12 15 22" />
       </svg>
     ),
   },
@@ -32,8 +33,12 @@ const NAV_ENTRIES: NavEntry[] = [
     label: "Pengajuan",
     permission: null,
     icon: (
-      <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-        <path d="M4 3a2 2 0 012-2h8a2 2 0 012 2v10a2 2 0 01-2 2H6a2 2 0 01-2-2V3zm2 0v10h8V3H6zm2 2h4v2H8V5zm0 4h4v2H8V9z" />
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+        <polyline points="14 2 14 8 20 8" />
+        <line x1="16" y1="13" x2="8" y2="13" />
+        <line x1="16" y1="17" x2="8" y2="17" />
+        <polyline points="10 9 9 9 8 9" />
       </svg>
     ),
   },
@@ -42,8 +47,9 @@ const NAV_ENTRIES: NavEntry[] = [
     label: "Quality Control",
     permission: "qc.review",
     icon: (
-      <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-        <path d="M10 1 3 4v5c0 4 3 7.4 7 9 4-1.6 7-5 7-9V4l-7-3zm-1 12L5.5 9.5 7 8l2 2 4-4 1.5 1.5L9 13z" />
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+        <polyline points="9 12 11 14 15 10" />
       </svg>
     ),
   },
@@ -52,8 +58,10 @@ const NAV_ENTRIES: NavEntry[] = [
     label: "Pelaporan",
     permission: "report.view",
     icon: (
-      <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-        <path d="M3 3h14v2H3V3zm0 4h14v2H3V7zm0 4h14v2H3v-2zm0 4h10v2H3v-2z" />
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <line x1="18" y1="20" x2="18" y2="10" />
+        <line x1="12" y1="20" x2="12" y2="4" />
+        <line x1="6" y1="20" x2="6" y2="14" />
       </svg>
     ),
   },
@@ -62,8 +70,11 @@ const NAV_ENTRIES: NavEntry[] = [
     label: "Pengguna",
     permission: "user.manage",
     icon: (
-      <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-        <path d="M10 4a4 4 0 100 8 4 4 0 000-8zm0 6a2 2 0 110-4 2 2 0 010 4zM4 18a4 4 0 0112 0v1H4v-1z" />
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+        <circle cx="9" cy="7" r="4" />
+        <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+        <path d="M16 3.13a4 4 0 0 1 0 7.75" />
       </svg>
     ),
   },
@@ -72,9 +83,6 @@ const NAV_ENTRIES: NavEntry[] = [
     label: "Master Data",
     permission: "masterdata.manage",
     end: true,
-    // These three had no route into them except a row of chips on the parent
-    // page, so nothing in the navigation said they existed and nothing showed
-    // where you were once inside one.
     children: [
       { to: "/master-data/vehicle-brands", label: "Merk Kendaraan", permission: "masterdata.manage" },
       {
@@ -85,8 +93,11 @@ const NAV_ENTRIES: NavEntry[] = [
       { to: "/master-data/tire-sizes", label: "Ukuran Ban", permission: "masterdata.manage" },
     ],
     icon: (
-      <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-        <path d="M5 3a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2V5a2 2 0 00-2-2H5zm3 2h4v2H8V5zm0 4h4v2H8V9zm0 4h3v2H8v-2z" />
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <rect x="2" y="2" width="20" height="8" rx="2" ry="2" />
+        <rect x="2" y="14" width="20" height="8" rx="2" ry="2" />
+        <line x1="6" y1="6" x2="6.01" y2="6" />
+        <line x1="6" y1="18" x2="6.01" y2="18" />
       </svg>
     ),
   },
@@ -95,8 +106,12 @@ const NAV_ENTRIES: NavEntry[] = [
     label: "Jejak Audit",
     permission: "audit.read",
     icon: (
-      <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-        <path d="M3 3a2 2 0 012-2h10a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V3zm3 0v4h10V3H6zm0 6v6h10V9H6z" />
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+        <polyline points="14 2 14 8 20 8" />
+        <line x1="16" y1="13" x2="8" y2="13" />
+        <line x1="16" y1="17" x2="8" y2="17" />
+        <line x1="10" y1="9" x2="8" y2="9" />
       </svg>
     ),
   },
@@ -105,28 +120,20 @@ const NAV_ENTRIES: NavEntry[] = [
     label: "Operasional",
     permission: "ops.health.read",
     icon: (
-      <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-        <path d="M10 2a6 6 0 00-6 6v3.28A6 6 0 0010 18a6 6 0 006-6V8a6 6 0 00-6-6zm-2 10a2 2 0 110-4 2 2 0 010 4zm8 0a2 2 0 110-4 2 2 0 010 4z" />
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
       </svg>
     ),
   },
 ];
 
 const LINK_BASE =
-  "flex items-center gap-3 rounded-lg px-3.5 py-2.5 text-sm font-medium transition-colors min-h-11";
-const LINK_ACTIVE = "bg-accent-soft text-accent-text";
-const LINK_IDLE = "text-muted hover:bg-surface-sunken hover:text-body";
+  "group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all min-h-11";
+const LINK_ACTIVE =
+  "bg-accent-soft text-accent-text font-semibold shadow-sm border border-accent/20";
+const LINK_IDLE =
+  "text-muted hover:bg-surface-sunken hover:text-body";
 
-/**
- * Primary navigation.
- *
- * Entries the current user has no permission for are not rendered at all,
- * rather than rendered and disabled (K-07). The server enforces the same rules
- * independently — hiding a menu is not authorisation (PLAN/04 §2.2).
- *
- * Identity and logout live in the header, not here: having them in both places
- * meant the user's name and role appeared twice on every desktop screen.
- */
 export function Sidebar({
   onNavigate,
   isMobile = false,
@@ -143,22 +150,31 @@ export function Sidebar({
   return (
     <aside
       className={cn(
-        "flex h-dvh flex-shrink-0 flex-col border-r border-line bg-surface",
+        "flex h-full flex-shrink-0 flex-col border-r border-line bg-surface select-none z-30",
         isMobile ? "w-full border-r-0" : "hidden w-64 md:flex",
       )}
     >
+      {/* Brand Header */}
       <div className="flex h-16 flex-shrink-0 items-center justify-between gap-2 border-b border-line px-4">
-        <div className="flex items-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-md bg-accent text-on-accent shadow-sm">
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-              <path d="M10 2a8 8 0 100 16 8 8 0 000-16zm0 14a6 6 0 110-12 6 6 0 010 12z" />
-            </svg>
+        <Link to="/welcome" onClick={onNavigate} className="flex items-center gap-2.5 group">
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-tr from-brand-600 via-cyan-500 to-indigo-500 p-0.5 shadow-md shadow-brand-500/20 group-hover:scale-105 transition-transform">
+            <div className="flex h-full w-full items-center justify-center rounded-[10px] bg-surface">
+              <svg className="h-5 w-5 text-accent-text" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="9" strokeDasharray="3 3" className="animate-spin-very-slow" />
+                <circle cx="12" cy="12" r="3" />
+                <path d="M12 3v3M12 18v3M3 12h3M18 12h3" />
+              </svg>
+            </div>
           </div>
           <div className="flex flex-col">
-            <span className="text-sm font-semibold text-body">Commercial 2026</span>
-            <span className="text-xs text-muted">Tire Data System</span>
+            <span className="text-sm font-bold tracking-wide text-body">
+              COMMERCIAL<span className="text-accent-text">2026</span>
+            </span>
+            <span className="text-[10px] font-medium text-muted uppercase tracking-wider">
+              Tire Data System
+            </span>
           </div>
-        </div>
+        </Link>
 
         {isMobile ? (
           <button
@@ -167,18 +183,19 @@ export function Sidebar({
             aria-label="Tutup menu"
             onClick={onNavigate}
           >
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-              <path
-                fillRule="evenodd"
-                d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-                clipRule="evenodd"
-              />
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
             </svg>
           </button>
         ) : null}
       </div>
 
-      <nav aria-label="Navigasi utama" className="flex-1 overflow-y-auto px-3 py-4">
+      {/* Navigation Links */}
+      <nav aria-label="Navigasi utama" className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
+        <div className="px-3 pb-2 text-[11px] font-semibold uppercase tracking-wider text-subtle">
+          Menu Utama
+        </div>
         <ul className="space-y-1">
           {entries.map((entry) => (
             <li key={entry.to}>
@@ -188,12 +205,12 @@ export function Sidebar({
                 onClick={onNavigate}
                 className={({ isActive }) => cn(LINK_BASE, isActive ? LINK_ACTIVE : LINK_IDLE)}
               >
-                <span className="flex-shrink-0">{entry.icon}</span>
-                <span>{entry.label}</span>
+                <span className="flex-shrink-0 text-current">{entry.icon}</span>
+                <span className="flex-1 truncate">{entry.label}</span>
               </NavLink>
 
               {entry.children !== undefined ? (
-                <ul className="mt-1 space-y-1 border-l border-line pl-3 ml-5">
+                <ul className="mt-1 space-y-1 border-l-2 border-line pl-3 ml-5">
                   {entry.children
                     .filter((child) => child.permission === null || can(child.permission))
                     .map((child) => (
@@ -203,8 +220,10 @@ export function Sidebar({
                           onClick={onNavigate}
                           className={({ isActive }) =>
                             cn(
-                              "flex min-h-11 items-center rounded-lg px-3 text-sm transition-colors",
-                              isActive ? LINK_ACTIVE : LINK_IDLE,
+                              "flex min-h-9 items-center rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors",
+                              isActive
+                                ? "bg-accent-soft text-accent-text font-semibold"
+                                : "text-muted hover:bg-surface-sunken hover:text-body",
                             )
                           }
                         >
@@ -218,6 +237,23 @@ export function Sidebar({
           ))}
         </ul>
       </nav>
+
+      {/* Sidebar Footer Info */}
+      <div className="flex-shrink-0 border-t border-line p-3">
+        <div className="rounded-lg bg-surface-sunken/80 border border-line p-2.5">
+          <div className="flex items-center gap-2">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+            </span>
+            <span className="text-[11px] font-semibold text-body">SYSTEM ONLINE</span>
+            <span className="ml-auto text-[10px] font-mono text-muted">TLS 1.3</span>
+          </div>
+          <p className="mt-1 text-[10px] text-muted truncate">
+            Fleet Telemetry &amp; QC Gate
+          </p>
+        </div>
+      </div>
     </aside>
   );
 }

@@ -95,7 +95,7 @@ function waitForStepUpHandler(): Promise<() => Promise<boolean>> {
   return new Promise<() => Promise<boolean>>((resolve) => {
     const timeoutId = window.setTimeout(() => {
       // Remove from queue and reject if handler still not available
-      const index = stepUpHandlerQueue.indexOf(resolve as any);
+      const index = stepUpHandlerQueue.indexOf(resolve);
       if (index !== -1) {
         stepUpHandlerQueue.splice(index, 1);
       }
