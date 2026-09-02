@@ -150,7 +150,7 @@ function PhotoCredit({ image }: { image: ImageCredit }): ReactNode {
  * slot cut into the card. The chalk-mark rule on focus is drawn by
  * `.auth-field` in `auth.css`.
  */
-export const AUTH_FIELD = "rounded-base border-transparent bg-surface-sunken";
+export const AUTH_FIELD = "rounded-base bg-surface-sunken";
 
 export function authFieldClass(extra?: string): string {
   return cn(AUTH_FIELD, extra);

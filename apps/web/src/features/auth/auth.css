@@ -41,6 +41,39 @@
   transform: scaleX(1);
 }
 
+/*
+ * Inside these wrappers the input's focus indicator is the border going to
+ * `--blue` plus the chalk rule above — not the application's general amber ring.
+ *
+ * Three indicators stacked on one 40px control is not three times as clear; the
+ * ring simply drew over the other two, so the brief's chalk mark was invisible
+ * on the screen it was written for. Two remain, and neither depends on colour
+ * alone: the border also doubles in weight, and the rule is a new element
+ * appearing where there was none.
+ *
+ * The ring is untouched everywhere else — on buttons, links, and every other
+ * form in the application.
+ */
+.auth-field input:focus,
+.auth-field input:focus-visible {
+  outline: none;
+  box-shadow: none;
+  border-color: rgb(var(--blue));
+  border-width: 2px;
+  /* Compensate for the extra border so the text does not shift by a pixel. */
+  padding-left: calc(0.75rem - 1px);
+  padding-right: calc(0.75rem - 1px);
+}
+
+/* A resting border, so there is something for the focus state to change. A
+   field that gains its first border on focus reads as the box appearing. */
+.auth-field input {
+  border-color: rgb(var(--color-line-strong));
+}
+.auth-field input[aria-invalid="true"] {
+  border-color: rgb(var(--color-danger));
+}
+
 /* ── Entrance ───────────────────────────────────────────────────────────────
  *
  * Three items, 40ms apart, 300ms in total. That is the whole entrance — nothing
