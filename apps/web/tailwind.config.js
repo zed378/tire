@@ -202,6 +202,19 @@ export default {
         // A single easing everywhere, per the brief.
         precision: "cubic-bezier(.2,.8,.2,1)",
       },
+      transitionDuration: {
+        /*
+         * The brief's three classes: micro-interaction, state transition, page
+         * entrance. Tailwind ships neither 180 nor 220, so `duration-180` was
+         * compiling to nothing at all and every button was hovering at the
+         * browser default — the same silent no-op as `dark:bg-brand-950` in the
+         * sidebar, which pointed at a stop that did not exist.
+         */
+        180: "180ms",
+        220: "220ms",
+        250: "250ms",
+        400: "400ms",
+      },
     },
   },
   plugins: [],

@@ -1,0 +1,334 @@
+/*
+ * Decoration that belongs to the public landing page and nowhere else.
+ *
+ * It lives here rather than in `index.css` so the authenticated application —
+ * which is twenty screens of dense data and wants none of this — does not carry
+ * it. Vite folds the file into the same stylesheet at build time, so it costs
+ * one import and no extra request.
+ *
+ * EVERYTHING HERE IS CSS. No animation library, no `style` attribute: the CSP
+ * is `style-src 'self'` with no `unsafe-inline` (PLAN/13 §7), and gate G-13
+ * fails the build on an inline style. JavaScript's only job on this page is to
+ * add and remove class names.
+ */
+
+/* ── Hero orchestration ─────────────────────────────────────────────────────
+ *
+ * The page's single non-reactive moment, ~1.2s, and it runs once per session.
+ * `LandingPage` reads a `sessionStorage` flag and, on a second visit, renders
+ * with `.hero--static`, which turns every one of these off. Back-navigation
+ * should not replay a performance.
+ *
+ * Note the direction of the defaults: the finished state is what is written on
+ * the element, and the animation moves *toward* it. If the class is never
+ * added — JavaScript failed, the flag was already set — the hero is simply
+ * there, complete. Nothing waits on script to become visible.
+ */
+
+@keyframes hero-sweep {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes hero-callout {
+  from {
+    opacity: 0;
+    transform: translateX(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes hero-leader {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+@keyframes hero-settle {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* 1 — a measurement rule sweeps the image, left to right. */
+.hero--play .hero-sweep {
+  animation: hero-sweep 600ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+/* 2 — the three callouts resolve in sequence, 120ms apart, each leader line
+ *     drawing out from the point it annotates. */
+.hero--play .hero-callout {
+  animation: hero-callout 260ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+.hero--play .hero-leader {
+  transform-origin: left center;
+  animation: hero-leader 260ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+.hero--play .hero-callout-1,
+.hero--play .hero-callout-1 .hero-leader {
+  animation-delay: 600ms;
+}
+.hero--play .hero-callout-2,
+.hero--play .hero-callout-2 .hero-leader {
+  animation-delay: 720ms;
+}
+.hero--play .hero-callout-3,
+.hero--play .hero-callout-3 .hero-leader {
+  animation-delay: 840ms;
+}
+
+/* 3 — headline and calls to action settle in last. */
+.hero--play .hero-settle {
+  animation: hero-settle 420ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  animation-delay: 960ms;
+}
+
+/* The leader line sharpens and the label lifts when the callout is pointed at.
+ * A callout is an annotation on a drawing, so it thickens rather than moves. */
+.hero-callout .hero-leader {
+  transition: background-color 150ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.hero-callout:hover .hero-leader,
+.hero-callout:focus-within .hero-leader {
+  background-color: rgb(var(--amber));
+}
+.hero-callout .hero-callout-label {
+  opacity: 0.82;
+  transition: opacity 150ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.hero-callout:hover .hero-callout-label,
+.hero-callout:focus-within .hero-callout-label {
+  opacity: 1;
+}
+
+/*
+ * The photograph is pulled toward graphite rather than left as a colour
+ * snapshot. A full-colour stock photo behind type is the thing that makes a
+ * page read as a template; desaturating it turns it back into a surface.
+ */
+.hero-photo {
+  filter: saturate(0.28) contrast(1.06) brightness(0.82);
+}
+
+/* ── Navigation ─────────────────────────────────────────────────────────────
+ *
+ * The active and hovered marker is a dashed rule, not a pill. It is meant to
+ * read as a tire track, and it draws rather than appears.
+ */
+
+.nav-link {
+  position: relative;
+}
+.nav-link::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -6px;
+  height: 0;
+  border-bottom: 2px dashed currentColor;
+  opacity: 0;
+  transform: scaleX(0.4);
+  transform-origin: left center;
+  transition:
+    opacity 150ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    transform 150ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.nav-link:hover::after,
+.nav-link:focus-visible::after,
+.nav-link[aria-current="true"]::after {
+  opacity: 1;
+  transform: scaleX(1);
+}
+
+/*
+ * The scroll progress strip under the header, styled as a wear indicator.
+ *
+ * Driven by a scroll-linked animation, which needs no JavaScript and cannot
+ * touch a style attribute. Where the browser does not support it the bar is
+ * simply absent — it is a flourish, and nothing on the page depends on it.
+ */
+.scroll-wear {
+  transform: scaleX(0);
+  transform-origin: left center;
+}
+
+@supports (animation-timeline: scroll()) {
+  @keyframes wear-advance {
+    from {
+      transform: scaleX(0);
+    }
+    to {
+      transform: scaleX(1);
+    }
+  }
+
+  .scroll-wear {
+    animation: wear-advance linear both;
+    animation-timeline: scroll(root block);
+  }
+}
+
+/* ── Product journey ────────────────────────────────────────────────────────
+ *
+ * The one section allowed to move on scroll, because the movement is
+ * functional: it reports where the reader is inside a real sequence. The active
+ * step is set by IntersectionObserver adding a class — no scroll hijacking, and
+ * no sticky viewport takeover on mobile.
+ */
+
+.journey-step {
+  transition:
+    color 250ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    opacity 250ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  opacity: 0.55;
+}
+.journey-step--active {
+  opacity: 1;
+}
+.journey-marker {
+  transition:
+    background-color 250ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    border-color 250ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    transform 250ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.journey-step--active .journey-marker {
+  background-color: rgb(var(--amber));
+  border-color: rgb(var(--amber));
+  transform: scale(1.15);
+}
+.journey-progress {
+  transition: transform 400ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  transform-origin: top center;
+  transform: scaleY(var(--journey-progress, 0));
+}
+
+/* Six discrete steps, so the progress line advances by class rather than by a
+ * computed style attribute. */
+.journey--at-1 .journey-progress {
+  transform: scaleY(0.166);
+}
+.journey--at-2 .journey-progress {
+  transform: scaleY(0.333);
+}
+.journey--at-3 .journey-progress {
+  transform: scaleY(0.5);
+}
+.journey--at-4 .journey-progress {
+  transform: scaleY(0.666);
+}
+.journey--at-5 .journey-progress {
+  transform: scaleY(0.833);
+}
+.journey--at-6 .journey-progress {
+  transform: scaleY(1);
+}
+
+/* ── Product preview ────────────────────────────────────────────────────────*/
+
+/* Clicking a tire position swaps the detail panel. The swap is announced by a
+ * short settle, so it is obvious that something changed and what. */
+@keyframes detail-swap {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.detail-swap {
+  animation: detail-swap 220ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+/*
+ * Surfaces that respond to a pointer shift their border to the accent and gain
+ * a low shadow. They do not move: a card that lifts on hover nudges everything
+ * around it, and on a page of data that reads as instability.
+ */
+.surface-interactive {
+  transition:
+    border-color 180ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    box-shadow 180ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    background-color 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+/* ── Industrial band ────────────────────────────────────────────────────────
+ *
+ * Low-amplitude parallax, scroll-linked in CSS. Same reasoning as the wear
+ * strip: unsupported means static, which is a perfectly good version of it.
+ */
+
+@supports (animation-timeline: view()) {
+  @keyframes band-drift {
+    from {
+      transform: translateY(-3%) scale(1.08);
+    }
+    to {
+      transform: translateY(3%) scale(1.08);
+    }
+  }
+
+  .band-parallax {
+    animation: band-drift linear both;
+    animation-timeline: view();
+    animation-range: cover;
+  }
+}
+
+/* ── Reduced motion ─────────────────────────────────────────────────────────
+ *
+ * Everything above collapses to its final state. Not "shorter" — off. The
+ * content must be complete and legible, and it is: none of these animations
+ * ever supplied content, only movement toward it.
+ */
+
+@media (prefers-reduced-motion: reduce) {
+  .hero--play .hero-sweep,
+  .hero--play .hero-callout,
+  .hero--play .hero-leader,
+  .hero--play .hero-settle,
+  .band-parallax,
+  .scroll-wear {
+    animation: none !important;
+  }
+
+  .hero-sweep {
+    display: none;
+  }
+
+  .journey-step,
+  .journey-marker,
+  .journey-progress,
+  .surface-interactive,
+  .nav-link::after,
+  .hero-callout .hero-leader,
+  .hero-callout .hero-callout-label {
+    transition: none !important;
+  }
+
+  .detail-swap {
+    animation: none;
+  }
+
+  /* The journey renders as six static steps with no scroll binding. */
+  .journey-step {
+    opacity: 1;
+  }
+}
