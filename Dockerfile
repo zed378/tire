@@ -56,7 +56,8 @@ COPY --from=build /app/apps/web/dist ./web
 # ── Optional: CSV seed data for production deployment ──────────────────────
 # Place CSV files in requirements/ directory for tire brands and patterns
 # Files: req-TB Brand Pattern.csv, req-LT Brand Pattern.csv, req-Size.csv, req-Vehicle Brand.csv
-COPY requirements/ ./requirements/ 2>/dev/null || true
+# These are optional - seeding will work without them
+RUN mkdir -p /app/requirements
 
 # ── Storage directory ────────────────────────────────────────────────────────
 # Photos land here when STORAGE_DRIVER=local; the compose file mounts a volume
