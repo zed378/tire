@@ -1,5 +1,7 @@
 import { type ReactNode } from "react";
 import { Link } from "react-router-dom";
+import { USER_ROLE_LABELS } from "@c26/contracts";
+import { useSession } from "../../lib/session.tsx";
 import { ThemeToggle } from "../../components/ui/theme-toggle.tsx";
 import { HERO_IMAGE, IMAGE_CREDITS, TREAD_IMAGE, WHEEL_IMAGE } from "./image-credits.ts";
 
@@ -35,22 +37,72 @@ export function LandingPage(): ReactNode {
 }
 
 function SiteHeader(): ReactNode {
+  const { user } = useSession();
+
   return (
-    <header className="border-b border-line">
-      <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-5 py-4 sm:px-8">
-        <Link to="/" className="flex items-baseline gap-2">
-          <span className="text-base font-semibold tracking-tight text-body">Commercial 2026</span>
+    <header className="sticky top-0 z-30 border-b border-line bg-surface/95 backdrop-blur-md transition-colors">
+      <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-5 py-3.5 sm:px-8">
+        <Link to="/" className="flex items-baseline gap-2 group">
+          <span className="text-base font-bold tracking-tight text-body group-hover:text-accent-text transition-colors">
+            Commercial 2026
+          </span>
           <span className="hidden text-xs text-subtle sm:inline">Data Ban Bus &amp; Truk</span>
         </Link>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2.5 sm:gap-3">
           <ThemeToggle />
-          <Link
-            to="/login"
-            className="inline-flex min-h-11 items-center rounded-md bg-accent px-4 text-sm font-medium text-on-accent transition-colors hover:bg-accent-hover"
-          >
-            Masuk
-          </Link>
+
+          {user !== null ? (
+            <div className="flex items-center gap-2.5 sm:gap-3">
+              {/* Desktop user identity info */}
+              <div className="hidden text-right sm:block">
+                <p className="text-xs font-semibold text-body leading-tight">{user.displayName}</p>
+                <p className="text-[11px] text-muted leading-tight">{USER_ROLE_LABELS[user.role]}</p>
+              </div>
+
+              {/* Mobile compact user chip */}
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-accent/20 bg-accent-soft px-2 py-0.5 text-[11px] font-medium text-accent-text sm:hidden truncate max-w-[110px]">
+                <span className="h-1.5 w-1.5 rounded-full bg-accent animate-pulse flex-shrink-0" />
+                <span className="truncate">{user.displayName}</span>
+              </span>
+
+              {/* Direct Link to Dashboard */}
+              <Link
+                to="/welcome"
+                className="inline-flex h-9 items-center justify-center gap-1.5 rounded-lg bg-accent px-3.5 sm:px-4 text-xs sm:text-sm font-medium text-on-accent transition-all hover:bg-accent-hover shadow-sm active:scale-[0.98]"
+              >
+                <span>Dashboard</span>
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <polyline points="9 18 15 12 9 6" />
+                </svg>
+              </Link>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2">
+              <Link
+                to="/register"
+                className="hidden sm:inline-flex h-9 items-center justify-center rounded-lg border border-line-strong bg-surface px-3.5 text-xs sm:text-sm font-medium text-body transition-colors hover:bg-surface-sunken"
+              >
+                Daftar
+              </Link>
+              <Link
+                to="/login"
+                className="inline-flex h-9 items-center justify-center rounded-lg bg-accent px-4 text-xs sm:text-sm font-medium text-on-accent transition-all hover:bg-accent-hover shadow-sm active:scale-[0.98]"
+              >
+                Masuk
+              </Link>
+            </div>
+          )}
         </div>
       </div>
     </header>
@@ -58,6 +110,8 @@ function SiteHeader(): ReactNode {
 }
 
 function Hero(): ReactNode {
+  const { user } = useSession();
+
   return (
     <section className="mx-auto max-w-6xl px-5 pb-16 pt-12 sm:px-8 sm:pb-24 sm:pt-20">
       <div className="grid items-center gap-10 lg:grid-cols-[1.05fr_1fr] lg:gap-14">
@@ -77,18 +131,42 @@ function Hero(): ReactNode {
           </p>
 
           <div className="mt-8 flex flex-wrap items-center gap-3">
-            <Link
-              to="/login"
-              className="inline-flex min-h-11 items-center rounded-md bg-accent px-5 text-sm font-medium text-on-accent transition-colors hover:bg-accent-hover"
-            >
-              Masuk ke sistem
-            </Link>
-            <Link
-              to="/register"
-              className="inline-flex min-h-11 items-center rounded-md border border-line-strong px-5 text-sm font-medium text-body transition-colors hover:bg-surface-sunken"
-            >
-              Daftar akun
-            </Link>
+            {user !== null ? (
+              <Link
+                to="/welcome"
+                className="inline-flex min-h-11 items-center gap-2 rounded-lg bg-accent px-5 text-sm font-medium text-on-accent transition-colors hover:bg-accent-hover shadow-sm"
+              >
+                <span>Buka Dashboard ({user.displayName})</span>
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <polyline points="9 18 15 12 9 6" />
+                </svg>
+              </Link>
+            ) : (
+              <>
+                <Link
+                  to="/login"
+                  className="inline-flex min-h-11 items-center rounded-lg bg-accent px-5 text-sm font-medium text-on-accent transition-colors hover:bg-accent-hover shadow-sm"
+                >
+                  Masuk ke sistem
+                </Link>
+                <Link
+                  to="/register"
+                  className="inline-flex min-h-11 items-center rounded-lg border border-line-strong bg-surface px-5 text-sm font-medium text-body transition-colors hover:bg-surface-sunken"
+                >
+                  Daftar akun
+                </Link>
+              </>
+            )}
           </div>
 
           <p className="mt-4 text-xs text-subtle">
@@ -290,28 +368,57 @@ function WhatItRefuses(): ReactNode {
 }
 
 function ClosingCta(): ReactNode {
+  const { user } = useSession();
+
   return (
     <section className="mx-auto max-w-6xl px-5 py-16 sm:px-8 sm:py-20">
       <div className="flex flex-col items-start justify-between gap-6 rounded-xl border border-line bg-surface p-6 sm:flex-row sm:items-center sm:p-8">
         <div>
-          <h2 className="text-xl font-semibold tracking-tight text-body">Sudah punya akun?</h2>
+          <h2 className="text-xl font-semibold tracking-tight text-body">
+            {user !== null ? `Masuk sebagai ${user.displayName}` : "Sudah punya akun?"}
+          </h2>
           <p className="mt-1.5 text-sm text-muted">
-            Masuk dengan User ID dan kata sandi Anda. Admin dan operator akan diminta
-            mendaftarkan 2FA pada login pertama.
+            {user !== null
+              ? `Anda saat ini terotentikasi sebagai ${USER_ROLE_LABELS[user.role]}. Klik tombol di sebelah kanan untuk melanjutkan pekerjaan Anda di dashboard.`
+              : "Masuk dengan User ID dan kata sandi Anda. Admin dan operator akan diminta mendaftarkan 2FA pada login pertama."}
           </p>
         </div>
-        <Link
-          to="/login"
-          className="inline-flex min-h-11 flex-none items-center rounded-md bg-accent px-5 text-sm font-medium text-on-accent transition-colors hover:bg-accent-hover"
-        >
-          Masuk ke sistem
-        </Link>
+        {user !== null ? (
+          <Link
+            to="/welcome"
+            className="inline-flex min-h-11 flex-none items-center gap-2 rounded-lg bg-accent px-5 text-sm font-medium text-on-accent transition-colors hover:bg-accent-hover shadow-sm"
+          >
+            <span>Buka Dashboard</span>
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <polyline points="9 18 15 12 9 6" />
+            </svg>
+          </Link>
+        ) : (
+          <Link
+            to="/login"
+            className="inline-flex min-h-11 flex-none items-center rounded-lg bg-accent px-5 text-sm font-medium text-on-accent transition-colors hover:bg-accent-hover shadow-sm"
+          >
+            Masuk ke sistem
+          </Link>
+        )}
       </div>
     </section>
   );
 }
 
 function SiteFooter(): ReactNode {
+  const { user } = useSession();
+
   return (
     <footer className="border-t border-line bg-surface">
       <div className="mx-auto max-w-6xl px-5 py-10 sm:px-8">
@@ -321,12 +428,20 @@ function SiteFooter(): ReactNode {
             <p className="mt-1 text-xs text-muted">Sistem Data Ban Bus &amp; Truk</p>
           </div>
           <nav aria-label="Tautan kaki halaman" className="flex flex-wrap gap-x-5 gap-y-2 text-sm">
-            <Link to="/login" className="text-muted hover:text-body">
-              Masuk
-            </Link>
-            <Link to="/register" className="text-muted hover:text-body">
-              Daftar
-            </Link>
+            {user !== null ? (
+              <Link to="/welcome" className="text-muted hover:text-body">
+                Dashboard ({user.displayName})
+              </Link>
+            ) : (
+              <>
+                <Link to="/login" className="text-muted hover:text-body">
+                  Masuk
+                </Link>
+                <Link to="/register" className="text-muted hover:text-body">
+                  Daftar
+                </Link>
+              </>
+            )}
           </nav>
         </div>
 
