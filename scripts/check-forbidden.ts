@@ -63,8 +63,26 @@ for (const file of sourceFiles) {
     });
 }
 
+// ── G-13 ──────────────────────────────────────────────────────────────────────────
+// Only the client is scanned: the CSP governs what the browser renders.
+const g13: string[] = [];
+for (const file of sourceFiles) {
+  if (!file.includes("apps/web/")) continue;
+  stripComments(read(file))
+    .split("\n")
+    .forEach((line, index) => {
+      if (/\bstyle=\{/.test(line)) {
+        g13.push(
+          `${file}:${index + 1} — inline style attribute; the CSP drops it (PLAN/13 §7). ` +
+            `Use a Tailwind class, quantising the value if it is computed.`,
+        );
+      }
+    });
+}
+
 process.stdout.write(`Forbidden-pattern gates — ${sourceFiles.length} files scanned\n`);
 report("G-03 alert/confirm/prompt", g03);
 report("G-10 demo panel & hardcoded credentials", g10);
+report("G-13 inline style attributes", g13);
 
-if (g03.length > 0 || g10.length > 0) process.exit(1);
+if (g03.length > 0 || g10.length > 0 || g13.length > 0) process.exit(1);
