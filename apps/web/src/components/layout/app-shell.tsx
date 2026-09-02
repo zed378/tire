@@ -33,8 +33,8 @@ export function AppShell({ children }: { children: ReactNode }): ReactNode {
     <div className="flex min-h-dvh bg-slate-50 dark:bg-slate-950 transition-colors duration-200">
       <Sidebar />
 
-      <div className="flex flex-1 flex-col">
-        <header className="sticky top-0 z-30 border-b border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 transition-colors duration-200">
+      <div className="flex flex-1 flex-col min-h-dvh">
+        <header className="sticky top-0 z-40 border-b border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 transition-colors duration-200 flex-shrink-0">
           <div className="flex h-14 items-center justify-between px-4">
             <button
               type="button"

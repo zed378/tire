@@ -93,8 +93,8 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }): ReactNode 
   );
 
   return (
-    <aside className="flex h-dvh w-full flex-col border-r border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 md:w-64 md:border-r transition-colors duration-200">
-      <div className="flex h-16 items-center justify-between gap-2 px-4 border-b border-slate-200 dark:border-slate-800">
+    <aside className="hidden md:flex h-dvh w-64 flex-col border-r border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 transition-colors duration-200 flex-shrink-0">
+      <div className="flex h-16 items-center justify-between gap-2 px-4 border-b border-slate-200 dark:border-slate-800 flex-shrink-0">
         <div className="flex items-center gap-2">
           <div className="flex h-8 w-8 items-center justify-center rounded-md bg-brand-600 text-white">
             <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
@@ -106,16 +106,6 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }): ReactNode 
             <span className="text-xs text-slate-500 dark:text-slate-400">Tire Data System</span>
           </div>
         </div>
-        <button
-          type="button"
-          className="rounded-md p-2 text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800 md:hidden"
-          aria-label="Tutup menu"
-          onClick={onNavigate}
-        >
-          <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-            <path d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" />
-          </svg>
-        </button>
       </div>
 
       <nav className="flex-1 overflow-y-auto px-3 py-4">
@@ -142,7 +132,7 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }): ReactNode 
         </ul>
       </nav>
 
-      <div className="border-t border-slate-200 dark:border-slate-800 p-3">
+      <div className="border-t border-slate-200 dark:border-slate-800 p-3 flex-shrink-0">
         <div className="mb-2 rounded-md bg-slate-50 dark:bg-slate-950 p-2 border dark:border-slate-800">
           <p className="text-sm font-medium text-slate-900 dark:text-slate-100">{user?.displayName}</p>
           <p className="text-xs text-slate-500 dark:text-slate-400">
