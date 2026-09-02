@@ -162,7 +162,7 @@ export async function seedCsvProd(options: SeedCsvProdOptions = {}): Promise<voi
   }
 
   const prisma = options.prisma ?? new PrismaClient();
-  const requirementsDir = options.requirementsDir ?? resolve(process.cwd(), "../../requirements");
+  const requirementsDir = options.requirementsDir ?? resolve(process.cwd(), "requirements");
 
   try {
     // Check if CSV files exist
