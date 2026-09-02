@@ -226,7 +226,8 @@ function Numbers(): ReactNode {
         <p className="text-[11px] font-medium uppercase tracking-wider text-subtle">
           Aturan yang ditegakkan sistem
         </p>
-        <dl className="mt-5 grid grid-cols-2 gap-6 sm:grid-cols-4">
+        <Reveal>
+          <dl className="grid grid-cols-2 gap-6 sm:grid-cols-4">
           {NUMBERS.map((item) => (
             <div key={item.label}>
               <dt className="sr-only">{item.label}</dt>
@@ -239,8 +240,9 @@ function Numbers(): ReactNode {
                 </span>
               </dd>
             </div>
-          ))}
-        </dl>
+            ))}
+          </dl>
+        </Reveal>
       </div>
     </section>
   );
@@ -270,7 +272,7 @@ function TheProblem(): ReactNode {
   return (
     <section id="masalah" className="border-b border-line bg-canvas">
       <div className="mx-auto max-w-6xl px-5 py-16 sm:px-8 sm:py-20">
-        <div className="max-w-2xl">
+        <Reveal className="max-w-2xl">
           <h2 className="text-2xl font-semibold tracking-tight text-body sm:text-3xl">
             Dibangun dari daftar hal yang dulu rusak
           </h2>
@@ -278,18 +280,20 @@ function TheProblem(): ReactNode {
             Sistem sebelumnya berjalan di atas spreadsheet dan formulir. Ia bekerja, sampai
             volumenya naik. Empat di antaranya yang paling sering menggigit:
           </p>
-        </div>
+        </Reveal>
 
-        <ul className="mt-10 grid gap-px overflow-hidden rounded-xl border border-line bg-line sm:grid-cols-2">
+        <Reveal delay={1} className="mt-10">
+          <ul className="grid gap-px overflow-hidden rounded-xl border border-line bg-line sm:grid-cols-2">
           {PROBLEMS.map((item) => (
             <li key={item.before} className="bg-surface p-5 sm:p-6">
               <p className="text-sm leading-relaxed text-subtle line-through decoration-danger/60">
                 {item.before}
               </p>
               <p className="mt-3 text-sm font-medium leading-relaxed text-body">{item.after}</p>
-            </li>
-          ))}
-        </ul>
+              </li>
+            ))}
+          </ul>
+        </Reveal>
       </div>
     </section>
   );
@@ -380,7 +384,8 @@ function WhatItRefuses(): ReactNode {
           kedisiplinan pengisi formulir.
         </p>
 
-        <ul className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <Reveal delay={1} className="mt-8">
+          <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {REFUSALS.map((item) => (
             <li
               key={item}
@@ -388,8 +393,9 @@ function WhatItRefuses(): ReactNode {
             >
               {item}
             </li>
-          ))}
-        </ul>
+            ))}
+          </ul>
+        </Reveal>
       </div>
     </section>
   );

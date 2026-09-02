@@ -22,15 +22,13 @@ export function Reveal({
   children,
   className,
   delay,
-  as: Tag = "div",
 }: {
   children: ReactNode;
   className?: string;
   /** One of a fixed set of steps — a computed delay would need a style attribute. */
   delay?: 1 | 2 | 3 | 4;
-  as?: "div" | "section" | "li";
 }): ReactNode {
-  const ref = useRef<HTMLElement>(null);
+  const ref = useRef<HTMLDivElement>(null);
   const [shown, setShown] = useState(false);
 
   useEffect(() => {
@@ -62,12 +60,16 @@ export function Reveal({
   }, [shown]);
 
   return (
-    <Tag
-      ref={ref as React.RefObject<HTMLDivElement & HTMLElement>}
-      className={cn(shown && "animate-fade-up", shown && delay !== undefined && DELAY[delay], className)}
+    <div
+      ref={ref}
+      className={cn(
+        shown && "animate-fade-up",
+        shown && delay !== undefined && DELAY[delay],
+        className,
+      )}
     >
       {children}
-    </Tag>
+    </div>
   );
 }
 
