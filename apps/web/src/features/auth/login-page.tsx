@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Navigate, useLocation, useNavigate } from "react-router-dom";
+import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
 import { loginSchema, type LoginInput } from "@c26/contracts";
 import { isApiError } from "../../lib/api-client.ts";
 import { useSession } from "../../lib/session.tsx";
@@ -88,8 +88,8 @@ export function LoginPage(): ReactNode {
 
       {/* Top Navigation Header */}
       <header className="relative z-10 flex items-center justify-between border-b border-slate-200/80 bg-white/70 dark:border-slate-800/80 dark:bg-slate-950/60 px-4 sm:px-6 py-3.5 sm:py-4 backdrop-blur-md transition-colors duration-200">
-        <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-tr from-brand-600 via-cyan-500 to-indigo-500 p-0.5 shadow-lg shadow-brand-500/20">
+        <Link to="/" className="flex items-center gap-3 group">
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-tr from-brand-600 via-cyan-500 to-indigo-500 p-0.5 shadow-lg shadow-brand-500/20 group-hover:scale-105 transition-transform">
             <div className="flex h-full w-full items-center justify-center rounded-[10px] bg-white dark:bg-slate-950">
               <svg className="h-5 w-5 text-brand-600 dark:text-cyan-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="12" cy="12" r="9" strokeDasharray="3 3" className="animate-spin-very-slow" />
@@ -101,12 +101,22 @@ export function LoginPage(): ReactNode {
           <span className="text-base font-bold tracking-wider text-slate-900 dark:text-white">
             COMMERCIAL<span className="text-brand-600 dark:text-cyan-400">2026</span>
           </span>
-        </div>
+        </Link>
 
         <div className="flex items-center gap-2 sm:gap-3">
-          <div className="flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2.5 sm:px-3 py-1 text-[11px] sm:text-xs font-medium text-emerald-600 dark:text-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.15)]">
+          <Link to="/">
+            <Button variant="ghost" size="sm" className="gap-1.5 text-xs text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white">
+              <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+                <polyline points="9 22 9 12 15 12 15 22" />
+              </svg>
+              <span>Beranda</span>
+            </Button>
+          </Link>
+
+          <div className="hidden sm:flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2.5 sm:px-3 py-1 text-[11px] font-medium text-emerald-600 dark:text-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.15)]">
             <span className="h-2 w-2 rounded-full bg-emerald-500 dark:bg-emerald-400 animate-pulse" />
-            <span className="hidden xs:inline sm:inline">SYSTEM ONLINE</span>
+            <span>SYSTEM ONLINE</span>
           </div>
 
           <ThemeToggle />
@@ -199,33 +209,33 @@ export function LoginPage(): ReactNode {
             >
               {error !== null ? <ErrorSummary error={error} onDismiss={() => setError(null)} /> : null}
 
-               <Field label="User ID" htmlFor="username" error={errors.username?.message} required>
-                 <Input
-                   id="username"
-                   autoComplete="username"
-                   autoCapitalize="none"
-                   autoFocus
-                   invalid={errors.username !== undefined}
-                   className="border-slate-300 bg-white text-slate-900 placeholder:text-slate-400 focus:border-brand-500 focus:ring-brand-500/30 dark:border-slate-700 dark:bg-slate-950/80 dark:text-white dark:placeholder:text-slate-500 dark:focus:border-cyan-500 dark:focus:ring-cyan-500/30"
-                   {...register("username")}
-                 />
-               </Field>
+              <Field label="User ID" htmlFor="username" error={errors.username?.message} required>
+                <Input
+                  id="username"
+                  autoComplete="username"
+                  autoCapitalize="none"
+                  autoFocus
+                  invalid={errors.username !== undefined}
+                  className="border-slate-300 bg-white text-slate-900 placeholder:text-slate-400 focus:border-brand-500 focus:ring-brand-500/30 dark:border-slate-700 dark:bg-slate-950/80 dark:text-white dark:placeholder:text-slate-500 dark:focus:border-cyan-500 dark:focus:ring-cyan-500/30"
+                  {...register("username")}
+                />
+              </Field>
 
-               <Field label="Password" htmlFor="password" error={errors.password?.message} required>
-                 <div className="relative">
-                   <Input
-                     id="password"
-                     type={showPassword ? "text" : "password"}
-                     autoComplete="current-password"
-                     invalid={errors.password !== undefined}
-                     className="pr-10 border-slate-300 bg-white text-slate-900 placeholder:text-slate-400 focus:border-brand-500 focus:ring-brand-500/30 dark:border-slate-700 dark:bg-slate-950/80 dark:text-white dark:placeholder:text-slate-500 dark:focus:border-cyan-500 dark:focus:ring-cyan-500/30"
-                     {...register("password")}
-                   />
-                   <span
-                     onClick={() => setShowPassword((prev) => !prev)}
-                     className="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer text-slate-400 hover:text-slate-200 dark:text-slate-500 dark:hover:text-slate-300 transition-colors"
-                     title={showPassword ? "Sembunyikan password" : "Tampilkan password"}
-                   >
+              <Field label="Password" htmlFor="password" error={errors.password?.message} required>
+                <div className="relative">
+                  <Input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    autoComplete="current-password"
+                    invalid={errors.password !== undefined}
+                    className="pr-10 border-slate-300 bg-white text-slate-900 placeholder:text-slate-400 focus:border-brand-500 focus:ring-brand-500/30 dark:border-slate-700 dark:bg-slate-950/80 dark:text-white dark:placeholder:text-slate-500 dark:focus:border-cyan-500 dark:focus:ring-cyan-500/30"
+                    {...register("password")}
+                  />
+                  <span
+                    onClick={() => setShowPassword((prev) => !prev)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 transition-colors"
+                    title={showPassword ? "Sembunyikan password" : "Tampilkan password"}
+                  >
                     {showPassword ? (
                       <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                         <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
@@ -241,41 +251,41 @@ export function LoginPage(): ReactNode {
                 </div>
               </Field>
 
-               {needsTotp ? (
-                 useRecoveryCode ? (
-                   <Field
-                     label="Kode pemulihan"
-                     htmlFor="recoveryCode"
-                     error={errors.recoveryCode?.message}
-                     hint="Gunakan salah satu kode sekali pakai yang Anda simpan saat mendaftarkan autentikasi dua faktor."
-                   >
-                     <Input
-                       id="recoveryCode"
-                       autoComplete="one-time-code"
-                       invalid={errors.recoveryCode !== undefined}
-                       className="border-slate-800 dark:border-slate-700 bg-slate-950/80 dark:bg-slate-900/80 text-white dark:text-slate-100 placeholder:text-slate-500 dark:placeholder:text-slate-400 focus:border-cyan-500 focus:ring-cyan-500/30"
-                       {...register("recoveryCode")}
-                     />
-                   </Field>
-                 ) : (
-                   <Field
-                     label="Kode autentikasi"
-                     htmlFor="totpCode"
-                     error={errors.totpCode?.message}
-                     hint="Enam angka dari aplikasi authenticator Anda. Kode ini bekerja tanpa sinyal."
-                   >
-                     <Input
-                       id="totpCode"
-                       inputMode="numeric"
-                       autoComplete="one-time-code"
-                       maxLength={6}
-                       invalid={errors.totpCode !== undefined}
-                       className="border-slate-800 dark:border-slate-700 bg-slate-950/80 dark:bg-slate-900/80 text-center font-mono text-lg tracking-widest text-white dark:text-slate-100 placeholder:text-slate-500 dark:placeholder:text-slate-400 focus:border-cyan-500 focus:ring-cyan-500/30"
-                       {...register("totpCode")}
-                     />
-                   </Field>
-                 )
-               ) : null}
+              {needsTotp ? (
+                useRecoveryCode ? (
+                  <Field
+                    label="Kode pemulihan"
+                    htmlFor="recoveryCode"
+                    error={errors.recoveryCode?.message}
+                    hint="Gunakan salah satu kode sekali pakai yang Anda simpan saat mendaftarkan autentikasi dua faktor."
+                  >
+                    <Input
+                      id="recoveryCode"
+                      autoComplete="one-time-code"
+                      invalid={errors.recoveryCode !== undefined}
+                      className="border-slate-800 dark:border-slate-700 bg-slate-950/80 dark:bg-slate-900/80 text-white dark:text-slate-100 placeholder:text-slate-500 dark:placeholder:text-slate-400 focus:border-cyan-500 focus:ring-cyan-500/30"
+                      {...register("recoveryCode")}
+                    />
+                  </Field>
+                ) : (
+                  <Field
+                    label="Kode autentikasi"
+                    htmlFor="totpCode"
+                    error={errors.totpCode?.message}
+                    hint="Enam angka dari aplikasi authenticator Anda. Kode ini bekerja tanpa sinyal."
+                  >
+                    <Input
+                      id="totpCode"
+                      inputMode="numeric"
+                      autoComplete="one-time-code"
+                      maxLength={6}
+                      invalid={errors.totpCode !== undefined}
+                      className="border-slate-800 dark:border-slate-700 bg-slate-950/80 dark:bg-slate-900/80 text-center font-mono text-lg tracking-widest text-white dark:text-slate-100 placeholder:text-slate-500 dark:placeholder:text-slate-400 focus:border-cyan-500 focus:ring-cyan-500/30"
+                      {...register("totpCode")}
+                    />
+                  </Field>
+                )
+              ) : null}
 
               <Button
                 type="submit"
@@ -298,16 +308,43 @@ export function LoginPage(): ReactNode {
               ) : null}
             </form>
 
-             <p className="mt-5 text-center text-xs text-slate-400 dark:text-slate-500">
-               Lupa password? Hubungi admin untuk mengatur ulang.
-             </p>
+            {/* Redirect to Register Page */}
+            <div className="mt-5 border-t border-slate-200/80 dark:border-slate-800/80 pt-4 text-center">
+              <p className="text-xs text-slate-600 dark:text-slate-400">
+                Belum memiliki akun?{" "}
+                <Link
+                  to="/register"
+                  className="font-semibold text-brand-600 hover:text-brand-700 dark:text-cyan-400 dark:hover:text-cyan-300 transition-colors underline-offset-2 hover:underline"
+                >
+                  Daftar akun baru di sini →
+                </Link>
+              </p>
+            </div>
+
+            <p className="mt-3 text-center text-[11px] text-slate-400 dark:text-slate-500">
+              Lupa password? Hubungi admin untuk mengatur ulang.
+            </p>
+          </div>
+
+          {/* Back to Home Button under the form */}
+          <div className="mt-4 text-center">
+            <Link
+              to="/"
+              className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 transition-colors"
+            >
+              <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="19" y1="12" x2="5" y2="12" />
+                <polyline points="12 19 5 12 12 5" />
+              </svg>
+              Kembali ke Beranda
+            </Link>
           </div>
         </div>
 
       </main>
 
       {/* Footer */}
-      <footer className="relative z-10 border-t border-slate-900 bg-slate-950/80 px-6 py-3 text-center text-xs text-slate-400 backdrop-blur-md">
+      <footer className="relative z-10 border-t border-slate-200 dark:border-slate-900 bg-white/70 dark:bg-slate-950/80 px-6 py-3 text-center text-xs text-slate-500 dark:text-slate-400 backdrop-blur-md">
         Commercial 2026 &copy; Sistem Pengolahan Data Ban Bus &amp; Truk. All rights reserved.
       </footer>
     </div>

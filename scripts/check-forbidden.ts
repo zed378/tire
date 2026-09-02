@@ -6,7 +6,8 @@
  *        re-enter the new system.
  * G-10 — demo login panels and hardcoded credentials must return zero hits.
  *        Closes D-16: three buttons that logged in without any credentials.
- * G-13 — no inline `style` attributes in the client. The CSP is `style-src
+ * G-13 — no inline `style` attributes, and no assets loaded from another
+ *        origin, in the client. The CSP is `style-src
  *        'self'` with no `unsafe-inline` (PLAN/13 §7), so an inline style is
  *        silently dropped by the browser. It works perfectly in `vite dev`,
  *        where no CSP header is set, and fails only in production — which is
@@ -71,6 +72,17 @@ for (const file of sourceFiles) {
   stripComments(read(file))
     .split("\n")
     .forEach((line, index) => {
+      // `img-src 'self' …` — an asset on another origin is refused by the
+      // browser, and again only where the CSP header is set. Four landing-page
+      // photographs were hot-linked to images.unsplash.com and had been broken
+      // in production the whole time.
+      const external = /(?:src|srcSet|href)=["'{`]{1,2}https?:\/\//.exec(line);
+      if (external !== null && !/rel=["']?(?:license|noopener|noreferrer)/.test(line)) {
+        g13.push(
+          `${file}:${index + 1} — asset loaded from another origin; the CSP refuses it ` +
+            `(PLAN/13 §7). Download it into apps/web/public/ and reference it by path.`,
+        );
+      }
       if (/\bstyle=\{/.test(line)) {
         g13.push(
           `${file}:${index + 1} — inline style attribute; the CSP drops it (PLAN/13 §7). ` +
@@ -83,6 +95,6 @@ for (const file of sourceFiles) {
 process.stdout.write(`Forbidden-pattern gates — ${sourceFiles.length} files scanned\n`);
 report("G-03 alert/confirm/prompt", g03);
 report("G-10 demo panel & hardcoded credentials", g10);
-report("G-13 inline style attributes", g13);
+report("G-13 CSP: inline styles & cross-origin assets", g13);
 
 if (g03.length > 0 || g10.length > 0 || g13.length > 0) process.exit(1);

@@ -48,11 +48,6 @@ export function RegisterPage(): ReactNode {
     setError(null);
 
     try {
-      // Through the shared client, not a bare `fetch`. Hand-parsing the
-      // response here re-implemented the PLAN/05 §2 envelope and lost what
-      // comes with it: the Indonesian message the server already composed, the
-      // requestId a 500 must show (§5.2 rule 7), and the SERVICE_UNAVAILABLE
-      // banner a network failure has to become rather than a silent stop.
       await api.post("/api/auth/register", values);
 
       // Redirect to welcome dashboard upon registration
@@ -88,9 +83,19 @@ export function RegisterPage(): ReactNode {
         </Link>
 
         <div className="flex items-center gap-2 sm:gap-3">
-          <div className="flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2.5 sm:px-3 py-1 text-[11px] sm:text-xs font-medium text-emerald-600 dark:text-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.15)]">
+          <Link to="/">
+            <Button variant="ghost" size="sm" className="gap-1.5 text-xs text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white">
+              <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+                <polyline points="9 22 9 12 15 12 15 22" />
+              </svg>
+              <span>Beranda</span>
+            </Button>
+          </Link>
+
+          <div className="hidden sm:flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2.5 sm:px-3 py-1 text-[11px] font-medium text-emerald-600 dark:text-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.15)]">
             <span className="h-2 w-2 rounded-full bg-emerald-500 dark:bg-emerald-400 animate-pulse" />
-            <span className="hidden xs:inline sm:inline">SYSTEM ONLINE</span>
+            <span>SYSTEM ONLINE</span>
           </div>
 
           <ThemeToggle />
@@ -181,7 +186,7 @@ export function RegisterPage(): ReactNode {
             <form onSubmit={(event) => void onSubmit(event)} noValidate className="space-y-3.5">
               {error !== null ? (
                 <Banner tone="error" onDismiss={() => setError(null)}>
-                  {error instanceof Error ? error.message : isApiError(error) ? error.envelope.message : "Pendaftaran gagal. Silakan coba lagi."}
+                  {isApiError(error) ? error.envelope.message : error instanceof Error ? error.message : "Pendaftaran gagal. Silakan coba lagi."}
                 </Banner>
               ) : null}
 
@@ -302,6 +307,20 @@ export function RegisterPage(): ReactNode {
                 </Link>
               </p>
             </div>
+          </div>
+
+          {/* Back to Home Button under the form */}
+          <div className="mt-4 text-center">
+            <Link
+              to="/"
+              className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 transition-colors"
+            >
+              <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="19" y1="12" x2="5" y2="12" />
+                <polyline points="12 19 5 12 12 5" />
+              </svg>
+              Kembali ke Beranda
+            </Link>
           </div>
         </div>
 
