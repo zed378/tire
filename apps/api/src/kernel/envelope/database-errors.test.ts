@@ -4,19 +4,19 @@ import { translateDatabaseError } from './database-errors.ts';
 import { AppError } from './app-error.ts';
 
 describe('translateDatabaseError', () => {
+  /**
+   * A real Prisma error, not a shaped object.
+   *
+   * `translateDatabaseError` dispatches on `instanceof`, so an object literal
+   * cast through `unknown` fails every branch and the function returns null.
+   * Nine tests in this file asserted against that null and failed — invisibly,
+   * because a typecheck error elsewhere kept the suite from running at all.
+   */
   const makePrismaError = (
     code: string,
     meta: Record<string, unknown> = {},
-  ): Prisma.PrismaClientKnownRequestError => {
-    return {
-      code,
-      meta,
-      clientVersion: '0.0.0',
-      message: '',
-      stack: '',
-      cause: undefined,
-    } as unknown as Prisma.PrismaClientKnownRequestError;
-  };
+  ): Prisma.PrismaClientKnownRequestError =>
+    new Prisma.PrismaClientKnownRequestError('', { code, clientVersion: '0.0.0', meta });
 
   it('returns null for a non-Prisma error', () => {
     expect(translateDatabaseError(new Error('random error'))).toBeNull();
@@ -104,13 +104,13 @@ describe('translateDatabaseError', () => {
   });
 
   it('translates PrismaClientInitializationError to SERVICE_UNAVAILABLE', () => {
-    const err = new Prisma.PrismaClientInitializationError('connection refused', {});
+    const err = new Prisma.PrismaClientInitializationError('connection refused', '0.0.0');
     const result = translateDatabaseError(err);
     expect(result?.code).toBe('SERVICE_UNAVAILABLE');
   });
 
   it('translates PrismaClientRustPanicError to SERVICE_UNAVAILABLE', () => {
-    const err = new Prisma.PrismaClientRustPanicError('rust panic', {});
+    const err = new Prisma.PrismaClientRustPanicError('rust panic', '0.0.0');
     const result = translateDatabaseError(err);
     expect(result?.code).toBe('SERVICE_UNAVAILABLE');
   });
