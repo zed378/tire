@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { registerSchema, type RegisterInput } from "@c26/contracts";
-import { isApiError } from "../../lib/api-client.ts";
+import { api, isApiError } from "../../lib/api-client.ts";
 import { Banner } from "../../components/ui/feedback.tsx";
 import { Button, Field, Input } from "../../components/ui/primitives.tsx";
 import { ThemeToggle } from "../../components/ui/theme-toggle.tsx";
@@ -48,21 +48,12 @@ export function RegisterPage(): ReactNode {
     setError(null);
 
     try {
-      const response = await fetch("/api/auth/register", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify(values),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        if (data.fieldErrors && Array.isArray(data.fieldErrors)) {
-          const firstErr = data.fieldErrors[0];
-          throw new Error(firstErr.message || "Validasi gagal.");
-        }
-        throw new Error(data.message || "Pendaftaran gagal diproses.");
-      }
+      // Through the shared client, not a bare `fetch`. Hand-parsing the
+      // response here re-implemented the PLAN/05 §2 envelope and lost what
+      // comes with it: the Indonesian message the server already composed, the
+      // requestId a 500 must show (§5.2 rule 7), and the SERVICE_UNAVAILABLE
+      // banner a network failure has to become rather than a silent stop.
+      await api.post("/api/auth/register", values);
 
       // Redirect to welcome dashboard upon registration
       void navigate("/welcome", { replace: true });
