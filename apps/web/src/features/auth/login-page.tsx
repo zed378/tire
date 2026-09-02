@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
@@ -8,7 +8,9 @@ import { useSession } from "../../lib/session.tsx";
 import { Banner } from "../../components/ui/feedback.tsx";
 import { HERO_IMAGE } from "../landing/image-credits.ts";
 import { AUTH_FIELD, AuthLayout } from "./auth-layout.tsx";
+import { PasswordField } from "./auth-fields.tsx";
 import { Button, Field, Input } from "../../components/ui/primitives.tsx";
+import { formatDate } from "../../lib/format.ts";
 
 /**
  * Login (PLAN/04 §4).
@@ -39,8 +41,25 @@ export function LoginPage(): ReactNode {
     setFocus,
   } = useForm<LoginInput>({
     resolver: zodResolver(loginSchema),
-    mode: "onSubmit",
+    // On blur, not on the first keystroke: telling someone their User ID is
+    // too short while they are still typing the third character is noise.
+    // `reValidateMode` keeps a corrected field updating live once it has
+    // already failed once, which is the moment live feedback is actually
+    // wanted (brief §30).
+    mode: "onBlur",
+    reValidateMode: "onChange",
   });
+
+  /*
+   * A server error moves focus to itself. Without this the message is
+   * announced but the reader stays wherever they were, which on a failed
+   * sign-in is usually the password field — so a screen reader user hears that
+   * something went wrong and has no way to find out what.
+   */
+  const errorRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (error !== null) errorRef.current?.focus();
+  }, [error]);
 
   if (user !== null) {
     const from = (location.state as { from?: string } | null)?.from;
@@ -92,10 +111,7 @@ export function LoginPage(): ReactNode {
           : "Gunakan User ID dan kata sandi yang diberikan admin."
       }
       image={HERO_IMAGE}
-      imageCaption={[
-        { label: "SN2026-00001 · Pass QC", detail: "B 1234 ABC · Probolinggo, Jawa Timur" },
-        { label: "Steer 1 Kanan", detail: "6 dari 6 foto terunggah" },
-      ]}
+      note={`${formatDate(new Date())} WIB`}
       footer={
         <>
           <p className="text-xs text-muted">
@@ -113,67 +129,35 @@ export function LoginPage(): ReactNode {
         </>
       }
     >
-      <form onSubmit={(event) => void onSubmit(event)} noValidate className="space-y-4">
-        {error !== null ? <ErrorSummary error={error} onDismiss={() => setError(null)} /> : null}
+      <form onSubmit={(event) => void onSubmit(event)} noValidate className="auth-stagger space-y-4">
+        {error !== null ? (
+          <div ref={errorRef} tabIndex={-1} className="outline-none">
+            <ErrorSummary error={error} onDismiss={() => setError(null)} />
+          </div>
+        ) : null}
 
         <Field label="User ID" htmlFor="username" error={errors.username?.message} required>
-          <Input
-            id="username"
-            autoComplete="username"
-            autoCapitalize="none"
-            autoFocus
-            invalid={errors.username !== undefined}
-            className={AUTH_FIELD}
-            {...register("username")}
-          />
+          <div className="auth-field">
+            <Input
+              id="username"
+              autoComplete="username"
+              autoCapitalize="none"
+              autoFocus
+              invalid={errors.username !== undefined}
+              className={AUTH_FIELD}
+              {...register("username")}
+            />
+          </div>
         </Field>
 
         <Field label="Password" htmlFor="password" error={errors.password?.message} required>
-          <div className="relative">
-            <Input
-              id="password"
-              type={showPassword ? "text" : "password"}
-              autoComplete="current-password"
-              invalid={errors.password !== undefined}
-              className={`${AUTH_FIELD} pr-11`}
-              {...register("password")}
-            />
-            <button
-              type="button"
-              onClick={() => {
-                setShowPassword((prev) => !prev);
-              }}
-              aria-pressed={showPassword}
-              aria-label={showPassword ? "Sembunyikan password" : "Tampilkan password"}
-              className="absolute right-1 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-lg text-subtle transition-colors hover:text-body"
-            >
-              {showPassword ? (
-                <svg
-                  className="h-4 w-4"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  aria-hidden="true"
-                >
-                  <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
-                  <line x1="1" y1="1" x2="23" y2="23" />
-                </svg>
-              ) : (
-                <svg
-                  className="h-4 w-4"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  aria-hidden="true"
-                >
-                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                  <circle cx="12" cy="12" r="3" />
-                </svg>
-              )}
-            </button>
-          </div>
+          <PasswordField
+            id="password"
+            autoComplete="current-password"
+            invalid={errors.password !== undefined}
+            className={AUTH_FIELD}
+            {...register("password")}
+          />
         </Field>
 
         {needsTotp ? (
@@ -184,13 +168,15 @@ export function LoginPage(): ReactNode {
               error={errors.recoveryCode?.message}
               hint="Gunakan salah satu kode sekali pakai yang Anda simpan saat mendaftarkan autentikasi dua faktor."
             >
-              <Input
-                id="recoveryCode"
-                autoComplete="one-time-code"
-                invalid={errors.recoveryCode !== undefined}
-                className={`${AUTH_FIELD} text-center font-mono tracking-widest`}
-                {...register("recoveryCode")}
-              />
+              <div className="auth-field">
+                <Input
+                  id="recoveryCode"
+                  autoComplete="one-time-code"
+                  invalid={errors.recoveryCode !== undefined}
+                  className={`${AUTH_FIELD} text-center font-data tracking-widest`}
+                  {...register("recoveryCode")}
+                />
+              </div>
             </Field>
           ) : (
             <Field
@@ -199,22 +185,24 @@ export function LoginPage(): ReactNode {
               error={errors.totpCode?.message}
               hint="Enam angka dari aplikasi authenticator Anda. Kode ini bekerja tanpa sinyal."
             >
-              <Input
-                id="totpCode"
-                inputMode="numeric"
-                autoComplete="one-time-code"
-                maxLength={6}
-                invalid={errors.totpCode !== undefined}
-                className={`${AUTH_FIELD} text-center font-mono text-lg tracking-widest`}
-                {...register("totpCode")}
-              />
+              <div className="auth-field">
+                <Input
+                  id="totpCode"
+                  inputMode="numeric"
+                  autoComplete="one-time-code"
+                  maxLength={6}
+                  invalid={errors.totpCode !== undefined}
+                  className={`${AUTH_FIELD} text-center font-data text-lg tracking-widest`}
+                  {...register("totpCode")}
+                />
+              </div>
             </Field>
           )
         ) : null}
 
         <Button
           type="submit"
-          className="w-full rounded-xl"
+          className="w-full"
           loading={isSubmitting}
           loadingText="Memproses…"
         >
