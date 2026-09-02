@@ -14,6 +14,7 @@ import { endOfDayIso, formatDate, formatDateTime, formatNumber, startOfDayIso } 
 import { Banner, ErrorBanner, useToast } from "../../components/ui/feedback.tsx";
 import { Button, Card, Field, Input, Select, Spinner } from "../../components/ui/primitives.tsx";
 import { LineChart } from "../../components/ui/line-chart.tsx";
+import { Pagination } from "../../components/ui/pagination.tsx";
 
 /**
  * The regional dashboard and export (F-11, PLAN/08 F5).
@@ -23,7 +24,10 @@ import { LineChart } from "../../components/ui/line-chart.tsx";
  * and "the numbers match a hand count of the test data" is the acceptance
  * criterion for this phase.
  */
+const TABLE_PER_PAGE = 25;
+
 export function ReportsPage(): ReactNode {
+  const [tablePage, setTablePage] = useState(1);
   const [provinceId, setProvinceId] = useState<number | null>(null);
   const [category, setCategory] = useState<"TB" | "LT" | "">("");
   const [from, setFrom] = useState("");
