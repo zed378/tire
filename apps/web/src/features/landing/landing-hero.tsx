@@ -67,9 +67,20 @@ export function LandingHero(): ReactNode {
   }, []);
 
   return (
-    <section className={`relative overflow-hidden bg-canvas ${play ? "hero--play" : ""}`}>
-      <div className="mx-auto grid max-w-site items-center gap-10 px-5 pb-16 pt-14 sm:px-8 lg:grid-cols-[minmax(0,7fr)_minmax(0,6fr)] lg:gap-4 lg:pb-24 lg:pt-20">
-        <div className="hero-settle max-w-prose lg:max-w-none lg:pr-10">
+    <section className={`relative bg-canvas ${play ? "hero--play" : ""}`}>
+      {/*
+        The text sits in the normal container so its left edge lines up with
+        every section below it. The image is taken out of flow on desktop and
+        pinned to the right edge of the viewport — a photograph that stops
+        politely at a margin has been turned back into an illustration, and the
+        crop running off the edge is the whole point of the composition.
+
+        A negative margin cannot do this: percentage margins resolve against the
+        containing block, not the viewport, so it silently produced a normal
+        box.
+      */}
+      <div className="mx-auto max-w-site px-5 pb-10 pt-14 sm:px-8 lg:pb-24 lg:pt-24">
+        <div className="hero-settle max-w-prose lg:w-[52%] lg:max-w-none lg:pr-8">
           <p className="text-sm text-subtle">Manajemen ban armada</p>
 
           <h1 className="mt-4 font-display text-2xl font-bold leading-[1.08] tracking-tight text-body sm:text-3xl">
@@ -99,13 +110,11 @@ export function LandingHero(): ReactNode {
           </div>
         </div>
 
-        {/*
-          On mobile this sits under the text at a fixed aspect ratio. On desktop
-          it breaks out of the container and runs to the right edge of the
-          viewport — the crop is the point, and a photograph that stops politely
-          at a margin has been turned back into an illustration.
-        */}
-        <div className="relative aspect-[4/3] w-full overflow-hidden rounded-panel bg-graphite lg:aspect-auto lg:h-[30rem] lg:rounded-l-panel lg:rounded-r-none lg:mr-[calc(50%-50vw)]">
+      </div>
+
+      {/* On mobile it follows the text at a fixed ratio; on desktop it is
+          pinned to the right half of the viewport, full height. */}
+      <div className="relative mx-5 aspect-[4/3] overflow-hidden rounded-panel bg-graphite sm:mx-8 lg:absolute lg:inset-y-0 lg:right-0 lg:mx-0 lg:aspect-auto lg:w-[45%] lg:rounded-l-panel lg:rounded-r-none">
           <img
             src={TREAD_IMAGE.src}
             alt={TREAD_IMAGE.alt}
@@ -156,8 +165,11 @@ export function LandingHero(): ReactNode {
               Pass QC
             </p>
           </div>
-        </div>
       </div>
+
+      {/* Restores the section's height on desktop, where the image is out of
+          flow and would otherwise contribute nothing. */}
+      <div aria-hidden="true" className="hidden lg:block lg:h-[34rem]" />
     </section>
   );
 }

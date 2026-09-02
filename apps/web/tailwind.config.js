@@ -9,6 +9,22 @@ function token(name) {
   return `rgb(var(--color-${name}) / <alpha-value>)`;
 }
 
+/**
+ * `material(name)` does the same for the palette layer, whose properties are
+ * named for the material itself — `--graphite`, `--amber` — with no `--color-`
+ * prefix. They are deliberately unprefixed: the semantic tokens point at them,
+ * and `--color-accent: var(--color-blue)` would read as one name aliasing
+ * another rather than a role naming a material.
+ *
+ * Without this the palette utilities compiled to `rgb(var(--color-graphite))`,
+ * a property that does not exist — so `bg-graphite`, `bg-amber` and `text-paper`
+ * silently painted nothing at all. The closing panel and its button were
+ * invisible in the browser while the build stayed green.
+ */
+function material(name) {
+  return `rgb(var(--${name}) / <alpha-value>)`;
+}
+
 export default {
   /*
    * The class is always written explicitly by ThemeProvider — it resolves the
@@ -64,13 +80,13 @@ export default {
          * component can reach for either the role or the material — but
          * there is only one set of values underneath.
          */
-        graphite: { DEFAULT: token("graphite"), 80: token("graphite-80") },
-        concrete: token("concrete"),
-        paper: token("paper"),
-        steel: { DEFAULT: token("steel"), ink: token("steel-ink") },
-        amber: token("amber"),
-        blue: { DEFAULT: token("blue"), deep: token("blue-deep") },
-        signal: { danger: token("danger"), ok: token("ok") },
+        graphite: { DEFAULT: material("graphite"), 80: material("graphite-80") },
+        concrete: material("concrete"),
+        paper: material("paper"),
+        steel: { DEFAULT: material("steel"), ink: material("steel-ink") },
+        amber: material("amber"),
+        blue: { DEFAULT: material("blue"), deep: material("blue-deep") },
+        signal: { danger: material("danger"), ok: material("ok") },
 
         danger: {
           DEFAULT: token("danger"),
