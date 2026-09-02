@@ -119,7 +119,7 @@ export function AppShell({ children }: { children: ReactNode }): ReactNode {
       ) : null}
 
       {sidebarOpen ? (
-        <div className="fixed inset-y-0 left-0 z-50 w-64 md:hidden">
+        <div className="fixed inset-0 z-50 md:hidden">
           <Sidebar onNavigate={() => setSidebarOpen(false)} />
         </div>
       ) : null}

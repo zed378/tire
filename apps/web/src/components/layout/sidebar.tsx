@@ -93,17 +93,29 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }): ReactNode 
   );
 
   return (
-    <aside className="flex h-full w-64 flex-col border-r border-slate-200 bg-white">
-      <div className="flex h-16 items-center gap-2 px-4 border-b border-slate-200">
-        <div className="flex h-8 w-8 items-center justify-center rounded-md bg-brand-600 text-white">
+    <aside className="flex h-dvh w-full flex-col border-r border-slate-200 bg-white md:w-64 md:border-r">
+      <div className="flex h-16 items-center justify-between gap-2 px-4 border-b border-slate-200">
+        <div className="flex items-center gap-2">
+          <div className="flex h-8 w-8 items-center justify-center rounded-md bg-brand-600 text-white">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+              <path d="M10 2a8 8 0 100 16 8 8 0 000-16zm0 14a6 6 0 110-12 6 6 0 010 12z" />
+            </svg>
+          </div>
+          <div className="flex flex-col">
+            <span className="text-sm font-semibold text-slate-900">Commercial 2026</span>
+            <span className="text-xs text-slate-500">Tire Data System</span>
+          </div>
+        </div>
+        <button
+          type="button"
+          className="rounded-md p-2 text-slate-600 hover:bg-slate-100 md:hidden"
+          aria-label="Tutup menu"
+          onClick={onNavigate}
+        >
           <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-            <path d="M10 2a8 8 0 100 16 8 8 0 000-16zm0 14a6 6 0 110-12 6 6 0 010 12z" />
+            <path d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" />
           </svg>
-        </div>
-        <div className="flex flex-col">
-          <span className="text-sm font-semibold text-slate-900">Commercial 2026</span>
-          <span className="text-xs text-slate-500">Tire Data System</span>
-        </div>
+        </button>
       </div>
 
       <nav className="flex-1 overflow-y-auto px-3 py-4">
