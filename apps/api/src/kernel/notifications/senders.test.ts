@@ -1,4 +1,5 @@
-import { describe, expect, it } from 'vitest';
+import { assert, describe, expect, it } from 'vitest';
+import type { OutgoingNotification } from './sender.ts';
 import { buildSenders, inAppSender, consoleEmailSender, resendEmailSender, unavailableWhatsappSender } from './senders.ts';
 
 const ENVS = {
@@ -32,7 +33,7 @@ describe('inAppSender', () => {
       body: 'Test body',
       link: null,
     });
-    expect(result.ok).toBe(true);
+    assert(result.ok, 'expected the send to succeed');
     expect(result.externalId).toBeUndefined();
   });
 });
@@ -45,7 +46,7 @@ describe('consoleEmailSender', () => {
   it('returns ok:true with console externalId', async () => {
     setupEnvs();
     try {
-      const notification = {
+      const notification: OutgoingNotification = {
         id: 42n,
         recipientId: 1n,
         recipientName: 'Test',
@@ -58,7 +59,7 @@ describe('consoleEmailSender', () => {
         link: null,
       };
       const result = await consoleEmailSender.send(notification);
-      expect(result.ok).toBe(true);
+      assert(result.ok, 'expected the send to succeed');
       expect(result.externalId).toBe('console-42');
     } finally {
       teardownEnvs();
@@ -86,7 +87,7 @@ describe('resendEmailSender', () => {
         body: 'Test',
         link: null,
       });
-      expect(result.ok).toBe(false);
+      assert(!result.ok, 'expected the send to fail');
       expect(result.retryable).toBe(false);
       expect((result as { error: string }).error).toBe('recipient has no email address');
     } finally {
@@ -109,7 +110,7 @@ describe('resendEmailSender', () => {
         body: 'Test',
         link: null,
       });
-      expect(result.ok).toBe(false);
+      assert(!result.ok, 'expected the send to fail');
       expect(result.retryable).toBe(false);
     } finally {
       teardownEnvs();
@@ -134,7 +135,7 @@ describe('resendEmailSender', () => {
         body: 'Test',
         link: null,
       });
-      expect(result.ok).toBe(false);
+      assert(!result.ok, 'expected the send to fail');
       expect(result.retryable).toBe(false);
       expect((result as { error: string }).error).toBe('RESEND_API_KEY is not configured');
     } finally {
@@ -166,7 +167,7 @@ describe('unavailableWhatsappSender', () => {
       body: 'Test',
       link: null,
     });
-    expect(result.ok).toBe(false);
+    assert(!result.ok, 'expected the send to fail');
     expect(result.retryable).toBe(false);
     expect((result as { error: string }).error).toContain('not enabled');
   });

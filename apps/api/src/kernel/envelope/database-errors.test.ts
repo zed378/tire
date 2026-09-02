@@ -1,10 +1,13 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest';
-import { Prisma } from '../../../generated/prisma/index.js';
+import { describe, expect, it } from 'vitest';
+import { Prisma } from '../../generated/prisma/index.js';
 import { translateDatabaseError } from './database-errors.ts';
 import { AppError } from './app-error.ts';
 
 describe('translateDatabaseError', () => {
-  const makePrismaError = (code, meta = {}): Prisma.PrismaClientKnownRequestError => {
+  const makePrismaError = (
+    code: string,
+    meta: Record<string, unknown> = {},
+  ): Prisma.PrismaClientKnownRequestError => {
     return {
       code,
       meta,
