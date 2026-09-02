@@ -4,6 +4,7 @@ import { startQueueProcessor, subscribeToQueue, summarise } from "../../lib/phot
 import { useSession } from "../../lib/session.tsx";
 import { USER_ROLE_LABELS } from "@c26/contracts";
 import { Sidebar } from "./sidebar.tsx";
+import { ThemeToggle } from "../ui/theme-toggle.tsx";
 
 export function AppShell({ children }: { children: ReactNode }): ReactNode {
   const location = useLocation();
@@ -29,15 +30,15 @@ export function AppShell({ children }: { children: ReactNode }): ReactNode {
   }, []);
 
   return (
-    <div className="flex min-h-dvh bg-slate-50">
+    <div className="flex min-h-dvh bg-slate-50 dark:bg-slate-950 transition-colors duration-200">
       <Sidebar />
 
       <div className="flex flex-1 flex-col">
-        <header className="sticky top-0 z-30 border-b border-slate-200 bg-white">
+        <header className="sticky top-0 z-30 border-b border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 transition-colors duration-200">
           <div className="flex h-14 items-center justify-between px-4">
             <button
               type="button"
-              className="rounded-md p-2 text-slate-600 hover:bg-slate-100 md:hidden"
+              className="rounded-md p-2 text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800 md:hidden"
               aria-label="Buka menu"
               aria-expanded={sidebarOpen}
               onClick={() => setSidebarOpen((open) => !open)}
@@ -51,15 +52,18 @@ export function AppShell({ children }: { children: ReactNode }): ReactNode {
               {queuedCount > 0 ? (
                 <a
                   href="/upload-queue"
-                  className="rounded-full border border-amber-300 bg-amber-50 px-3 py-1 text-xs font-medium text-amber-900"
+                  className="rounded-full border border-amber-300 bg-amber-50 px-3 py-1 text-xs font-medium text-amber-900 dark:border-amber-700/50 dark:bg-amber-900/30 dark:text-amber-200"
                 >
                   {queuedCount} foto menunggu
                 </a>
               ) : null}
 
+              {/* Theme Toggle placed directly to the left of the notification icon */}
+              <ThemeToggle />
+
               <a
                 href="/notifications"
-                className="relative rounded-md p-2 text-slate-600 hover:bg-slate-100"
+                className="relative rounded-md p-2 text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
                 aria-label="Notifikasi"
               >
                 <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
@@ -67,16 +71,16 @@ export function AppShell({ children }: { children: ReactNode }): ReactNode {
                 </svg>
               </a>
 
-              <div className="flex items-center gap-2 pl-2 border-l border-slate-200">
+              <div className="flex items-center gap-2 pl-2 border-l border-slate-200 dark:border-slate-800">
                 <div className="hidden text-right sm:block">
-                  <p className="text-sm font-medium text-slate-900">{user?.displayName}</p>
-                  <p className="text-xs text-slate-500">
+                  <p className="text-sm font-medium text-slate-900 dark:text-slate-100">{user?.displayName}</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
                     {user === null ? "" : USER_ROLE_LABELS[user.role]}
                   </p>
                 </div>
                 <button
                   type="button"
-                  className="rounded-md p-2 text-slate-600 hover:bg-slate-100"
+                  className="rounded-md p-2 text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
                   onClick={() => void logout()}
                   aria-label="Keluar"
                 >

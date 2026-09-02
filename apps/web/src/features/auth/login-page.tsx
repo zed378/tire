@@ -7,6 +7,7 @@ import { isApiError } from "../../lib/api-client.ts";
 import { useSession } from "../../lib/session.tsx";
 import { Banner } from "../../components/ui/feedback.tsx";
 import { Button, Field, Input } from "../../components/ui/primitives.tsx";
+import { ThemeToggle } from "../../components/ui/theme-toggle.tsx";
 
 /**
  * Login (PLAN/04 §4).
@@ -78,33 +79,37 @@ export function LoginPage(): ReactNode {
   });
 
   return (
-    <div className="relative flex min-h-dvh flex-col justify-between overflow-hidden bg-slate-950 text-slate-100 font-sans selection:bg-cyan-500/30 selection:text-cyan-200">
+    <div className="relative flex min-h-dvh flex-col justify-between overflow-hidden bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100 font-sans selection:bg-brand-500/20 selection:text-brand-900 dark:selection:bg-cyan-500/30 dark:selection:text-cyan-200 transition-colors duration-200">
       {/* Background Cyber Grid & Ambient Glowing Lights */}
-      <div className="pointer-events-none absolute inset-0 bg-cyber-grid opacity-25" />
-      <div className="pointer-events-none absolute inset-0 bg-tire-radial" />
-      <div className="pointer-events-none absolute -top-40 -left-40 h-96 w-96 rounded-full bg-blue-600/20 blur-[120px] animate-glow-pulse" />
-      <div className="pointer-events-none absolute -bottom-40 -right-40 h-96 w-96 rounded-full bg-cyan-500/20 blur-[120px] animate-glow-pulse" />
+      <div className="pointer-events-none absolute inset-0 bg-cyber-grid opacity-15 dark:opacity-25" />
+      <div className="pointer-events-none absolute inset-0 bg-tire-radial opacity-40 dark:opacity-100" />
+      <div className="pointer-events-none absolute -top-40 -left-40 h-96 w-96 rounded-full bg-blue-500/10 dark:bg-blue-600/20 blur-[120px] animate-glow-pulse" />
+      <div className="pointer-events-none absolute -bottom-40 -right-40 h-96 w-96 rounded-full bg-cyan-400/10 dark:bg-cyan-500/20 blur-[120px] animate-glow-pulse" />
 
       {/* Top Navigation Header */}
-      <header className="relative z-10 flex items-center justify-between border-b border-slate-800/80 bg-slate-950/60 px-6 py-4 backdrop-blur-md">
+      <header className="relative z-10 flex items-center justify-between border-b border-slate-200/80 bg-white/70 dark:border-slate-800/80 dark:bg-slate-950/60 px-6 py-4 backdrop-blur-md transition-colors duration-200">
         <div className="flex items-center gap-3">
           <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-tr from-brand-600 via-cyan-500 to-indigo-500 p-0.5 shadow-lg shadow-brand-500/20">
-            <div className="flex h-full w-full items-center justify-center rounded-[10px] bg-slate-950">
-              <svg className="h-5 w-5 text-cyan-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+            <div className="flex h-full w-full items-center justify-center rounded-[10px] bg-white dark:bg-slate-950">
+              <svg className="h-5 w-5 text-brand-600 dark:text-cyan-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="12" cy="12" r="9" strokeDasharray="3 3" className="animate-spin-very-slow" />
                 <circle cx="12" cy="12" r="3" />
                 <path d="M12 3v3M12 18v3M3 12h3M18 12h3" />
               </svg>
             </div>
           </div>
-          <span className="text-base font-bold tracking-wider text-white">
-            COMMERCIAL<span className="text-cyan-400">2026</span>
+          <span className="text-base font-bold tracking-wider text-slate-900 dark:text-white">
+            COMMERCIAL<span className="text-brand-600 dark:text-cyan-400">2026</span>
           </span>
         </div>
 
-        <div className="flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-xs font-medium text-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.15)]">
-          <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
-          <span>SYSTEM ONLINE</span>
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-xs font-medium text-emerald-600 dark:text-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.15)]">
+            <span className="h-2 w-2 rounded-full bg-emerald-500 dark:bg-emerald-400 animate-pulse" />
+            <span>SYSTEM ONLINE</span>
+          </div>
+
+          <ThemeToggle />
         </div>
       </header>
 
@@ -113,76 +118,76 @@ export function LoginPage(): ReactNode {
         
         {/* Left Hero & Telemetry Info */}
         <div className="mb-10 w-full max-w-lg lg:mb-0 lg:w-1/2">
-          <div className="inline-flex items-center gap-2 rounded-full border border-cyan-500/30 bg-cyan-500/10 px-3.5 py-1 text-xs font-semibold tracking-wider text-cyan-300 uppercase backdrop-blur-md">
+          <div className="inline-flex items-center gap-2 rounded-full border border-brand-500/20 bg-brand-500/10 dark:border-cyan-500/30 dark:bg-cyan-500/10 px-3.5 py-1 text-xs font-semibold tracking-wider text-brand-700 dark:text-cyan-300 uppercase backdrop-blur-md">
             <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
             </svg>
             Next-Gen Fleet Telemetry
           </div>
 
-          <h1 className="mt-4 text-3xl font-extrabold tracking-tight text-white sm:text-4xl lg:text-5xl">
+          <h1 className="mt-4 text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white sm:text-4xl lg:text-5xl">
             Sistem Pengolahan <br />
-            <span className="bg-gradient-to-r from-cyan-400 via-blue-400 to-indigo-400 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-brand-600 via-cyan-600 to-indigo-600 dark:from-cyan-400 dark:via-blue-400 dark:to-indigo-400 bg-clip-text text-transparent">
               Data Ban Bus &amp; Truk
             </span>
           </h1>
 
-          <p className="mt-4 text-sm text-slate-400 leading-relaxed sm:text-base">
+          <p className="mt-4 text-sm text-slate-600 dark:text-slate-400 leading-relaxed sm:text-base">
             Platform inspeksi armada terintegrasi dengan pemantauan tekanan, kedalaman alur, dan analisis kondisi ban secara presisi tinggi.
           </p>
 
           {/* Feature Badges */}
           <div className="mt-8 grid grid-cols-1 gap-3 sm:grid-cols-3">
-            <div className="rounded-xl border border-slate-800/80 bg-slate-900/60 p-3.5 backdrop-blur-md transition-all hover:border-cyan-500/40 hover:bg-slate-900/90">
-              <div className="mb-1 text-cyan-400">
+            <div className="rounded-xl border border-slate-200/80 bg-white/80 dark:border-slate-800/80 dark:bg-slate-900/60 p-3.5 backdrop-blur-md shadow-sm transition-all hover:border-brand-500/40 dark:hover:border-cyan-500/40">
+              <div className="mb-1 text-brand-600 dark:text-cyan-400">
                 <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
                 </svg>
               </div>
-              <div className="text-xs font-semibold text-slate-200">Real-time QC</div>
-              <div className="text-[11px] text-slate-400">Inspeksi Digital</div>
+              <div className="text-xs font-semibold text-slate-800 dark:text-slate-200">Real-time QC</div>
+              <div className="text-[11px] text-slate-500 dark:text-slate-400">Inspeksi Digital</div>
             </div>
 
-            <div className="rounded-xl border border-slate-800/80 bg-slate-900/60 p-3.5 backdrop-blur-md transition-all hover:border-cyan-500/40 hover:bg-slate-900/90">
-              <div className="mb-1 text-blue-400">
+            <div className="rounded-xl border border-slate-200/80 bg-white/80 dark:border-slate-800/80 dark:bg-slate-900/60 p-3.5 backdrop-blur-md shadow-sm transition-all hover:border-brand-500/40 dark:hover:border-cyan-500/40">
+              <div className="mb-1 text-blue-600 dark:text-blue-400">
                 <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <rect x="3" y="3" width="18" height="18" rx="2" />
                   <path d="M3 9h18M9 21V9" />
                 </svg>
               </div>
-              <div className="text-xs font-semibold text-slate-200">Axle Mapping</div>
-              <div className="text-[11px] text-slate-400">Konfigurasi Poros</div>
+              <div className="text-xs font-semibold text-slate-800 dark:text-slate-200">Axle Mapping</div>
+              <div className="text-[11px] text-slate-500 dark:text-slate-400">Konfigurasi Poros</div>
             </div>
 
-            <div className="rounded-xl border border-slate-800/80 bg-slate-900/60 p-3.5 backdrop-blur-md transition-all hover:border-cyan-500/40 hover:bg-slate-900/90">
-              <div className="mb-1 text-indigo-400">
+            <div className="rounded-xl border border-slate-200/80 bg-white/80 dark:border-slate-800/80 dark:bg-slate-900/60 p-3.5 backdrop-blur-md shadow-sm transition-all hover:border-brand-500/40 dark:hover:border-cyan-500/40">
+              <div className="mb-1 text-indigo-600 dark:text-indigo-400">
                 <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
                 </svg>
               </div>
-              <div className="text-xs font-semibold text-slate-200">Audit Ready</div>
-              <div className="text-[11px] text-slate-400">Integrasi Data</div>
+              <div className="text-xs font-semibold text-slate-800 dark:text-slate-200">Audit Ready</div>
+              <div className="text-[11px] text-slate-500 dark:text-slate-400">Integrasi Data</div>
             </div>
           </div>
         </div>
 
         {/* Right Glassmorphism Form Card */}
         <div className="w-full max-w-md">
-          <div className="relative rounded-2xl border border-slate-800/90 bg-slate-900/80 p-7 shadow-[0_0_60px_rgba(37,99,235,0.12)] backdrop-blur-2xl transition-all duration-300">
+          <div className="relative rounded-2xl border border-slate-200/90 bg-white/90 dark:border-slate-800/90 dark:bg-slate-900/80 p-7 shadow-xl dark:shadow-[0_0_60px_rgba(37,99,235,0.12)] backdrop-blur-2xl transition-all duration-300">
             
-            {/* Top Cyan Accent Glow */}
-            <div className="absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-cyan-500 to-transparent opacity-80" />
+            {/* Top Accent Glow */}
+            <div className="absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-brand-500 dark:via-cyan-500 to-transparent opacity-80" />
 
             <div className="mb-6">
               <div className="flex items-center justify-between">
-                <h2 className="text-xl font-bold tracking-wide text-white">
+                <h2 className="text-xl font-bold tracking-wide text-slate-900 dark:text-white">
                   Otentikasi Pengguna
                 </h2>
-                <span className="rounded-md bg-slate-800 px-2 py-0.5 text-[10px] font-mono text-cyan-400 border border-cyan-500/20">
+                <span className="rounded-md bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-cyan-400 border border-slate-200 dark:border-cyan-500/20 px-2 py-0.5 text-[10px] font-mono">
                   TLS 1.3
                 </span>
               </div>
-              <p className="mt-1 text-xs text-slate-400">
+              <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
                 Masukkan kredensial akun Anda untuk mengakses terminal
               </p>
             </div>
@@ -201,7 +206,7 @@ export function LoginPage(): ReactNode {
                   autoCapitalize="none"
                   autoFocus
                   invalid={errors.username !== undefined}
-                  className="border-slate-800 bg-slate-950/80 text-white placeholder:text-slate-500 focus:border-cyan-500 focus:ring-cyan-500/30"
+                  className="border-slate-300 bg-white text-slate-900 placeholder:text-slate-400 focus:border-brand-500 focus:ring-brand-500/30 dark:border-slate-800 dark:bg-slate-950/80 dark:text-white dark:placeholder:text-slate-500 dark:focus:border-cyan-500 dark:focus:ring-cyan-500/30"
                   {...register("username")}
                 />
               </Field>
@@ -213,7 +218,7 @@ export function LoginPage(): ReactNode {
                     type={showPassword ? "text" : "password"}
                     autoComplete="current-password"
                     invalid={errors.password !== undefined}
-                    className="pr-10 border-slate-800 bg-slate-950/80 text-white placeholder:text-slate-500 focus:border-cyan-500 focus:ring-cyan-500/30"
+                    className="pr-10 border-slate-300 bg-white text-slate-900 placeholder:text-slate-400 focus:border-brand-500 focus:ring-brand-500/30 dark:border-slate-800 dark:bg-slate-950/80 dark:text-white dark:placeholder:text-slate-500 dark:focus:border-cyan-500 dark:focus:ring-cyan-500/30"
                     {...register("password")}
                   />
                   <span

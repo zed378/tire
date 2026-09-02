@@ -93,8 +93,8 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }): ReactNode 
   );
 
   return (
-    <aside className="flex h-dvh w-full flex-col border-r border-slate-200 bg-white md:w-64 md:border-r">
-      <div className="flex h-16 items-center justify-between gap-2 px-4 border-b border-slate-200">
+    <aside className="flex h-dvh w-full flex-col border-r border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 md:w-64 md:border-r transition-colors duration-200">
+      <div className="flex h-16 items-center justify-between gap-2 px-4 border-b border-slate-200 dark:border-slate-800">
         <div className="flex items-center gap-2">
           <div className="flex h-8 w-8 items-center justify-center rounded-md bg-brand-600 text-white">
             <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
@@ -102,13 +102,13 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }): ReactNode 
             </svg>
           </div>
           <div className="flex flex-col">
-            <span className="text-sm font-semibold text-slate-900">Commercial 2026</span>
-            <span className="text-xs text-slate-500">Tire Data System</span>
+            <span className="text-sm font-semibold text-slate-900 dark:text-white">Commercial 2026</span>
+            <span className="text-xs text-slate-500 dark:text-slate-400">Tire Data System</span>
           </div>
         </div>
         <button
           type="button"
-          className="rounded-md p-2 text-slate-600 hover:bg-slate-100 md:hidden"
+          className="rounded-md p-2 text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800 md:hidden"
           aria-label="Tutup menu"
           onClick={onNavigate}
         >
@@ -129,8 +129,8 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }): ReactNode 
                   cn(
                     "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
                     isActive
-                      ? "bg-brand-50 text-brand-700"
-                      : "text-slate-600 hover:bg-slate-50 hover:text-slate-900",
+                      ? "bg-brand-50 text-brand-700 dark:bg-brand-950/80 dark:text-cyan-400 dark:border dark:border-cyan-500/20"
+                      : "text-slate-600 hover:bg-slate-50 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800/60 dark:hover:text-slate-200",
                   )
                 }
               >
@@ -142,16 +142,16 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }): ReactNode 
         </ul>
       </nav>
 
-      <div className="border-t border-slate-200 p-3">
-        <div className="mb-2 rounded-md bg-slate-50 p-2">
-          <p className="text-sm font-medium text-slate-900">{user?.displayName}</p>
-          <p className="text-xs text-slate-500">
+      <div className="border-t border-slate-200 dark:border-slate-800 p-3">
+        <div className="mb-2 rounded-md bg-slate-50 dark:bg-slate-950 p-2 border dark:border-slate-800">
+          <p className="text-sm font-medium text-slate-900 dark:text-slate-100">{user?.displayName}</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400">
             {user === null ? "" : USER_ROLE_LABELS[user.role]}
           </p>
         </div>
         <Button
           variant="ghost"
-          className="w-full justify-center"
+          className="w-full justify-center dark:text-slate-300 dark:hover:bg-slate-800"
           onClick={() => {
             void logout();
           }}

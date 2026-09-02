@@ -39,16 +39,20 @@ const ReportsPage = lazy(() =>
   import("./features/reports/reports-page.tsx").then((module) => ({ default: module.ReportsPage })),
 );
 
+import { ThemeProvider } from "./lib/theme.tsx";
+
 export function App(): ReactNode {
   return (
-    <SessionProvider>
-      <ToastProvider>
-        {/* Mounted once: any request answered with STEP_UP_REQUIRED opens this
-            and is replayed after a successful verification (PLAN/13 §4). */}
-        <StepUpDialog />
-        <AppRoutes />
-      </ToastProvider>
-    </SessionProvider>
+    <ThemeProvider>
+      <SessionProvider>
+        <ToastProvider>
+          {/* Mounted once: any request answered with STEP_UP_REQUIRED opens this
+              and is replayed after a successful verification (PLAN/13 §4). */}
+          <StepUpDialog />
+          <AppRoutes />
+        </ToastProvider>
+      </SessionProvider>
+    </ThemeProvider>
   );
 }
 

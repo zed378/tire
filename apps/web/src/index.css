@@ -14,7 +14,7 @@
   }
 
   body {
-    @apply bg-slate-950 text-slate-100 antialiased selection:bg-cyan-500/30 selection:text-cyan-200;
+    @apply bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100 antialiased selection:bg-brand-500/20 selection:text-brand-900 dark:selection:bg-cyan-500/30 dark:selection:text-cyan-200 transition-colors duration-200;
   }
 
   /*
@@ -23,7 +23,7 @@
    * (PLAN/00 §4).
    */
   :focus-visible {
-    @apply outline-none ring-2 ring-cyan-400 ring-offset-2 ring-offset-slate-950;
+    @apply outline-none ring-2 ring-brand-600 dark:ring-cyan-400 ring-offset-2 ring-offset-white dark:ring-offset-slate-950;
   }
 
   /* Inputs at 16px so iOS Safari does not zoom on focus mid-form. */
