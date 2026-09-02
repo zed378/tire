@@ -92,6 +92,13 @@ describe("seed-prod-admin script", () => {
     });
 
     it("throws error if password is missing or under 10 characters", async () => {
+      // The script falls back to SEED_ADMIN_PASSWORD, and the developer's own
+      // .env sets it. Without this the "no password supplied" case quietly
+      // received one, passed validation, and went on to open a database
+      // connection — so the test passed or failed depending on whether Postgres
+      // happened to be reachable.
+      delete process.env.SEED_ADMIN_PASSWORD;
+
       await expect(
         seedProdAdmin({
           args: [],

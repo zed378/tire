@@ -1,188 +1,132 @@
-# Database Initialization & Seeding Flow
+# Database Seeding Flow
 
-## Overview
+Bagaimana database diisi saat deployment, dan apa yang sengaja tidak otomatis.
 
-Flow database initialization telah diubah untuk mengotomatisasi seeding data master dan CSV saat fase `db-init` deployment. Setup admin password tetap manual untuk keamanan.
+## Ringkasan
 
-## Fase Startup Container
+Semua pekerjaan database sekali-per-deployment dijalankan oleh service `db-init`
+di `docker-compose.prod.yml`, sebagai `command`-nya:
 
-Saat container Docker dimulai, `docker-entrypoint.sh` menjalankan tiga fase dalam urutan:
-
-### 1. Database Ready Check
-Menunggu database PostgreSQL siap menerima koneksi (retry setiap 2 detik).
-
-### 2. Prisma Migrations
-```bash
-prisma migrate deploy
-```
-- Menjalankan semua SQL migrations dari `prisma/migrations/`
-- Membuat schema dan tabel aplikasi
-- Idempotent: aman dijalankan setiap kali container start
-
-### 3. Database Seeding (BARU - Otomatis)
-```bash
-node dist/scripts/db-init-seed.js
-```
-- Seeds master data (provinces, cities, vehicle brands, tire brands)
-- Seeds CSV data jika file tersedia di `requirements/`
-- Idempotent: menggunakan `findUnique` + `create` untuk menghindari duplikasi
-- Optional: jika CSV files tidak lengkap, akan skip dan log warning
-
-**File CSV yang diharapkan:**
-- `requirements/req-TB Brand Pattern.csv`
-- `requirements/req-LT Brand Pattern.csv`
-- `requirements/req-Size.csv`
-- `requirements/req-Vehicle Brand.csv`
-
-### 4. Queue Setup
-```bash
-node -e "... pg-boss queue initialization ..."
-```
-- Membuat schema pgboss dan job queues
-- Idempotent: aman dijalankan setiap kali container start
-
-### 5. Start API Server
-```bash
-node dist/server.js
+```yaml
+command: ["sh", "-c", "pnpm db:migrate && pnpm db:seed:init"]
 ```
 
-## Admin Password Setup (MANUAL - Tidak Otomatis)
+`api` dan `worker` menunggu `db-init` selesai dengan sukses
+(`service_completed_successfully`). Jadi kalau seeding gagal, deployment
+berhenti — bukan naik dengan tabel master kosong.
 
-Admin password setup **tidak dijalankan otomatis** sebagai exception untuk keamanan (PLAN/13 §8).
+| Fase | Perintah | Isi |
+| --- | --- | --- |
+| 1. Migrasi | `prisma migrate deploy` | Membuat/memperbarui skema |
+| 2. Antrian | `node dist/scripts/queue-setup.js` | Skema dan 11 antrian pg-boss |
+| 3. Seed | `node dist/scripts/seed-init.js` | Data referensi |
 
-### Setup Admin Account
+Ketiganya idempoten dan dijalankan ulang pada setiap deployment.
 
-Setelah container berjalan, gunakan `docker exec`:
+## Apa yang di-seed
+
+`seed-init` mengisi data referensi saja — tidak pernah membuat akun:
+
+- **Master data bawaan** (`src/scripts/seed/master-data.ts`): 32 provinsi, 290
+  kota, plus daftar awal merek kendaraan dan merek ban.
+- **Master data CSV** (`src/scripts/seed/csv-data.ts`), dibaca dari
+  `/app/requirements` (bind mount, read-only):
+  - `req-Vehicle Brand.csv` → `vehicle_brands`
+  - `req-TB Brand Pattern.csv` → `tire_brands` + `tire_brand_patterns` (type `TB`)
+  - `req-LT Brand Pattern.csv` → `tire_brands` + `tire_brand_patterns` (type `LT`)
+  - `req-Size.csv` → dibaca dan dihitung saja. **Tidak disimpan**: tidak ada
+    tabel ukuran ban. Ukuran dicatat per ban di `tire_specs.size` (PLAN/02 §7).
+
+Hasil pada database kosong: 32 provinsi, 290 kota, 32 merek kendaraan, 174 merek
+ban, 1.551 pola ban (1.247 TB + 304 LT).
+
+Kalau direktori CSV tidak ditemukan, seeding **tidak gagal** — data bawaan tetap
+masuk — tetapi log mengatakannya dengan jelas. Letaknya bisa diarahkan lewat
+`SEED_REQUIREMENTS_DIR`.
+
+### Idempotensi
+
+Setiap baris dicek dulu, lalu dibuat kalau belum ada. Baris yang sudah ada tidak
+pernah diubah: kalau admin mengganti nama atau menonaktifkan sebuah merek lewat
+layar admin, deployment berikutnya tidak boleh mengembalikannya.
+
+Jalankan ulang kapan saja:
 
 ```bash
-# Dengan positional argument
-docker exec <container> node dist/scripts/seed-prod-admin.js "MySecurePassword123"
-
-# Dengan flag
-docker exec <container> node dist/scripts/seed-prod-admin.js --password="MySecurePassword123" --username="admin"
-
-# Dengan environment variable
-docker exec <container> -e SEED_ADMIN_PASSWORD="MySecurePassword123" \
-  node dist/scripts/seed-prod-admin.js
+docker exec -it commercial2026-api-1 pnpm db:seed:init
 ```
 
-**Requirements:**
-- Password minimal 10 karakter
-- Hanya berjalan di APP_ENV=production dan inside container
-- Idempotent: jika admin sudah ada, tidak membuat duplikat
+## Yang sengaja manual: akun admin pertama
 
-## NPM Scripts
-
-### Development
+Password tidak boleh lewat di langkah deployment (PLAN/13 §8). Jadi akun admin
+pertama dibuat operator, sekali, setelah stack berjalan:
 
 ```bash
-# Seed database lokal (development)
-pnpm db:seed
+docker exec -it commercial2026-api-1 node dist/scripts/seed-prod-admin.js "PasswordAnda123"
 
-# Reset database dan seed ulang
-pnpm db:reset
+# atau dengan username lain (default: admin)
+docker exec -it commercial2026-api-1 node dist/scripts/seed-prod-admin.js "PasswordAnda123" --username=superadmin
 ```
 
-### Production
+Script itu menolak jalan di luar container dan di luar `APP_ENV=production`.
+Akun yang dibuat wajib ganti password saat login pertama, dan — karena admin —
+wajib mendaftarkan MFA sebelum bisa melakukan apa pun (PLAN/13 §3.1).
+
+## Development lokal
 
 ```bash
-# Seed master + CSV data (manual, untuk testing)
-pnpm db:init-seed
-
-# Setup admin account (manual)
-pnpm db:seed:prod-admin "password"
-
-# Seed CSV data saja
-pnpm db:seed:csv-prod
+pnpm db:migrate    # migrasi + antrian
+pnpm db:seed       # master data + admin pertama + data demo
 ```
 
-## Docker Deployment Examples
+`pnpm db:seed` menolak jalan saat `APP_ENV=production`, karena ia juga membuat
+akun dan inspeksi contoh. Ia memerlukan `SEED_ADMIN_PASSWORD` (minimal 10
+karakter) dan, untuk data demo, `SEED_DEMO_PASSWORD`.
 
-### Build image
+## Kalau deployment berhenti dengan P3009
+
+`prisma migrate deploy` menolak menerapkan apa pun selama masih ada migrasi
+gagal yang tercatat, dan catatan itu bertahan sampai operator menyatakan apa yang
+terjadi padanya. Ini nyata terjadi di proyek ini: migrasi `0002_login_attempts`
+gagal pada 2026-09-01 dengan error 42P07 (`login_attempts` sudah dibuat oleh
+`0001_init`), foldernya kemudian dihapus, dan barisnya memblokir setiap
+deployment sesudahnya.
+
+Lihat apa yang gagal dan apakah ia sempat mengubah sesuatu:
+
 ```bash
-docker build -t tire-app:latest .
+docker exec -it commercial2026-postgres-1 psql -U c26 -d c26 \
+  -c "select migration_name, started_at, finished_at, applied_steps_count, logs
+      from _prisma_migrations where finished_at is null;"
 ```
 
-### Run container dengan automatic seeding
+`applied_steps_count = 0` berarti database tidak tersentuh, jadi catatannya boleh
+ditandai rolled back lalu deployment diulang:
+
 ```bash
-docker run -d \
-  --name tire-app \
-  -e DATABASE_URL="postgresql://user:pass@postgres:5432/tire_db" \
-  -e APP_ENV=production \
-  -e STORAGE_DRIVER=local \
-  -e UPLOAD_DIR=/app/uploads \
-  tire-app:latest
+docker compose -f docker-compose.prod.yml run --rm --entrypoint sh db-init \
+  -c "cd /app/apps/api && node /app/node_modules/prisma/build/index.js \
+      migrate resolve --rolled-back <migration_name>"
 ```
 
-Container akan otomatis:
-1. Menunggu database ready
-2. Run migrations
-3. Seed master data + CSV data
-4. Setup queues
-5. Start API
+Kalau ada langkah yang **sudah** diterapkan, jangan lakukan ini — telusuri dulu
+apa yang sempat masuk. Langkah ini sengaja manual: skrip deployment yang
+membereskan migrasi gagalnya sendiri, cepat atau lambat akan membereskan satu
+yang seharusnya diperiksa.
 
-### Setup admin account setelah container ready
-```bash
-docker exec tire-app node dist/scripts/seed-prod-admin.js "AdminPassword123"
-```
+## Riwayat
 
-## Troubleshooting
+Sebelum ini, seeding ditulis di `docker-entrypoint.sh` — file yang tidak pernah
+di-`COPY` ke image dan tidak pernah dijadikan `ENTRYPOINT`. Ia hanya dirujuk oleh
+sebuah komentar di Dockerfile. `db-init` menjalankan `pnpm db:migrate` saja,
+sehingga setiap deployment naik dengan `provinces`, `cities`, `vehicle_brands`,
+dan `tire_brands` kosong, tanpa satu pun tanda bahwa ada yang dilewati.
 
-### CSV files not found
-```
-warning: CSV file not found: req-TB Brand Pattern.csv
-```
-- Pastikan file CSV ada di `requirements/` directory
-- Script akan skip CSV seeding jika files tidak lengkap
-- Master data akan tetap di-seed
+Ada enam entrypoint seed yang saling menduplikasi saat itu; sekarang tersisa dua,
+masing-masing dengan satu tugas: `seed-init` (otomatis, data referensi) dan
+`seed-prod-admin` (manual, akun pertama). Ditambah `prisma/seed.ts` untuk
+development lokal.
 
-### Seeding failed: File tidak ditemukan
-```
-Gagal: script ini HANYA dapat dijalankan pada lingkungan produksi (APP_ENV=production).
-```
-- Pastikan `APP_ENV=production` saat menjalankan seed-prod-admin
-- Script hanya berjalan di production environment untuk keamanan
-
-### Admin password tidak valid
-```
-Gagal: parameter input password (minimal 10 karakter) wajib diberikan.
-```
-- Password minimal 10 karakter
-- Contoh: `docker exec <container> node dist/scripts/seed-prod-admin.js "MySecurePassword123"`
-
-## Idempotency & Safety
-
-Semua seeding operations **idempotent**:
-- Menjalankan seeding 2x tidak membuat duplikasi data
-- Aman untuk dijalankan setiap kali container restart
-- Menggunakan `findUnique` + conditional create untuk menghindari duplikasi
-
-Admin setup adalah exception:
-- **Tidak otomatis** untuk keamanan password
-- Hanya melalui manual `docker exec` dengan APP_ENV=production check
-- Double gate: production environment + container detection
-
-## Files Modified
-
-1. **apps/api/src/scripts/db-init-seed.ts** (NEW)
-   - Unified seeding script untuk master data + CSV data
-   - Dijalankan otomatis di db-init phase
-
-2. **docker-entrypoint.sh**
-   - Tambahan: `node dist/scripts/db-init-seed.js` setelah migrations
-   - Updated komentarnya
-
-3. **apps/api/package.json**
-   - Tambahan: `"db:init-seed"` script
-
-4. **Dockerfile**
-   - Updated komentarnya untuk clarify flow baru
-   - Pastikan src/scripts tersedia di image
-
-## Security Notes
-
-- ✅ Admin password TIDAK hardcoded
-- ✅ Admin setup TIDAK otomatis
-- ✅ Password hanya via CLI argument atau env variable (docker exec)
-- ✅ Double-gated: APP_ENV=production + container detection
-- ✅ Master data & CSV data aman di-otomatisasi (tidak contains credentials)
+Dokumen lain di `docs/` yang menyebut `docker-entrypoint.sh`,
+`db-init-seed.ts`, `seed-csv-prod.js`, atau `seed-prod.ts` adalah catatan
+historis dari periode itu dan tidak lagi menggambarkan sistem yang berjalan.

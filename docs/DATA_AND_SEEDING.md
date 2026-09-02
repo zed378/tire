@@ -177,13 +177,14 @@ seeding (APP_ENV=local)
 
 ⚠️ **Important**: Main seed script refuses to run on production (safety feature).
 
-**Step 1: Run database migrations & queue setup**
+**Step 1: Migrations, queue setup, and reference-data seeding**
 ```bash
-pnpm db:migrate
-# Automatis dijalankan oleh container db-init pada docker-compose.prod.yml
+# All three run automatically in the db-init container on every deployment:
+#   pnpm db:migrate && pnpm db:seed:init
+# api and worker wait for it to succeed before they start.
 ```
 
-**Step 2: Create first admin**
+**Step 2: Create first admin** (the only manual step)
 ```bash
 node dist/scripts/seed-prod-admin.js "YourSecurePassword123"
 
@@ -191,9 +192,10 @@ node dist/scripts/seed-prod-admin.js "YourSecurePassword123"
 node dist/scripts/seed-prod-admin.js "YourSecurePassword123" --username=admin
 ```
 
-**Step 3: Seed CSV master data** (optional, recommended)
+**Step 3: nothing** — CSV master data was already seeded in step 1. To re-run
+it by hand (idempotent):
 ```bash
-node dist/scripts/seed-csv-prod.js
+docker exec -it commercial2026-api-1 pnpm db:seed:init
 ```
 
 ### Security Gates (Production Only)
@@ -212,16 +214,23 @@ apps/api/
 │   ├── schema.prisma                   # Database schema
 │   ├── queue-setup.ts                  # Delegator for queue setup
 │   ├── queue-smoke.ts                  # Delegator for queue smoke test
-│   ├── seed.ts                         # Dev seed orchestration
-│   ├── seed-prod.ts                    # Production seed wrapper
+│   ├── seed.ts                         # Local-dev seed (refuses on production)
+│   ├── seed/
+│   │   ├── demo-data.ts                # Demo accounts and inspections (local only)
+│   │   └── sample-photos.ts            # Generated sample photographs (local only)
 │   └── migrations/
-│       └── 0001_init/migration.sql     # Initial database setup
+│       ├── 0001_init/migration.sql     # Initial database setup
+│       └── 0003_tire_brand_patterns/   # tire_brand_patterns, missing from 0001
 └── src/
     └── scripts/
         ├── queue-setup.ts              # pg-boss schema & queue setup (compiles to dist/scripts/)
         ├── queue-smoke.ts              # Queue integration smoke test (compiles to dist/scripts/)
-        ├── seed-prod-admin.ts          # Production admin creation (compiles to dist/scripts/)
-        └── seed-csv-prod.ts            # Production CSV seeding (compiles to dist/scripts/)
+        ├── seed-init.ts                # Deployment reference-data seed (db-init runs this)
+        ├── seed-prod-admin.ts          # Production admin creation (manual only)
+        └── seed/
+            ├── master-data.ts          # Provinces, cities, built-in brands
+            ├── csv-data.ts             # Brands, patterns from requirements/*.csv
+            └── requirements-dir.ts     # Locates the CSV directory
 
 requirements/  (optional)
 ├── req-Vehicle Brand.csv               # 30 vehicle brands
@@ -245,13 +254,16 @@ Three optional CSV files in `requirements/` directory:
 
 ### CSV Seeding Process
 
-**Development/Staging**: Automatic (included in `pnpm db:seed`)
+**Development/Staging**: automatic, included in `pnpm db:seed`.
 
-**Production**:
+**Production**: automatic, included in the `db-init` container's `pnpm
+db:seed:init`. Re-run by hand with:
 ```bash
-# Only runs in production inside container
-node dist/scripts/seed-csv-prod.js
+docker exec -it commercial2026-api-1 pnpm db:seed:init
 ```
+
+`req-Size.csv` is read and counted but **not stored** — there is no tire size
+table. Sizes are recorded per tire in `tire_specs.size` (PLAN/02 §7).
 
 ### Data Example
 
@@ -329,8 +341,9 @@ SELECT name, COUNT(*) FROM tire_brands GROUP BY name HAVING COUNT(*) > 1;
 
 ### Seeding Steps
 - [ ] Run migrations & queue setup (automatically done by `db-init` container during `docker compose up`, or manually via `pnpm db:migrate`)
+- [ ] Reference data (provinces, cities, brands, patterns) — done automatically
+      by `db-init`; confirm with `docker compose logs db-init`
 - [ ] Create first admin: `node dist/scripts/seed-prod-admin.js "password"`
-- [ ] (Optional) Seed CSV master data: `node dist/scripts/seed-csv-prod.js`
 
 ### Verification
 - [ ] Admin account created and can login
@@ -421,7 +434,7 @@ docker compose -f docker-compose.prod.yml exec api \
 
 # 5. Seed CSV master data (optional)
 docker compose -f docker-compose.prod.yml exec api \
-  node dist/scripts/seed-csv-prod.js
+  pnpm db:seed:init
 
 # 6. Verify
 curl http://127.0.0.1:3000/api/health

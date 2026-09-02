@@ -92,16 +92,35 @@ The api publishes only to `127.0.0.1:3000`, so nothing is reachable from the
 VM's network — the tunnel is the sole way in. The production compose topology includes:
 - `api`: API server and SPA static file host (`127.0.0.1:3000`)
 - `worker`: Background job worker
-- `db-init`: Automatic database migration & pg-boss queue setup container (`pnpm db:migrate`)
+- `db-init`: Runs once per deployment, before `api` and `worker` are allowed to
+  start: migrations, pg-boss queue setup, then reference-data seeding
+  (`pnpm db:migrate && pnpm db:seed:init`)
 - `postgres`: PostgreSQL 18 database engine
 - `pgadmin`: Database GUI manager (`127.0.0.1:5050`, dev local on `:5050`)
 
-### Database Seeding in Production
+### Database seeding in production
 
-In a production environment (`APP_ENV=production`), the default `pnpm db:seed` script refuses to create admin accounts or demo data. To create the initial administrator account and seed master data in production, run the pre-compiled JS scripts inside the running container:
+Reference data seeds itself. The `db-init` container runs
+`pnpm db:seed:init` after the migrations, on every deployment, and `api` and
+`worker` wait for it to succeed — so a failed seed holds the deployment instead
+of bringing the system up with empty dropdowns.
+
+It seeds provinces, cities, vehicle brands, tire brands and tire brand patterns,
+reading the CSVs bind-mounted at `/app/requirements`. It is idempotent: it adds
+only what is missing and never modifies a row an admin has since edited. Re-run
+it by hand with:
 
 ```bash
-# 1. Create initial admin account:
+docker exec -it commercial2026-api-1 pnpm db:seed:init
+```
+
+If the CSVs live somewhere else, point `SEED_REQUIREMENTS_DIR` at them.
+
+**The first admin account is the one thing that is not automatic**, because a
+deployment step is not a place for a password (PLAN/13 §8). Create it once, by
+hand, after the stack is up:
+
+```bash
 docker exec -it commercial2026-api-1 node dist/scripts/seed-prod-admin.js "PasswordProdSecret123!"
 
 # Or via pnpm shortcut:
@@ -109,10 +128,32 @@ docker exec -it commercial2026-api-1 pnpm db:seed:prod-admin "PasswordProdSecret
 
 # Optional: specify a custom admin username (default: admin)
 docker exec -it commercial2026-api-1 node dist/scripts/seed-prod-admin.js "PasswordProdSecret123!" --username=superadmin
-
-# 2. Seed CSV master data (Tire Brands, Patterns, Sizes, Vehicle Brands):
-docker exec -it commercial2026-api-1 node dist/scripts/seed-csv-prod.js
 ```
+
+`pnpm db:seed` is the local-development seed. It refuses to run when
+`APP_ENV=production`, because it also creates accounts and demo inspections.
+
+### If a deployment stops with `P3009`
+
+`prisma migrate deploy` refuses to apply anything while a previously failed
+migration is recorded, and it stays recorded until an operator says what
+happened to it. Check what failed and whether it changed anything:
+
+```bash
+docker exec -it commercial2026-postgres-1 psql -U c26 -d c26   -c "select migration_name, started_at, finished_at, applied_steps_count, logs
+      from _prisma_migrations where finished_at is null;"
+```
+
+`applied_steps_count = 0` means the database was not touched, so the entry can
+be marked rolled back and the deployment retried:
+
+```bash
+docker compose -f docker-compose.prod.yml run --rm --entrypoint sh db-init   -c "cd /app/apps/api && node /app/node_modules/prisma/build/index.js       migrate resolve --rolled-back <migration_name>"
+```
+
+If any steps *were* applied, do not do this — work out what landed first. This
+is deliberately a manual step: a deploy script that clears its own failed
+migrations will eventually clear one that mattered.
 
 ## Where photos are stored
 

@@ -46,14 +46,17 @@ COPY --from=build /app/apps/api/src/scripts ./apps/api/src/scripts
 # Create symlink so commands running inside apps/api (like pnpm db:migrate) resolve dist/ correctly
 RUN mkdir -p ./apps/api && ln -s /app/dist ./apps/api/dist
 
-# ── Prisma files for seeding ─────────────────────────────────────────────────
-# Include schema, migrations, and seed scripts for production database setup
-# Must be at apps/api/prisma so pnpm db:migrate can find it
+# ── Prisma schema and migrations ─────────────────────────────────────────────
+# `prisma migrate deploy` reads these, and it runs with apps/api as its working
+# directory, so they have to land at apps/api/prisma.
+#
+# The seed itself is NOT here: it compiles to dist/scripts/ with the rest of the
+# application and runs as plain node. An earlier arrangement executed the seed
+# from .ts source with a globally installed tsx, which broke twice — once
+# because the source file was never copied into the image, and once because the
+# copy landed at a path the runner did not look in.
 COPY --from=build /app/apps/api/prisma ./apps/api/prisma
 COPY --from=build /app/apps/api/prisma.config.ts ./apps/api/prisma.config.ts
-
-# Copy seed subdirectory (master-data, csv-data, demo-data, sample-photos)
-COPY --from=build /app/apps/api/prisma/seed ./apps/api/prisma/seed
 
 # Copy package.json files needed for seed scripts and pnpm db:migrate
 COPY --from=build /app/apps/api/package.json ./apps/api/package.json
@@ -64,10 +67,13 @@ COPY --from=build /app/pnpm-workspace.yaml ./pnpm-workspace.yaml
 # The client, served by this same process (see kernel/http/static-spa.ts).
 COPY --from=build /app/apps/web/dist ./web
 
-# ── Optional: CSV seed data for production deployment ──────────────────────
-# Place CSV files in requirements/ directory for tire brands and patterns
-# Files: req-TB Brand Pattern.csv, req-LT Brand Pattern.csv, req-Size.csv, req-Vehicle Brand.csv
-# These are optional - seeding will work without them
+# ── CSV master data ──────────────────────────────────────────────────────────
+# Tire and vehicle brands, and the tire patterns under each brand. Baked in so
+# the image can seed itself; docker-compose.prod.yml also bind-mounts the host's
+# copy read-only over the top, so updated files do not need a rebuild.
+#
+# Optional: seed-init reports their absence clearly and seeds the built-in
+# master data anyway rather than failing the deployment.
 COPY requirements/ ./requirements/
 
 # ── Storage directory ────────────────────────────────────────────────────────
