@@ -1,5 +1,5 @@
 -- ============================================================================
--- 0002_tire_brand_patterns
+-- 0003_tire_brand_patterns
 --
 -- `tire_brand_patterns` was declared in schema.prisma and served by the
 -- master-brand module, but 0001_init never created it. Nothing caught that,
