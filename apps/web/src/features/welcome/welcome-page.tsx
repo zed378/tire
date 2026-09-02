@@ -1,79 +1,67 @@
-import { ReactNode, useEffect, useState } from "react";
+import { type ReactNode } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { USER_ROLE_LABELS, type DashboardMetrics } from "@c26/contracts";
+import { api } from "../../lib/api-client.ts";
+import { ErrorBanner } from "../../components/ui/feedback.tsx";
+import { PageHeader, SkeletonRows } from "../../components/ui/primitives.tsx";
 import { useSession } from "../../lib/session.tsx";
-import { Spinner } from "../../components/ui/primitives.tsx";
-import { SupplierWelcome } from "./supplier-welcome.tsx";
 import { AdminWelcome } from "./admin-welcome.tsx";
 import { ManagerWelcome } from "./manager-welcome.tsx";
 import { OperatorWelcome } from "./operator-welcome.tsx";
+import { SupplierWelcome } from "./supplier-welcome.tsx";
 
+/**
+ * The first screen after signing in.
+ *
+ * Every role gets a different one, because they have different jobs. Before
+ * this existed, everyone landed on `/inspections` — a page the manager and
+ * operator roles have no permission to read, so two of the four roles opened
+ * the application onto a screen that bounced them straight back out.
+ *
+ * The metrics come from the server already narrowed by role: the client renders
+ * whichever shape it is handed rather than asking for the one it expects. If
+ * the two ever disagree, the server is right.
+ */
 export function WelcomePage(): ReactNode {
   const { user } = useSession();
-  const [metrics, setMetrics] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const fetchMetrics = async () => {
-      try {
-        const response = await fetch("/api/dashboard/metrics");
-        if (!response.ok) throw new Error("Failed to fetch metrics");
-        const data = await response.json();
-        setMetrics(data);
-      } catch (err) {
-        setError("Gagal memuat dashboard metrics");
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchMetrics();
-  }, []);
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center py-20 text-slate-500">
-        <Spinner className="h-6 w-6" />
-        <span className="ml-2 text-sm">Memuat dashboard...</span>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="rounded-lg border border-red-200 bg-red-50 p-4">
-        <p className="text-red-800">{error}</p>
-      </div>
-    );
-  }
-
-  if (!user || !metrics) {
-    return <div>Data tidak tersedia</div>;
-  }
+  const metrics = useQuery({
+    queryKey: ["dashboard", "metrics"],
+    queryFn: () => api.get<DashboardMetrics>("/api/dashboard/metrics"),
+  });
 
   return (
-    <div className="space-y-6">
-      {/* Greeting */}
-      <div>
-        <h1 className="text-3xl font-bold text-slate-900">Selamat datang, {user.displayName}!</h1>
-        <p className="mt-2 text-slate-600">Peran: {getRoleLabel(user.role)}</p>
-      </div>
+    <div className="space-y-4">
+      <PageHeader
+        title={user === null ? "Beranda" : `Selamat datang, ${user.displayName}`}
+        description={user === null ? undefined : USER_ROLE_LABELS[user.role]}
+      />
 
-      {/* Role-specific content */}
-      {user.role === "supplier" && <SupplierWelcome metrics={metrics} />}
-      {user.role === "admin" && <AdminWelcome metrics={metrics} />}
-      {user.role === "manager" && <ManagerWelcome metrics={metrics} />}
-      {user.role === "operator" && <OperatorWelcome metrics={metrics} />}
+      {metrics.error !== null ? <ErrorBanner error={metrics.error} /> : null}
+
+      {metrics.isPending ? (
+        <div role="status" aria-live="polite">
+          <span className="sr-only">Memuat ringkasan…</span>
+          <SkeletonRows rows={4} />
+        </div>
+      ) : null}
+
+      {metrics.data !== undefined ? <RoleSummary metrics={metrics.data} /> : null}
     </div>
   );
 }
 
-function getRoleLabel(role: string): string {
-  const labels: Record<string, string> = {
-    supplier: "Data Supplier",
-    admin: "Admin",
-    manager: "PM/PIC/SPV",
-    operator: "Operator",
-  };
-  return labels[role] || role;
+function RoleSummary({ metrics }: { metrics: DashboardMetrics }): ReactNode {
+  // Narrowed on the discriminant, so adding a role to the union stops this
+  // compiling rather than silently rendering nothing.
+  switch (metrics.type) {
+    case "supplier":
+      return <SupplierWelcome metrics={metrics} />;
+    case "admin":
+      return <AdminWelcome metrics={metrics} />;
+    case "manager":
+      return <ManagerWelcome metrics={metrics} />;
+    case "operator":
+      return <OperatorWelcome metrics={metrics} />;
+  }
 }

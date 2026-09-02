@@ -15,10 +15,27 @@ import { INSPECTION_STATUSES, USER_ROLES, VEHICLE_CATEGORIES } from "./constants
  * imported by both sides — that is the rule this closes.
  */
 
+/**
+ * A count for every member of a fixed set, all keys required.
+ *
+ * `z.record(z.enum(...), ...)` would be the obvious spelling, but Zod infers it
+ * as `Partial<Record<...>>`, which would leave every tile on the dashboard
+ * asking whether its own number exists. The server always emits the full set —
+ * zeros included, so tiles never appear and disappear — and this keeps the type
+ * saying so without restating the key list anywhere.
+ */
+function countsOf<Key extends string>(keys: readonly Key[]): z.ZodObject<Record<Key, z.ZodNumber>> {
+  const shape = Object.fromEntries(keys.map((key) => [key, z.number().int()])) as Record<
+    Key,
+    z.ZodNumber
+  >;
+  return z.object(shape);
+}
+
 export const supplierMetricsSchema = z.object({
   type: z.literal("supplier"),
   /** Every status, including the ones at zero, so the tiles never shift about. */
-  submissionCounts: z.record(z.enum(INSPECTION_STATUSES), z.number().int()),
+  submissionCounts: countsOf(INSPECTION_STATUSES),
   lastSubmission: z
     .object({
       serialNumber: z.string(),
@@ -32,13 +49,13 @@ export const adminMetricsSchema = z.object({
   users: z.object({
     total: z.number().int(),
     active: z.number().int(),
-    byRole: z.record(z.enum(USER_ROLES), z.number().int()),
+    byRole: countsOf(USER_ROLES),
   }),
   inspections: z.object({
     total: z.number().int(),
-    byStatus: z.record(z.enum(INSPECTION_STATUSES), z.number().int()),
+    byStatus: countsOf(INSPECTION_STATUSES),
     thisMonth: z.number().int(),
-    thisMonthByCategory: z.record(z.enum(VEHICLE_CATEGORIES), z.number().int()),
+    thisMonthByCategory: countsOf(VEHICLE_CATEGORIES),
   }),
   recentAuditEvents: z.array(
     z.object({
@@ -53,7 +70,7 @@ export const adminMetricsSchema = z.object({
 export const managerMetricsSchema = z.object({
   type: z.literal("manager"),
   thisMonth: z.number().int(),
-  byCategory: z.record(z.enum(VEHICLE_CATEGORIES), z.number().int()),
+  byCategory: countsOf(VEHICLE_CATEGORIES),
   byRegion: z.array(
     z.object({
       region: z.string(),
