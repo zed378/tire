@@ -26,6 +26,7 @@ export function ChangePasswordPage(): ReactNode {
   const {
     register,
     handleSubmit,
+    reset,
     setError: setFieldError,
     formState: { errors, isSubmitting },
   } = useForm<ChangePasswordInput>({ resolver: zodResolver(changePasswordSchema) });
@@ -34,6 +35,7 @@ export function ChangePasswordPage(): ReactNode {
     setError(null);
     try {
       await api.post("/api/auth/change-password", values);
+      reset();
       await refresh();
       toast.push({ tone: "success", message: "Password berhasil diganti." });
       void navigate("/inspections", { replace: true });

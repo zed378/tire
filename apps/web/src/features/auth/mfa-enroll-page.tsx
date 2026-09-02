@@ -50,6 +50,8 @@ export function MfaEnrollPage(): ReactNode {
     mutationFn: (value: string) => api.post<MfaEnrollmentResult>("/api/auth/mfa/confirm", { code: value }),
     onSuccess: async (result) => {
       setRecoveryCodes(result.recoveryCodes);
+      setCode("");
+      setCodeError(undefined);
       await refresh();
       toast.push({ tone: "success", message: "Autentikasi dua faktor aktif." });
     },

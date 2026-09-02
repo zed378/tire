@@ -68,6 +68,12 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
     className,
     children,
     disabled,
+    // HTML defaults an unqualified <button> inside a form to `submit`, so a
+    // Button added to a form for some unrelated action submits it as well as
+    // doing its own job. Submitting is opted into here rather than out of.
+    // Nothing relied on the old default — every Button currently inside a form
+    // already names its type.
+    type = "button",
     ...props
   },
   ref,
@@ -75,6 +81,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
   return (
     <button
       ref={ref}
+      type={type}
       // Disabled while in flight: this is the double-submit guard, not a
       // decoration (PLAN/05 §5.2 rule 3).
       disabled={disabled === true || loading}

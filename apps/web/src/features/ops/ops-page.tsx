@@ -12,6 +12,7 @@ import {
   useToast,
 } from "../../components/ui/feedback.tsx";
 import { Button, Card, EmptyState, Field, Input, Spinner } from "../../components/ui/primitives.tsx";
+import { Pagination } from "../../components/ui/pagination.tsx";
 
 /**
  * The operations panel (PLAN/10 §3).
@@ -27,7 +28,10 @@ import { Button, Card, EmptyState, Field, Input, Spinner } from "../../component
  * data, every action audited, and every mutation behind a two-step confirmation
  * (PLAN/10 §3.2).
  */
+const ORPHANS_PER_PAGE = 20;
+
 export function OpsPage(): ReactNode {
+  const [orphanPage, setOrphanPage] = useState(1);
   const queryClient = useQueryClient();
   const toast = useToast();
   const [requestId, setRequestId] = useState("");

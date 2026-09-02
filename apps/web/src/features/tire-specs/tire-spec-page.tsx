@@ -72,6 +72,7 @@ export function TireSpecPage(): ReactNode {
       }),
     onSuccess: async () => {
       toast.push({ tone: "success", message: "Spesifikasi disalin ke posisi lain." });
+      setCopySource(null);
       await queryClient.invalidateQueries({ queryKey: ["tire-specs", sn] });
     },
     onError: setError,
