@@ -135,17 +135,82 @@ docker compose -f docker-compose.prod.yml exec api \
   node dist/scripts/seed-csv-prod.js
 ```
 
-## File Structure
+## Build Checklist
 
-### Required Files in Docker Image
+### Required Files (Pre-Build Verification)
+
+**Prisma & Database** ✅
+- `apps/api/prisma/schema.prisma` - Database schema
+- `apps/api/prisma/migrations/0001_init/migration.sql` - Initial migration
+- `apps/api/prisma/seed.ts` - Main seed orchestration
+- `apps/api/prisma/seed-prod.ts` - Production seed wrapper
+
+**Seed Scripts** ✅
+- `apps/api/src/scripts/seed-prod-admin.ts` - Admin creation script
+- `apps/api/src/scripts/seed-csv-prod.ts` - CSV seeding script
+- `apps/api/prisma/seed/master-data.ts` - Master data (34 provinces, 289 cities, 19 brands)
+- `apps/api/prisma/seed/csv-data.ts` - CSV parsing and seeding
+
+**CSV Files** (Optional - for tire brands/patterns)
+- `requirements/req-TB Brand Pattern.csv` - TB tire brands and patterns
+- `requirements/req-LT Brand Pattern.csv` - LT tire brands and patterns
+- `requirements/req-Size.csv` - Tire sizes
+- `requirements/req-Vehicle Brand.csv` - Vehicle brands
+
+**Verification Command**:
+```bash
+# Verify Prisma files exist
+ls -la apps/api/prisma/schema.prisma
+ls -la apps/api/prisma/migrations/
+ls -la apps/api/prisma/seed*.ts
+
+# Verify seed scripts exist
+ls -la apps/api/src/scripts/seed-*.ts
+
+# Verify CSV files (optional)
+ls -la requirements/
+```
+
+### Build Process
+
+```bash
+# 1. Build all packages
+pnpm build
+
+# 2. Build Docker image
+docker build -t commercial2026:latest .
+
+# 3. Verify image contents (optional)
+docker run --rm -it commercial2026:latest /bin/sh
+# Inside container:
+# ls -la /app/dist/
+# ls -la /app/prisma/
+# ls -la /app/requirements/
+```
+
+### Dockerfile Stages
+
+1. **base** - Alpine Node.js 24
+2. **deps** - Install dependencies
+3. **build** - Build all packages and compile TypeScript
+4. **api** - Final production image with:
+   - Compiled `dist/` directories from all packages
+   - Prisma schema and migrations
+   - Seed scripts (dev and prod)
+   - Optional requirements CSV files
+   - Web SPA (Next.js built)
+   - Uploads directory for file storage
+
+### File Structure in Docker Image
 ```
 /app/
-├── dist/                  (compiled API)
-├── web/                   (built SPA)
+├── dist/                  (compiled API - from apps/api/dist/)
+├── web/                   (built SPA - from apps/web/.next)
 ├── prisma/                (schema + migrations)
 ├── apps/api/package.json
 ├── packages/contracts/package.json
-└── requirements/          (optional CSV files)
+├── requirements/          (optional CSV files)
+└── uploads/               (photo storage volume)
 ```
 
 ### Volume Mounts
