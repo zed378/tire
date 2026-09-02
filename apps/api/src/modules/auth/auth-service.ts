@@ -78,7 +78,7 @@ export async function register(input: RegisterInput, context: LoginContext): Pro
   if (existing !== null) {
     throw new AppError("VALIDATION_ERROR", {
       fieldErrors: [
-        { field: "username", code: "DUPLICATE_USERNAME", message: "User ID ini sudah terdaftar." },
+        { field: "username", code: "NOT_ALLOWED", message: "User ID ini sudah terdaftar." },
       ],
     });
   }
