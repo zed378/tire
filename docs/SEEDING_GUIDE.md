@@ -1,27 +1,46 @@
-# Production Deployment Seeding Guide
+# Seeding Guide
 
 ## Overview
 
-When deploying to production, the system requires initial master data (Vehicle Brands, Tire Brands, and Tire Patterns) to be seeded. This data is loaded from CSV files in the `requirements/` directory.
+Commercial 2026 uses a comprehensive master data seeding strategy that includes:
+1. **Geographic Data**: All 34 Indonesian provinces with 289 cities/regencies (BPS codes)
+2. **Vehicle Brands**: 19 major commercial vehicle manufacturers
+3. **Tire Brands**: 27 tire manufacturers (premium, mid-range, and budget options)
+4. **CSV Data** (optional): Tire patterns and sizes from CSV files in `requirements/` directory
 
-## CSV Files
+The seeding system is production-safe with environment validation and idempotent operations.
 
-Three CSV files contain the initial data:
+## Master Data Coverage
 
-### 1. `req-TB Brand Pattern.csv`
-- **Description**: Truck/Bus (TB) tire brands and their associated patterns
-- **Format**: Brand name in column B, Pattern name in column C
-- **Content**: ~50 TB tire brands with 1,250+ patterns total
+### Geographic Data: 34 Provinces & 289 Cities
 
-### 2. `req-LT Brand Pattern.csv`
-- **Description**: Light Truck (LT) tire brands and their associated patterns  
-- **Format**: Brand name in column B, Pattern name in column C
-- **Content**: Vehicle brands and LT tire patterns
+Complete coverage of all Indonesian provinces:
 
-### 3. `req-Size.csv`
-- **Description**: Tire sizes grouped by category (TB/LT)
-- **Format**: Group in column A (TB or LT), Size in column B
-- **Content**: ~30 tire sizes
+| Region | Provinces | Cities/Regencies |
+|--------|-----------|-----------------|
+| Sumatera | 6 | 50+ |
+| Java | 6 | 35+ |
+| Bali & Nusa Tenggara | 3 | 20+ |
+| Kalimantan | 5 | 40+ |
+| Sulawesi | 6 | 50+ |
+| Maluku & Papua | 4 | 60+ |
+| Lampung & Kepulauan Riau | 2 | 20+ |
+| **TOTAL** | **34** | **289** |
+
+All codes follow official **BPS (Badan Pusat Statistik)** classification.
+
+### Vehicle Brands: 19 Options
+
+- **Premium**: Mercedes-Benz, Scania, Volvo, Man, DAF
+- **Asian**: Hino, Mitsubishi Fuso, Isuzu, UD Trucks, Tata Motors, Hyundai, Toyota
+- **Chinese**: Shacman, Sinotruk, Beiben, FAW, JAC
+- **Other**: Renault, Iveco
+
+### Tire Brands: 27 Options
+
+- **Premium**: Bridgestone, Michelin, Goodyear, Dunlop, Continental, Yokohama, Hankook, Toyo
+- **Mid-range**: GT Radial, Maxxis, Kumho, Kenda, Roadstone, Westlake, Cooper, Triangle, Firemax
+- **Budget**: Zeta, Aspira, Kalina, Accelera, Boto, Duro, Chengshan, Linglong, Winrun, Double Coin
 
 ## Seeding Process
 
@@ -30,7 +49,7 @@ Three CSV files contain the initial data:
 ```bash
 # Set required environment variables
 export SEED_ADMIN_PASSWORD="SecurePassword123"
-export SEED_DEMO_PASSWORD="DemoPassword123"
+export SEED_DEMO_PASSWORD="DemoPassword123"  # Optional, for demo data
 export APP_ENV="local"  # or "staging"
 
 # Run the seed script
@@ -39,10 +58,22 @@ pnpm db:seed
 
 This will:
 1. Create upload directories
-2. Seed master data (provinces, cities, vehicle brands)
-3. **Seed CSV data** (tire brands and patterns from requirements/)
+2. Seed master data:
+   - 34 provinces with BPS codes
+   - 289 cities/regencies with BPS codes
+   - 19 vehicle brands
+   - 27 tire brands
+3. Seed CSV data (tire patterns and sizes from `requirements/` directory)
 4. Create the first admin account
-5. Create demo accounts (if SEED_DEMO_PASSWORD is set)
+5. Create demo accounts (if `SEED_DEMO_PASSWORD` is set)
+
+**Expected Output**:
+```
+seeding (APP_ENV=local)
+  upload directory ready: apps/api/uploads
+  master data: 34 provinces, 289 cities, 19 vehicle brands, 27 tire brands
+  admin 'admin' created; must change its password on first login
+```
 
 ### For Production
 
@@ -50,7 +81,13 @@ This will:
 
 For production deployment, you must:
 
-1. **Create the first admin** using the dedicated production script:
+1. **Run database migrations first**:
+
+```bash
+pnpm db:migrate
+```
+
+2. **Create the first admin** using the dedicated production script:
 
 ```bash
 node dist/scripts/seed-prod-admin.js "YourSecurePassword123"
@@ -58,64 +95,173 @@ node dist/scripts/seed-prod-admin.js "YourSecurePassword123"
 node dist/scripts/seed-prod-admin.js "YourSecurePassword123" --username=admin
 ```
 
-2. **Seed CSV data** (tire brands & patterns) using:
+3. **Seed master data** (provinces, cities, brands):
+
+```bash
+# This runs only in production inside a container
+node dist/prisma/seed.js
+```
+
+4. **Seed CSV data** (tire brands & patterns) - optional:
 
 ```bash
 node dist/scripts/seed-csv-prod.js
 ```
 
-Both scripts enforce two strict security gates:
+All production scripts enforce two strict security gates:
 - ✅ Must run ONLY when `APP_ENV=production`
 - ✅ Must run ONLY inside a Docker/Podman container
 
-The CSV seed script:
-- Parses CSV files from `requirements/` directory
-- Upserts tire brands (no duplicates, safe to rerun)
-- Does not modify user accounts or other data
+## Master Data Implementation
 
-## CSV Seeding Implementation
+### File Structure
 
-The seeding logic is implemented in:
-- `apps/api/prisma/seed/csv-data.ts` - CSV parsing (used in development/staging)
-- `apps/api/src/scripts/seed-csv-prod.ts` - Production CSV seeding (compiled to `dist/scripts/seed-csv-prod.js`)
-- `apps/api/prisma/seed.ts` - Main seed orchestration for dev/staging
+```
+apps/api/
+├── prisma/
+│   ├── seed.ts                    # Main seed orchestration
+│   ├── seed-prod.ts               # Production seed (node compatible)
+│   └── seed/
+│       ├── master-data.ts         # 34 provinces + 289 cities + 46 brands
+│       ├── csv-data.ts            # CSV parsing for dev/staging
+│       └── demo-data.ts           # Demo accounts and sample data
+└── src/
+    └── scripts/
+        ├── seed-prod-admin.ts     # Production admin creation
+        └── seed-csv-prod.ts       # Production CSV seeding
+```
 
-### How It Works
+### Master Data Structure
 
-1. **Parse CSV Files**
-   - TB Brand Pattern: Extract brand name and patterns
-   - LT Brand Pattern: Extract brand name and patterns
-   - Size: Extract group and size values
+Location: `apps/api/prisma/seed/master-data.ts` (630+ lines)
 
-2. **Upsert Tire Brands**
-   - Uses database `UPSERT` (insert if not exists, update if exists)
-   - Prevents duplicates
-   - Safe to run multiple times
+```typescript
+export const REGIONS = [
+  {
+    code: "31",                    // BPS province code (2 digits)
+    name: "DKI Jakarta",
+    cities: [
+      { code: "3172", name: "Jakarta Timur" },      // BPS city code (4 digits)
+      { code: "3175", name: "Jakarta Utara" },
+      // ... more cities
+    ]
+  },
+  // ... 33 more provinces
+]
 
-3. **Output Summary**
-   - Prints count of brands and sizes loaded
-   - Example: `CSV data: 64 TB brands, 40 LT brands, 30 tire sizes`
+const VEHICLE_BRANDS = [
+  "Hino", "Mitsubishi Fuso", "Isuzu", "UD Trucks", // ... 15 more
+]
+
+const TIRE_BRANDS = [
+  "Bridgestone", "GT Radial", "Dunlop", // ... 24 more
+]
+```
+
+### Upsert Strategy
+
+All data uses Prisma's `upsert()` for safety:
+
+```typescript
+const province = await prisma.province.upsert({
+  where: { code: region.code },
+  create: { code: region.code, name: region.name },
+  update: { name: region.name },
+});
+```
+
+**Benefits**:
+- ✅ Idempotent: Safe to run multiple times
+- ✅ No duplicates: Uses unique `code` as key
+- ✅ Non-destructive: Won't delete existing data
+- ✅ Updates names if changed
+
+## Optional: CSV Seeding
+
+If you have CSV files with tire patterns and sizes, you can seed them:
+
+### CSV Files
+
+Three CSV files in `requirements/` directory:
+
+1. **`req-TB Brand Pattern.csv`** - Truck/Bus tire brands and patterns
+2. **`req-LT Brand Pattern.csv`** - Light Truck tire brands and patterns
+3. **`req-Size.csv`** - Tire sizes grouped by TB/LT
+
+### CSV Seeding Process
+
+**Development/Staging**: Automatic (included in `pnpm db:seed`)
+
+**Production**:
+```bash
+# Only runs in production inside container
+node dist/scripts/seed-csv-prod.js
+```
 
 ## Deployment Checklist
 
-- [ ] CSV files exist in `requirements/` directory
-  - `req-TB Brand Pattern.csv`
-  - `req-LT Brand Pattern.csv`
-  - `req-Size.csv`
-- [ ] Database is initialized (migrations run)
+### Initial Setup
+- [ ] Database is initialized (migrations run via `pnpm db:migrate`)
 - [ ] Application is running in Docker/Podman container
-- [ ] `APP_ENV=production` is set
+- [ ] `APP_ENV=production` is set in environment
+
+### Seeding Steps
 - [ ] Create first admin: `node dist/scripts/seed-prod-admin.js "password"`
-- [ ] Seed CSV data: `node dist/scripts/seed-csv-prod.js`
-- [ ] Verify tire brands appear in admin UI
-- [ ] Verify tire sizes are available in inspection forms
+- [ ] Seed master data: `node dist/prisma/seed.js`
+- [ ] (Optional) Seed CSV data: `node dist/scripts/seed-csv-prod.js`
+
+### Verification
+- [ ] Admin account is created and can login
+- [ ] 34 provinces appear in province dropdown
+- [ ] 289 cities/regencies appear when selecting province
+- [ ] 19 vehicle brands appear in vehicle selection
+- [ ] 27 tire brands appear in tire brand selection
+- [ ] (If using CSV) Tire patterns and sizes are available
 
 ## Troubleshooting
 
+### Main seed script runs on production
+
+**Error**: `Refusing to seed a production database`
+
+**Solution**: This is intentional protection. Use separate production scripts instead:
+```bash
+node dist/scripts/seed-prod-admin.js "password"
+node dist/prisma/seed.js
+```
+
+### Script not found
+
+**Error**: `Cannot find module '/app/dist/scripts/seed-csv-prod.js'`
+
+**Solution**: Build the API first:
+```bash
+pnpm build
+# Or just the API:
+pnpm build --filter=@c26/api
+```
+
+### Database connection fails
+
+**Error**: `Can't reach database server at localhost:5433`
+
+**Solution**: Ensure database is running:
+```bash
+# Check if containers are running
+docker-compose ps
+
+# Start containers
+docker-compose up -d
+
+# Wait for database to be ready
+docker-compose logs postgres
+```
+
 ### CSV files not found
+
 **Error**: `ENOENT: no such file or directory, open 'requirements/req-TB Brand Pattern.csv'`
 
-**Solution**: Ensure CSV files are in the correct location:
+**Solution**: Place CSV files in `requirements/` directory:
 ```
 project-root/
 ├── requirements/
@@ -124,42 +270,53 @@ project-root/
 │   └── req-Size.csv
 ```
 
-### Duplicate brands
-**Status**: Database contains duplicate brand entries
+### Duplicate data in database
 
-**Solution**: The upsert logic prevents new duplicates. Existing duplicates must be manually cleaned:
+**Status**: Multiple entries for same province/city/brand
+
+**Solution**: The upsert logic prevents new duplicates. For existing duplicates:
 ```sql
--- Find and merge duplicate brands if needed
-SELECT name, COUNT(*) FROM tire_brands 
+-- Check for duplicates
+SELECT name, COUNT(*) FROM provinces 
 GROUP BY name HAVING COUNT(*) > 1;
+
+-- Manual cleanup may be needed
+-- Contact database administrator
 ```
 
-### Seed script fails on production
-**Error**: "Gagal: script ini HANYA dapat dijalankan pada lingkungan produksi"
+### Permission denied during pnpm install
 
-**Solution**: Ensure you're running inside Docker/Podman container AND `APP_ENV=production` is set:
-```bash
-# Check environment
-echo $APP_ENV
-echo $IS_CONTAINER
+**Error**: `EACCES: permission denied, open '/app/_tmp_*'`
 
-# Run inside container
-docker exec <container-name> node dist/scripts/seed-csv-prod.js
-```
+**Solution**: This happens when installing dependencies as non-root in container. Ensure:
+- Build happens before deployment
+- Dependencies are installed with `pnpm install` before building
+- Production container has pre-built `dist/` directory
 
-### Script not found
-**Error**: `Cannot find module '/app/dist/scripts/seed-csv-prod.js'`
+## Data Quality
 
-**Solution**: Build the API first:
-```bash
-pnpm build --filter=api
-# Then run the script
-node apps/api/dist/scripts/seed-csv-prod.js
-```
+### BPS Compliance
 
-## Data Integrity
+All province and city codes follow official **Badan Pusat Statistik** standards:
+- **Province codes**: 2 digits (e.g., `31` = DKI Jakarta)
+- **City codes**: 4 digits (e.g., `3172` = Jakarta Timur)
 
-- **Upsert Strategy**: Uses `name` as unique key
-- **Idempotent**: Safe to run multiple times
-- **Non-destructive**: Won't delete existing tire brands or patterns
-- **Audit Trail**: All database operations are logged via Prisma
+### Brand Coverage
+
+- **Vehicle Brands**: All major commercial manufacturers in Indonesian market (2026)
+- **Tire Brands**: Mix of international premium, mid-range, and local budget brands
+
+### Data Integrity
+
+- **Upsert Strategy**: Uses unique identifiers (`code` or `name`)
+- **Idempotent**: Safe to run multiple times without data corruption
+- **Non-destructive**: Won't delete or overwrite user data
+- **Audit Trail**: All operations logged via Prisma
+
+## Support & Documentation
+
+For more detailed information:
+- See `MASTER_DATA_GUIDE.md` for comprehensive master data documentation
+- See `CLAUDE.md` for development guidelines and rules
+- See `.env.example` for all available environment variables
+
