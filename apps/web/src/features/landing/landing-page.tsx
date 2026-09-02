@@ -8,17 +8,8 @@ import { HERO_IMAGE, IMAGE_CREDITS, TREAD_IMAGE, WHEEL_IMAGE } from "./image-cre
 /**
  * The public page.
  *
- * WHAT IT DELIBERATELY IS NOT: the previous version opened with a pulsing
- * "SYSTEM ONLINE" badge over a cyber grid, three floating blurred orbs,
- * seventeen `backdrop-blur` surfaces and a heading called "Fitur Terdepan". It
- * could have been selling anything. This one says what the system does, in the
- * words the people who use it already use — Pengajuan, Pass QC, Perlu Revisi —
- * and shows a bus from Probolinggo rather than an abstract gradient.
- *
- * The concrete details are load-bearing, not decoration. `SN2026-00001` is the
- * real serial format (K-05). `Drive 1 Kiri Dalam` is a real tire position, named
- * exactly as the engine names it (K-02). Somebody who has done this job should
- * recognise their own work here; that recognition is the whole argument.
+ * What the system does, in the words the people who use it already use —
+ * Pengajuan, Pass QC, Perlu Revisi — and shows real fleet imagery.
  */
 export function LandingPage(): ReactNode {
   return (
@@ -41,35 +32,61 @@ function SiteHeader(): ReactNode {
 
   return (
     <header className="sticky top-0 z-30 border-b border-line bg-surface/95 backdrop-blur-md transition-colors">
-      <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-5 py-3.5 sm:px-8">
-        <Link to="/" className="flex items-baseline gap-2 group">
-          <span className="text-base font-bold tracking-tight text-body group-hover:text-accent-text transition-colors">
-            Commercial 2026
-          </span>
-          <span className="hidden text-xs text-subtle sm:inline">Data Ban Bus &amp; Truk</span>
+      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
+        {/* Brand Logo & Name */}
+        <Link to="/" className="flex items-center gap-2.5 group">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent text-on-accent shadow-sm transition-transform group-hover:scale-105">
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <circle cx="12" cy="12" r="9" strokeDasharray="3 3" />
+              <circle cx="12" cy="12" r="3" />
+              <path d="M12 3v3M12 18v3M3 12h3M18 12h3" />
+            </svg>
+          </div>
+          <div className="flex items-baseline gap-2">
+            <span className="text-sm sm:text-base font-bold tracking-tight text-body group-hover:text-accent-text transition-colors">
+              Commercial 2026
+            </span>
+            <span className="hidden text-xs text-muted sm:inline border-l border-line pl-2">
+              Data Ban Bus &amp; Truk
+            </span>
+          </div>
         </Link>
 
-        <div className="flex items-center gap-2.5 sm:gap-3">
+        {/* Right Actions & Auth State */}
+        <div className="flex items-center gap-2 sm:gap-2.5">
           <ThemeToggle />
 
           {user !== null ? (
-            <div className="flex items-center gap-2.5 sm:gap-3">
-              {/* Desktop user identity info */}
-              <div className="hidden text-right sm:block">
-                <p className="text-xs font-semibold text-body leading-tight">{user.displayName}</p>
-                <p className="text-[11px] text-muted leading-tight">{USER_ROLE_LABELS[user.role]}</p>
+            <div className="flex items-center gap-2 sm:gap-2.5">
+              {/* User Identity Chip */}
+              <div className="hidden sm:flex items-center gap-2 h-9 px-2.5 rounded-lg border border-line bg-surface-sunken/70 text-left">
+                <div className="flex h-6 w-6 items-center justify-center rounded-md bg-accent text-on-accent font-bold text-[11px]">
+                  {user.displayName.charAt(0).toUpperCase()}
+                </div>
+                <div className="flex flex-col pr-1">
+                  <span className="text-xs font-semibold text-body leading-tight truncate max-w-[130px]">
+                    {user.displayName}
+                  </span>
+                  <span className="text-[10px] text-muted leading-tight">
+                    {USER_ROLE_LABELS[user.role]}
+                  </span>
+                </div>
               </div>
 
-              {/* Mobile compact user chip */}
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-accent/20 bg-accent-soft px-2 py-0.5 text-[11px] font-medium text-accent-text sm:hidden truncate max-w-[110px]">
-                <span className="h-1.5 w-1.5 rounded-full bg-accent animate-pulse flex-shrink-0" />
-                <span className="truncate">{user.displayName}</span>
-              </span>
-
-              {/* Direct Link to Dashboard */}
+              {/* Direct Dashboard Action */}
               <Link
                 to="/welcome"
-                className="inline-flex h-9 items-center justify-center gap-1.5 rounded-lg bg-accent px-3.5 sm:px-4 text-xs sm:text-sm font-medium text-on-accent transition-all hover:bg-accent-hover shadow-sm active:scale-[0.98]"
+                className="inline-flex h-9 items-center justify-center gap-1.5 rounded-lg bg-accent px-3.5 sm:px-4 text-xs sm:text-sm font-medium text-on-accent shadow-sm transition-all hover:bg-accent-hover active:scale-[0.98]"
               >
                 <span>Dashboard</span>
                 <svg
@@ -78,7 +95,7 @@ function SiteHeader(): ReactNode {
                   viewBox="0 0 24 24"
                   fill="none"
                   stroke="currentColor"
-                  strokeWidth="2.5"
+                  strokeWidth="2.2"
                   strokeLinecap="round"
                   strokeLinejoin="round"
                   aria-hidden="true"
@@ -91,15 +108,29 @@ function SiteHeader(): ReactNode {
             <div className="flex items-center gap-2">
               <Link
                 to="/register"
-                className="hidden sm:inline-flex h-9 items-center justify-center rounded-lg border border-line-strong bg-surface px-3.5 text-xs sm:text-sm font-medium text-body transition-colors hover:bg-surface-sunken"
+                className="hidden sm:inline-flex h-9 items-center justify-center rounded-lg border border-line bg-surface px-3.5 text-xs sm:text-sm font-medium text-body transition-colors hover:bg-surface-sunken"
               >
                 Daftar
               </Link>
               <Link
                 to="/login"
-                className="inline-flex h-9 items-center justify-center rounded-lg bg-accent px-4 text-xs sm:text-sm font-medium text-on-accent transition-all hover:bg-accent-hover shadow-sm active:scale-[0.98]"
+                className="inline-flex h-9 items-center justify-center gap-1.5 rounded-lg bg-accent px-4 text-xs sm:text-sm font-medium text-on-accent shadow-sm transition-all hover:bg-accent-hover active:scale-[0.98]"
               >
-                Masuk
+                <span>Masuk</span>
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <line x1="5" y1="12" x2="19" y2="12" />
+                  <polyline points="12 5 19 12 12 19" />
+                </svg>
               </Link>
             </div>
           )}
@@ -113,7 +144,7 @@ function Hero(): ReactNode {
   const { user } = useSession();
 
   return (
-    <section className="mx-auto max-w-6xl px-5 pb-16 pt-12 sm:px-8 sm:pb-24 sm:pt-20">
+    <section className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 pb-16 pt-10 sm:pb-24 sm:pt-16">
       <div className="grid items-center gap-10 lg:grid-cols-[1.05fr_1fr] lg:gap-14">
         <div>
           <p className="text-sm font-medium text-accent-text">
@@ -180,8 +211,6 @@ function Hero(): ReactNode {
             alt={HERO_IMAGE.alt}
             width={1280}
             height={960}
-            // The one image above the fold, so it is not lazy and it is decoded
-            // eagerly. Everything below is deferred.
             loading="eager"
             fetchPriority="high"
             className="w-full rounded-xl border border-line object-cover shadow-sm"
@@ -226,7 +255,7 @@ const PROBLEMS: { before: string; after: string }[] = [
 function TheProblem(): ReactNode {
   return (
     <section className="border-y border-line bg-surface">
-      <div className="mx-auto max-w-6xl px-5 py-16 sm:px-8 sm:py-20">
+      <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-16 sm:py-20">
         <div className="max-w-2xl">
           <h2 className="text-2xl font-semibold tracking-tight text-body sm:text-3xl">
             Dibangun dari daftar hal yang dulu rusak
@@ -273,7 +302,7 @@ const STEPS: { title: string; body: string }[] = [
 
 function HowItWorks(): ReactNode {
   return (
-    <section className="mx-auto max-w-6xl px-5 py-16 sm:px-8 sm:py-24">
+    <section className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-16 sm:py-24">
       <div className="grid gap-10 lg:grid-cols-[1fr_1.15fr] lg:gap-16">
         <div>
           <h2 className="text-2xl font-semibold tracking-tight text-body sm:text-3xl">
@@ -291,7 +320,7 @@ function HowItWorks(): ReactNode {
               width={1000}
               height={666}
               loading="lazy"
-              className="w-full rounded-xl border border-line object-cover"
+              className="w-full rounded-xl border border-line object-cover shadow-sm"
             />
             <figcaption className="mt-2 text-xs text-subtle">
               Satu posisi ban, satu slot foto, satu kartu spesifikasi.
@@ -343,7 +372,7 @@ function WhatItRefuses(): ReactNode {
         className="absolute inset-0 h-full w-full object-cover opacity-[0.06]"
       />
 
-      <div className="relative mx-auto max-w-6xl px-5 py-16 sm:px-8 sm:py-20">
+      <div className="relative mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-16 sm:py-20">
         <h2 className="max-w-2xl text-2xl font-semibold tracking-tight text-body sm:text-3xl">
           Hal-hal yang sistem ini tolak lakukan
         </h2>
@@ -356,7 +385,7 @@ function WhatItRefuses(): ReactNode {
           {REFUSALS.map((item) => (
             <li
               key={item}
-              className="rounded-lg border border-line bg-surface p-4 text-sm leading-relaxed text-muted"
+              className="rounded-lg border border-line bg-surface p-4 text-sm leading-relaxed text-muted shadow-sm"
             >
               {item}
             </li>
@@ -371,8 +400,8 @@ function ClosingCta(): ReactNode {
   const { user } = useSession();
 
   return (
-    <section className="mx-auto max-w-6xl px-5 py-16 sm:px-8 sm:py-20">
-      <div className="flex flex-col items-start justify-between gap-6 rounded-xl border border-line bg-surface p-6 sm:flex-row sm:items-center sm:p-8">
+    <section className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-16 sm:py-20">
+      <div className="flex flex-col items-start justify-between gap-6 rounded-xl border border-line bg-surface p-6 sm:flex-row sm:items-center sm:p-8 shadow-sm">
         <div>
           <h2 className="text-xl font-semibold tracking-tight text-body">
             {user !== null ? `Masuk sebagai ${user.displayName}` : "Sudah punya akun?"}
@@ -421,7 +450,7 @@ function SiteFooter(): ReactNode {
 
   return (
     <footer className="border-t border-line bg-surface">
-      <div className="mx-auto max-w-6xl px-5 py-10 sm:px-8">
+      <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-10">
         <div className="flex flex-wrap items-start justify-between gap-6">
           <div>
             <p className="text-sm font-semibold text-body">Commercial 2026</p>
@@ -445,10 +474,6 @@ function SiteFooter(): ReactNode {
           </nav>
         </div>
 
-        {/*
-          Required by the licences, not a nicety. CC BY and CC BY-SA both oblige
-          us to name the author, state the licence, and link back to the source.
-        */}
         <div className="mt-8 border-t border-line pt-6">
           <h2 className="text-xs font-semibold uppercase tracking-wide text-subtle">
             Kredit foto

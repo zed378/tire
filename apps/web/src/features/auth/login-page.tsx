@@ -69,7 +69,11 @@ export function LoginPage(): ReactNode {
       }
 
       const from = (location.state as { from?: string } | null)?.from;
-      void navigate(from ?? "/inspections", { replace: true });
+      // Falls back to the role-aware home screen, not to /inspections —
+      // which the manager and operator roles have no permission to read, so
+      // two of the four roles landed on a page that bounced them straight
+      // back out. A deep link the user was heading for still wins.
+      void navigate(from ?? "/welcome", { replace: true });
     } catch (caught) {
       setError(caught);
       if (isApiError(caught) && caught.code === "INVALID_CREDENTIALS" && needsTotp) {
