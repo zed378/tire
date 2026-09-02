@@ -47,15 +47,22 @@ export function AuthLayout({
           src={image.src}
           alt=""
           aria-hidden="true"
-          className="absolute inset-0 h-full w-full object-cover saturate-[0.3]"
+          className="absolute inset-0 h-full w-full object-cover saturate-[0.45]"
           loading="lazy"
         />
         {/*
-          The scrim is opaque enough that the text over it clears 4.5:1 against
-          the darkest and the lightest part of the photograph, not just the part
-          that happened to sit behind the words when it was checked.
+          A graded scrim rather than a flat one.
+
+          A flat 75% wash guarantees contrast, but on an already-dark photograph
+          it leaves a panel that is almost black — the picture stops being a
+          picture. This is heavy where the type sits (top-left mark, bottom-left
+          sentence) and lighter across the middle, so the photograph survives
+          and the text still clears 4.5:1 over the part it actually covers.
         */}
-        <div aria-hidden="true" className="absolute inset-0 bg-graphite/75" />
+        <div
+          aria-hidden="true"
+          className="absolute inset-0 bg-gradient-to-b from-graphite/85 via-graphite/45 to-graphite/90"
+        />
 
         <div className="relative flex h-full flex-col justify-between p-5 sm:p-8 lg:p-10">
           <Link
