@@ -1,6 +1,19 @@
 import { describe, expect, it } from 'vitest';
 import { buildSenders, inAppSender, consoleEmailSender, resendEmailSender, unavailableWhatsappSender } from './senders.ts';
 
+const ENVS = {
+  DATABASE_URL: 'postgresql://localhost:5432/tire',
+  STORAGE_SIGNING_KEY: 'test-signing-key',
+  MFA_ENCRYPTION_KEY: 'test-mfa-key-32chars!!!!!',
+};
+
+function setupEnvs() {
+  Object.entries(ENVS).forEach(([k, v]) => { process.env[k] = v; });
+}
+function teardownEnvs() {
+  Object.keys(ENVS).forEach(k => delete process.env[k]);
+}
+
 describe('inAppSender', () => {
   it('has channel in_app', () => {
     expect(inAppSender.channel).toBe('in_app');
@@ -30,21 +43,26 @@ describe('consoleEmailSender', () => {
   });
 
   it('returns ok:true with console externalId', async () => {
-    const notification = {
-      id: 42n,
-      recipientId: 1n,
-      recipientName: 'Test',
-      recipientEmail: 'test@example.com',
-      recipientPhone: null,
-      channel: 'email',
-      eventType: 'test.event',
-      title: 'Test Subject',
-      body: 'Test body',
-      link: null,
-    };
-    const result = await consoleEmailSender.send(notification);
-    expect(result.ok).toBe(true);
-    expect(result.externalId).toBe('console-42');
+    setupEnvs();
+    try {
+      const notification = {
+        id: 42n,
+        recipientId: 1n,
+        recipientName: 'Test',
+        recipientEmail: 'test@example.com',
+        recipientPhone: null,
+        channel: 'email',
+        eventType: 'test.event',
+        title: 'Test Subject',
+        body: 'Test body',
+        link: null,
+      };
+      const result = await consoleEmailSender.send(notification);
+      expect(result.ok).toBe(true);
+      expect(result.externalId).toBe('console-42');
+    } finally {
+      teardownEnvs();
+    }
   });
 });
 
@@ -54,44 +72,55 @@ describe('resendEmailSender', () => {
   });
 
   it('returns error for missing email', async () => {
-    const result = await resendEmailSender.send({
-      id: 1n,
-      recipientId: 1n,
-      recipientName: 'Test',
-      recipientEmail: null,
-      recipientPhone: null,
-      channel: 'email',
-      eventType: 'test',
-      title: 'Test',
-      body: 'Test',
-      link: null,
-    });
-    expect(result.ok).toBe(false);
-    expect(result.retryable).toBe(false);
-    expect((result as { error: string }).error).toBe('recipient has no email address');
+    setupEnvs();
+    try {
+      const result = await resendEmailSender.send({
+        id: 1n,
+        recipientId: 1n,
+        recipientName: 'Test',
+        recipientEmail: null,
+        recipientPhone: null,
+        channel: 'email',
+        eventType: 'test',
+        title: 'Test',
+        body: 'Test',
+        link: null,
+      });
+      expect(result.ok).toBe(false);
+      expect(result.retryable).toBe(false);
+      expect((result as { error: string }).error).toBe('recipient has no email address');
+    } finally {
+      teardownEnvs();
+    }
   });
 
   it('returns error for missing email (empty string)', async () => {
-    const result = await resendEmailSender.send({
-      id: 1n,
-      recipientId: 1n,
-      recipientName: 'Test',
-      recipientEmail: '',
-      recipientPhone: null,
-      channel: 'email',
-      eventType: 'test',
-      title: 'Test',
-      body: 'Test',
-      link: null,
-    });
-    expect(result.ok).toBe(false);
-    expect(result.retryable).toBe(false);
+    setupEnvs();
+    try {
+      const result = await resendEmailSender.send({
+        id: 1n,
+        recipientId: 1n,
+        recipientName: 'Test',
+        recipientEmail: '',
+        recipientPhone: null,
+        channel: 'email',
+        eventType: 'test',
+        title: 'Test',
+        body: 'Test',
+        link: null,
+      });
+      expect(result.ok).toBe(false);
+      expect(result.retryable).toBe(false);
+    } finally {
+      teardownEnvs();
+    }
   });
 
   it('returns error for missing RESEND_API_KEY', async () => {
     const originalKey = process.env.RESEND_API_KEY;
     delete process.env.RESEND_API_KEY;
     process.env.RESEND_API_KEY = '';
+    setupEnvs();
     try {
       const result = await resendEmailSender.send({
         id: 1n,
@@ -109,8 +138,11 @@ describe('resendEmailSender', () => {
       expect(result.retryable).toBe(false);
       expect((result as { error: string }).error).toBe('RESEND_API_KEY is not configured');
     } finally {
+      teardownEnvs();
       if (originalKey !== undefined) {
         process.env.RESEND_API_KEY = originalKey;
+      } else {
+        delete process.env.RESEND_API_KEY;
       }
     }
   });
@@ -142,46 +174,34 @@ describe('unavailableWhatsappSender', () => {
 
 describe('buildSenders', () => {
   it('returns a Map with all channels', () => {
-    process.env.DATABASE_URL = 'postgresql://localhost:5432/tire';
-    process.env.STORAGE_SIGNING_KEY = 'test-signing-key';
-    process.env.MFA_ENCRYPTION_KEY = 'test-mfa-key-32chars!!!!!';
+    setupEnvs();
     try {
       const senders = buildSenders();
       expect(senders.has('in_app')).toBe(true);
       expect(senders.has('email')).toBe(true);
       expect(senders.has('whatsapp')).toBe(true);
     } finally {
-      delete process.env.DATABASE_URL;
-      delete process.env.STORAGE_SIGNING_KEY;
-      delete process.env.MFA_ENCRYPTION_KEY;
+      teardownEnvs();
     }
   });
 
   it('returns in_appSender for in_app channel', () => {
-    process.env.DATABASE_URL = 'postgresql://localhost:5432/tire';
-    process.env.STORAGE_SIGNING_KEY = 'test-signing-key';
-    process.env.MFA_ENCRYPTION_KEY = 'test-mfa-key-32chars!!!!!';
+    setupEnvs();
     try {
       const senders = buildSenders();
       expect(senders.get('in_app')).toBe(inAppSender);
     } finally {
-      delete process.env.DATABASE_URL;
-      delete process.env.STORAGE_SIGNING_KEY;
-      delete process.env.MFA_ENCRYPTION_KEY;
+      teardownEnvs();
     }
   });
 
   it('returns whatsapp sender for whatsapp channel', () => {
-    process.env.DATABASE_URL = 'postgresql://localhost:5432/tire';
-    process.env.STORAGE_SIGNING_KEY = 'test-signing-key';
-    process.env.MFA_ENCRYPTION_KEY = 'test-mfa-key-32chars!!!!!';
+    setupEnvs();
     try {
       const senders = buildSenders();
       expect(senders.get('whatsapp')).toBe(unavailableWhatsappSender);
     } finally {
-      delete process.env.DATABASE_URL;
-      delete process.env.STORAGE_SIGNING_KEY;
-      delete process.env.MFA_ENCRYPTION_KEY;
+      teardownEnvs();
     }
   });
 });

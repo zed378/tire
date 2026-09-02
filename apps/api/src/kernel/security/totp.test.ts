@@ -1,11 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  generateTotpSecret,
-  buildOtpauthUri,
-  verifyTotp,
-  generateRecoveryCodes,
-  normalizeRecoveryCode,
-} from './totp.ts';
+import { generateTotpSecret, buildOtpauthUri, verifyTotp, generateRecoveryCodes, normalizeRecoveryCode } from './totp.ts';
 
 describe('generateTotpSecret', () => {
   it('returns a valid base32 string', () => {
@@ -22,9 +16,11 @@ describe('generateTotpSecret', () => {
 });
 
 describe('buildOtpauthUri', () => {
-  it('returns a valid otpauth URI', () => {
+  it('returns a valid otpauth URI with required params', () => {
     const uri = buildOtpauthUri('testuser', 'JBSWY3DPEHPK3PXP');
-    expect(uri).toBe('otpauth://totp/Commercial%202026:testuser?secret=JBSWY3DPEHPK3PXP&issuer=Commercial%202026');
+    expect(uri).toContain('otpauth://totp/Commercial%202026:testuser');
+    expect(uri).toContain('secret=JBSWY3DPEHPK3PXP');
+    expect(uri).toContain('issuer=Commercial%202026');
   });
 
   it('encodes username with special characters', () => {

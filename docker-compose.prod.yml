@@ -67,6 +67,12 @@ services:
       - ./requirements:/app/requirements:ro
     command: >
       sh -c "
+        echo 'Waiting for PostgreSQL to be ready...' &&
+        until pg_isready -h postgres -U \${POSTGRES_USER:-c26} -d \${POSTGRES_DB:-c26} > /dev/null 2>&1; do
+          echo '  PostgreSQL not ready yet, waiting 2s...'
+          sleep 2
+        done &&
+        echo 'PostgreSQL is ready!' &&
         echo 'Running Prisma migrations...' &&
         cd /app &&
         npx prisma migrate deploy --schema=./apps/api/prisma/schema.prisma 2>&1 &&
@@ -102,7 +108,7 @@ services:
             console.log('  queue schema pgboss ready, ' + String(queues.length) + ' queues registered');
             process.exit(0);
           })();
-        \""
+        \"
 
   worker:
     build:

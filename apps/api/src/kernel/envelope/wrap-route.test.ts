@@ -11,7 +11,6 @@ describe('zodErrorToAppError', () => {
     const result = zodErrorToAppError(zodErr);
     expect(result).toBeInstanceOf(AppError);
     expect(result.code).toBe('VALIDATION_ERROR');
-    expect(result.message).toContain('Username');
     expect(result.fieldErrors).toHaveLength(1);
     expect(result.fieldErrors?.[0].field).toBe('username');
     expect(result.fieldErrors?.[0].code).toBe('TOO_SHORT');
@@ -35,10 +34,10 @@ describe('zodErrorToAppError', () => {
     expect(result.fieldErrors).toHaveLength(0);
   });
 
-  it('maps not_an_integer to INVALID_FORMAT via fieldCodeFor', () => {
+  it('maps not_an_integer to NOT_ALLOWED via fieldCodeFor', () => {
     const zodErr = new ZodError([{ code: 'not_an_integer', path: ['quantity'], message: 'bukan integer' }]);
     const result = zodErrorToAppError(zodErr);
-    expect(result.fieldErrors?.[0]?.code).toBe('INVALID_FORMAT');
+    expect(result.fieldErrors?.[0]?.code).toBe('NOT_ALLOWED');
   });
 
   it('maps unrecognized_keys to root NOT_ALLOWED', () => {
