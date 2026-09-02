@@ -2,7 +2,9 @@ import { type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { cn } from "../../lib/cn.ts";
 import { ThemeToggle } from "../../components/ui/theme-toggle.tsx";
-import type { ImageCredit } from "../landing/image-credits.ts";
+import { Photo } from "../../components/ui/photo.tsx";
+import { PHOTO_CREDITS, type PhotoCredit } from "../../lib/photo-credits.ts";
+import type { PhotoName } from "../../lib/photo-manifest.ts";
 import "./auth.css";
 
 /**
@@ -25,14 +27,14 @@ export function AuthLayout({
   subtitle,
   children,
   footer,
-  image,
+  photo,
   note,
 }: {
   title: string;
   subtitle: string;
   children: ReactNode;
   footer: ReactNode;
-  image: ImageCredit;
+  photo: PhotoName;
   /** One short factual line over the photograph. Never a testimonial. */
   note: string;
 }): ReactNode {
@@ -43,12 +45,15 @@ export function AuthLayout({
           is what the reader came for, and a full-height photograph above it
           just means scrolling past a picture to reach a password box. */}
       <aside className="relative isolate h-32 overflow-hidden bg-graphite sm:h-40 lg:col-span-5 lg:h-auto">
-        <img
-          src={image.src}
+        {/* `alt=""`: it is atmosphere. The heading beside it is the content,
+            and narrating the wallpaper before the sign-in form is an
+            obstruction, not a service. */}
+        <Photo
+          name={photo}
           alt=""
-          aria-hidden="true"
-          className="absolute inset-0 h-full w-full object-cover saturate-[0.45]"
-          loading="lazy"
+          sizes="(min-width: 1024px) 42vw, 100vw"
+          className="absolute inset-0 block h-full w-full"
+          imgClassName="h-full w-full object-cover"
         />
         {/*
           A graded scrim rather than a flat one.
@@ -106,7 +111,7 @@ export function AuthLayout({
         </div>
 
         <footer className="px-5 pb-6 text-center text-xs text-subtle sm:px-8">
-          <PhotoCredit image={image} />
+          <PhotoCreditLine credit={PHOTO_CREDITS[photo]} />
         </footer>
       </main>
     </div>
@@ -120,25 +125,25 @@ export function AuthLayout({
  * this is not decoration — it is the condition on which the image may be used
  * at all. The public-domain case needs none of it and is credited anyway.
  */
-function PhotoCredit({ image }: { image: ImageCredit }): ReactNode {
+function PhotoCreditLine({ credit }: { credit: PhotoCredit }): ReactNode {
   return (
     <span>
-      Foto: {image.author},{" "}
-      {image.licenseUrl === "" ? (
-        image.license
+      Foto: {credit.author},{" "}
+      {credit.licenseUrl === "" ? (
+        credit.license
       ) : (
         <a
-          href={image.licenseUrl}
+          href={credit.licenseUrl}
           rel="license noopener noreferrer"
           target="_blank"
           className="underline underline-offset-2 hover:text-muted"
         >
-          {image.license}
+          {credit.license}
         </a>
       )}
       , via{" "}
       <a
-        href={image.sourceUrl}
+        href={credit.sourceUrl}
         rel="noopener noreferrer"
         target="_blank"
         className="underline underline-offset-2 hover:text-muted"

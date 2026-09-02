@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { MAX_TOTAL_TIRES } from "@c26/contracts";
-import { HERO_IMAGE } from "./image-credits.ts";
+import { Photo } from "../../components/ui/photo.tsx";
 
 /* ── Product value — editorial, not a card grid ─────────────────────────────
  *
@@ -269,13 +269,14 @@ export function ProductJourney(): ReactNode {
 export function IndustrialBand(): ReactNode {
   return (
     <section className="relative isolate overflow-hidden bg-graphite">
-      <img
-        src={HERO_IMAGE.src}
-        alt={HERO_IMAGE.alt}
-        width={1600}
-        height={900}
-        loading="lazy"
-        className="band-parallax absolute inset-0 h-full w-full scale-105 object-cover opacity-45 saturate-[0.35]"
+      {/* `alt=""`: the copy over it says everything this photograph
+          contributes, and describing it again would only interrupt. */}
+      <Photo
+        name="depot"
+        alt=""
+        sizes="100vw"
+        className="band-parallax absolute inset-0 block h-full w-full opacity-45"
+        imgClassName="h-full w-full scale-105 object-cover"
       />
       {/* A scrim, so the type below holds its contrast over any part of the
           photograph rather than only over the part it was checked against. */}

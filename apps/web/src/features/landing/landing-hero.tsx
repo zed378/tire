@@ -1,6 +1,6 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
-import { TREAD_IMAGE } from "./image-credits.ts";
+import { Photo } from "../../components/ui/photo.tsx";
 
 /**
  * The hero — the one place on this page allowed to be bold.
@@ -114,13 +114,15 @@ export function LandingHero(): ReactNode {
       {/* On mobile it follows the text at a fixed ratio; on desktop it is
           pinned to the right half of the viewport, full height. */}
       <div className="relative mx-5 aspect-[4/3] overflow-hidden rounded-panel bg-graphite sm:mx-8 lg:absolute lg:inset-y-0 lg:right-0 lg:mx-0 lg:aspect-auto lg:w-[42%] lg:rounded-l-panel lg:rounded-r-none">
-        <img
-          src={TREAD_IMAGE.src}
-          alt={TREAD_IMAGE.alt}
-          width={1600}
-          height={1200}
-          fetchPriority="high"
-          className="hero-photo absolute inset-0 h-full w-full scale-[1.35] rotate-[8deg] object-cover"
+        <Photo
+          name="tire-tread"
+          alt="Permukaan alur ban truk dari dekat"
+          /* Full width below `lg`, then the 42% column the hero pins to the
+             right edge of the viewport. */
+          sizes="(min-width: 1024px) 42vw, 100vw"
+          priority
+          className="hero-photo absolute inset-0 block h-full w-full"
+          imgClassName="h-full w-full scale-[1.35] rotate-[8deg] object-cover"
         />
 
         {/* A measurement rule sweeping across the image, once. */}
