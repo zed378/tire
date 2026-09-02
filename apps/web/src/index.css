@@ -294,11 +294,30 @@
  * Respect a user who has asked their system for less motion. The landing
  * animations are decorative, so they simply stop.
  */
+/*
+ * Somebody who has asked their system for less motion gets none of it.
+ *
+ * This covers the entrance animations too, not only the decorative loops: the
+ * `Reveal` component still adds its class, and this simply makes that class do
+ * nothing. Content is unaffected either way — it was never hidden waiting to be
+ * animated in.
+ */
 @media (prefers-reduced-motion: reduce) {
   .animate-glow-pulse,
   .animate-float-slow,
-  .animate-spin-very-slow {
-    animation: none;
+  .animate-spin-very-slow,
+  .animate-drift,
+  .animate-fade-up,
+  .animate-fade-in,
+  .animate-scale-in {
+    animation: none !important;
+  }
+
+  *,
+  ::before,
+  ::after {
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }
 

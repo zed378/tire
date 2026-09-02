@@ -2,17 +2,21 @@ import { type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { USER_ROLE_LABELS } from "@c26/contracts";
 import { useSession } from "../../lib/session.tsx";
+import { ThemeToggle } from "../../components/ui/theme-toggle.tsx";
+import { Reveal } from "../../components/ui/reveal.tsx";
 import { HERO_IMAGE, IMAGE_CREDITS, TREAD_IMAGE, WHEEL_IMAGE } from "./image-credits.ts";
 
 /**
  * The public page.
  *
- * Committed to a dark treatment rather than following the viewer's theme: it is
- * one marketing surface, and the reference the owner chose is dark throughout.
- * The application behind the login stays theme-aware, so the raw palette
- * classes in this file are the documented exception to the token rule — they
- * describe one fixed design, not a theme. There is no theme switch here for the
- * same reason: it would offer a choice the page does not honour.
+ * Themed like the rest of the application, and the switch in the header works
+ * here as it does everywhere else. The hero band keeps its dark gradient in
+ * both themes because it is an image-backed banner rather than page chrome —
+ * the same reason a dark hero sits happily on a light page anywhere else.
+ *
+ * Motion is CSS keyframes with a class toggled by IntersectionObserver, never a
+ * motion library: those animate through `element.style`, and the CSP forbids
+ * inline styles outright (PLAN/13 §7).
  *
  * TWO THINGS FROM THE REFERENCE ARE DELIBERATELY ABSENT. It opens with a
  * "SOC 2 TYPE II CERTIFIED" chip and closes its hero with a row of client logos
@@ -65,6 +69,8 @@ function SiteHeader(): ReactNode {
           sends them straight on instead, which is the one thing they came for.
         */}
         <div className="ml-auto flex items-center gap-2.5 md:ml-0">
+          <ThemeToggle />
+
           {user !== null ? (
             <>
               <span className="hidden text-right text-xs leading-tight text-muted sm:block">
@@ -115,7 +121,7 @@ function Hero(): ReactNode {
 
       <div className="relative mx-auto grid max-w-6xl items-center gap-12 px-5 py-16 sm:px-8 sm:py-24 lg:grid-cols-[1.1fr_1fr]">
         <div>
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2 animate-fade-up">
             <span className="rounded border border-white/20 px-2 py-1 text-[11px] font-medium uppercase tracking-wider text-slate-300">
               Audit append-only
             </span>
@@ -127,18 +133,18 @@ function Hero(): ReactNode {
 
           {/* Two-tone headline, as in the reference: the setup recedes, the
               claim lands. */}
-          <h1 className="mt-6 text-4xl font-semibold leading-[1.05] tracking-tight sm:text-5xl lg:text-6xl">
+          <h1 className="mt-6 animate-fade-up text-4xl font-semibold leading-[1.05] tracking-tight [animation-delay:80ms] sm:text-5xl lg:text-6xl">
             <span className="block text-slate-400">Ketahuan sebelum</span>
             <span className="block text-white">jadi masalah.</span>
           </h1>
 
-          <p className="mt-5 max-w-lg text-base leading-relaxed text-slate-300">
+          <p className="mt-5 max-w-lg animate-fade-up text-base leading-relaxed text-slate-300 [animation-delay:160ms]">
             Data ban bus dan truk yang bisa dipertanggungjawabkan sampai ke posisi bannya. Nomor
             seri per pemeriksaan, foto per posisi ban, dan riwayat keputusan QC yang tidak bisa
             dihapus siapa pun.
           </p>
 
-          <div className="mt-8 flex flex-wrap items-center gap-3">
+          <div className="mt-8 flex animate-fade-up flex-wrap items-center gap-3 [animation-delay:240ms]">
             {/* Split button, following the reference. The arrow half is marked
                 decorative and taken out of the tab order — it goes exactly where
                 the label beside it already goes, and a keyboard user should not
@@ -178,7 +184,7 @@ function Hero(): ReactNode {
           </div>
         </div>
 
-        <figure className="relative">
+        <figure className="relative animate-scale-in [animation-delay:200ms]">
           <div className="overflow-hidden rounded-2xl border border-white/10">
             <img
               src={WHEEL_IMAGE.src}
@@ -192,7 +198,7 @@ function Hero(): ReactNode {
           </div>
 
           {/* One real record, floating over the image. */}
-          <div className="absolute -bottom-4 left-4 rounded-xl border border-white/10 bg-slate-950/85 px-4 py-3 backdrop-blur">
+          <div className="absolute -bottom-4 left-4 animate-drift rounded-xl border border-white/10 bg-slate-950/85 px-4 py-3 backdrop-blur">
             <p className="font-mono text-xs text-slate-400">SN2026-00001</p>
             <p className="mt-0.5 text-sm font-medium text-white">Drive 1 Kiri Dalam · Pass QC</p>
           </div>
