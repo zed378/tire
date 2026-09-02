@@ -262,7 +262,17 @@ const credits = [
   "  readonly sourceUrl: string;",
   "}",
   "",
-  "export const PHOTO_CREDITS = {",
+  "import type { PhotoName } from \"./photo-manifest.ts\";",
+  "",
+  "/*",
+  " * Typed as the interface, not `as const`.",
+  " *",
+  " * With a const assertion TypeScript narrows `licenseUrl` to the two literal",
+  " * URLs that happen to be in use today, and then proves the public-domain",
+  " * branch in the credit line unreachable — so adding a public-domain",
+  " * photograph later would break the build in a file nobody edited.",
+  " */",
+  "export const PHOTO_CREDITS: Record<PhotoName, PhotoCredit> = {",
   ...collected.map(
     (m) =>
       `  "${m.name}": {\n` +
@@ -272,7 +282,7 @@ const credits = [
       `    sourceUrl: ${JSON.stringify(m.sourceUrl)},\n` +
       `  },`,
   ),
-  "} as const satisfies Record<string, PhotoCredit>;",
+  "};",
   "",
 ].join("\n");
 

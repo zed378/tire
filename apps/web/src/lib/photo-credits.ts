@@ -14,7 +14,17 @@ export interface PhotoCredit {
   readonly sourceUrl: string;
 }
 
-export const PHOTO_CREDITS = {
+import type { PhotoName } from "./photo-manifest.ts";
+
+/*
+ * Typed as the interface, not `as const`.
+ *
+ * With a const assertion TypeScript narrows `licenseUrl` to the two literal
+ * URLs that happen to be in use today, and then proves the public-domain
+ * branch in the credit line unreachable — so adding a public-domain
+ * photograph later would break the build in a file nobody edited.
+ */
+export const PHOTO_CREDITS: Record<PhotoName, PhotoCredit> = {
   "tire-tread": {
     author: "Lee Coursey from Decatur, GA",
     license: "CC BY 2.0",
@@ -33,4 +43,4 @@ export const PHOTO_CREDITS = {
     licenseUrl: "https://creativecommons.org/licenses/by-sa/2.0",
     sourceUrl: "https://commons.wikimedia.org/wiki/File:AKDP_BUS_PROBOLINGGO_JAVA_INDONESIA_APRIL_2010.jpg",
   },
-} as const satisfies Record<string, PhotoCredit>;
+};
