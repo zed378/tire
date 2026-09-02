@@ -1,12 +1,18 @@
 #!/bin/sh
-# docker-entrypoint.sh — Initialize database (migrations + queue schema) before
-# starting the API.
+# docker-entrypoint.sh — Initialize database during container startup.
 #
-# 1. Run `prisma migrate deploy` to create all application tables from the SQL
-#    migrations in prisma/migrations/.
-# 2. Run pg-boss queue setup so the job queue exists.
+# Three phases (all idempotent — safe to run on every container start):
 #
-# Both are idempotent — safe to run on every container start.
+# 1. Prisma migrations: Create all application tables from SQL migrations
+#    in prisma/migrations/
+#
+# 2. Database seeding: Seed master data (provinces, cities, vehicle/tire brands)
+#    and optional CSV data from requirements/ directory. Automatic on first init.
+#
+# 3. Queue setup: Initialize pg-boss job queues for background tasks.
+#
+# Admin password setup (seed-prod-admin) is MANUAL-ONLY via docker exec,
+# never automated, to ensure credentials are never embedded in deployment.
 
 set -e
 
@@ -27,6 +33,10 @@ echo "  Checking prisma binary..."
 ls -la ./node_modules/prisma/build/index.js 2>&1 || echo "  Binary not found at expected path"
 node ./node_modules/prisma/build/index.js migrate deploy 2>&1
 echo "  Migration output above"
+
+echo "Running database seeding (master data + CSV data)..."
+node dist/scripts/db-init-seed.js 2>&1
+echo "  Seeding completed"
 
 echo "Running full queue setup..."
 node -e "

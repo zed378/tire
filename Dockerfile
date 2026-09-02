@@ -78,10 +78,17 @@ RUN mkdir -p /app/uploads && chown -R node:node /app/uploads
 USER node
 EXPOSE 3000
 
-# ── Entrypoint: API server ───────────────────────────────────────────────────
-# For seeding, use docker exec to run scripts:
-#   docker exec <container> pnpm db:migrate
+# ── Database initialization happens automatically on container start ───────
+# docker-entrypoint.sh runs:
+#   1. prisma migrate deploy (creates schema)
+#   2. db-init-seed (seeds master data + CSV data) — automatic
+#   3. queue setup (initializes job queues)
+#
+# Admin account setup is MANUAL-ONLY and must be run separately:
 #   docker exec <container> node dist/scripts/seed-prod-admin.js "password"
-#   docker exec <container> node dist/scripts/seed-csv-prod.js
-#   docker exec <container> tsx apps/api/prisma/seed.ts
+#
+# This separation ensures credentials are never automated in deployment.
+COPY --from=build /app/apps/api/src/scripts ./apps/api/src/scripts
+
+# ── Entrypoint: API server ───────────────────────────────────────────────────
 CMD ["node", "dist/server.js"]
