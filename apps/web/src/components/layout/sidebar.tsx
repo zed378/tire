@@ -1,18 +1,32 @@
 import { type ReactNode } from "react";
 import { NavLink } from "react-router-dom";
-import { USER_ROLE_LABELS, type Permission } from "@c26/contracts";
+import type { Permission } from "@c26/contracts";
 import { cn } from "../../lib/cn.ts";
 import { useSession } from "../../lib/session.tsx";
-import { Button } from "../ui/primitives.tsx";
 
 interface NavEntry {
   to: string;
   label: string;
   icon: ReactNode;
   permission: Permission | null;
+  /** Nested entries, shown indented under their parent when it is reachable. */
+  children?: { to: string; label: string; permission: Permission | null }[];
+  /** `end` on a NavLink stops a parent matching every child route. */
+  end?: boolean;
 }
 
 const NAV_ENTRIES: NavEntry[] = [
+  {
+    to: "/welcome",
+    label: "Beranda",
+    permission: null,
+    end: true,
+    icon: (
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+        <path d="M10 2 2 8v10h6v-5h4v5h6V8l-8-6z" />
+      </svg>
+    ),
+  },
   {
     to: "/inspections",
     label: "Pengajuan",
@@ -29,7 +43,7 @@ const NAV_ENTRIES: NavEntry[] = [
     permission: "qc.review",
     icon: (
       <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-        <path d="M10 2a6 6 0 00-6 6v3l-1.5 3h15L16 11V8a6 6 0 00-6-6zM8 15a2 2 0 104 0H8z" />
+        <path d="M10 1 3 4v5c0 4 3 7.4 7 9 4-1.6 7-5 7-9V4l-7-3zm-1 12L5.5 9.5 7 8l2 2 4-4 1.5 1.5L9 13z" />
       </svg>
     ),
   },
@@ -57,6 +71,19 @@ const NAV_ENTRIES: NavEntry[] = [
     to: "/master-data",
     label: "Master Data",
     permission: "masterdata.manage",
+    end: true,
+    // These three had no route into them except a row of chips on the parent
+    // page, so nothing in the navigation said they existed and nothing showed
+    // where you were once inside one.
+    children: [
+      { to: "/master-data/vehicle-brands", label: "Merk Kendaraan", permission: "masterdata.manage" },
+      {
+        to: "/master-data/tire-brand-patterns",
+        label: "Merk & Pattern Ban",
+        permission: "masterdata.manage",
+      },
+      { to: "/master-data/tire-sizes", label: "Ukuran Ban", permission: "masterdata.manage" },
+    ],
     icon: (
       <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
         <path d="M5 3a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2V5a2 2 0 00-2-2H5zm3 2h4v2H8V5zm0 4h4v2H8V9zm0 4h3v2H8v-2z" />
@@ -85,6 +112,21 @@ const NAV_ENTRIES: NavEntry[] = [
   },
 ];
 
+const LINK_BASE =
+  "flex items-center gap-3 rounded-lg px-3.5 py-2.5 text-sm font-medium transition-colors min-h-11";
+const LINK_ACTIVE = "bg-accent-soft text-accent-text";
+const LINK_IDLE = "text-muted hover:bg-surface-sunken hover:text-body";
+
+/**
+ * Primary navigation.
+ *
+ * Entries the current user has no permission for are not rendered at all,
+ * rather than rendered and disabled (K-07). The server enforces the same rules
+ * independently — hiding a menu is not authorisation (PLAN/04 §2.2).
+ *
+ * Identity and logout live in the header, not here: having them in both places
+ * meant the user's name and role appeared twice on every desktop screen.
+ */
 export function Sidebar({
   onNavigate,
   isMobile = false,
@@ -92,7 +134,7 @@ export function Sidebar({
   onNavigate?: () => void;
   isMobile?: boolean;
 }): ReactNode {
-  const { user, can, logout } = useSession();
+  const { can } = useSession();
 
   const entries = NAV_ENTRIES.filter(
     (entry) => entry.permission === null || can(entry.permission),
@@ -101,27 +143,27 @@ export function Sidebar({
   return (
     <aside
       className={cn(
-        "flex h-dvh flex-col border-r border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 transition-colors duration-200 flex-shrink-0",
+        "flex h-dvh flex-shrink-0 flex-col border-r border-line bg-surface",
         isMobile ? "w-full border-r-0" : "hidden w-64 md:flex",
       )}
     >
-      <div className="flex h-16 items-center justify-between gap-2 px-4 border-b border-slate-200 dark:border-slate-800 flex-shrink-0">
+      <div className="flex h-16 flex-shrink-0 items-center justify-between gap-2 border-b border-line px-4">
         <div className="flex items-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-md bg-brand-600 text-white shadow-sm">
+          <div className="flex h-8 w-8 items-center justify-center rounded-md bg-accent text-on-accent shadow-sm">
             <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
               <path d="M10 2a8 8 0 100 16 8 8 0 000-16zm0 14a6 6 0 110-12 6 6 0 010 12z" />
             </svg>
           </div>
           <div className="flex flex-col">
-            <span className="text-sm font-semibold text-slate-900 dark:text-white">Commercial 2026</span>
-            <span className="text-xs text-slate-500 dark:text-slate-400">Tire Data System</span>
+            <span className="text-sm font-semibold text-body">Commercial 2026</span>
+            <span className="text-xs text-muted">Tire Data System</span>
           </div>
         </div>
 
         {isMobile ? (
           <button
             type="button"
-            className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-500"
+            className="rounded-lg p-2 text-muted hover:bg-surface-sunken hover:text-body"
             aria-label="Tutup menu"
             onClick={onNavigate}
           >
@@ -136,47 +178,46 @@ export function Sidebar({
         ) : null}
       </div>
 
-      <nav className="flex-1 overflow-y-auto px-3 py-4">
+      <nav aria-label="Navigasi utama" className="flex-1 overflow-y-auto px-3 py-4">
         <ul className="space-y-1">
           {entries.map((entry) => (
             <li key={entry.to}>
               <NavLink
                 to={entry.to}
+                end={entry.end}
                 onClick={onNavigate}
-                className={({ isActive }) =>
-                  cn(
-                    "flex items-center gap-3 rounded-lg px-3.5 py-2.5 text-sm font-medium transition-colors min-h-[44px]",
-                    isActive
-                      ? "bg-brand-50 text-brand-700 dark:bg-brand-950/80 dark:text-cyan-400 dark:border dark:border-cyan-500/20"
-                      : "text-slate-600 hover:bg-slate-50 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800/60 dark:hover:text-slate-200",
-                  )
-                }
+                className={({ isActive }) => cn(LINK_BASE, isActive ? LINK_ACTIVE : LINK_IDLE)}
               >
                 <span className="flex-shrink-0">{entry.icon}</span>
                 <span>{entry.label}</span>
               </NavLink>
+
+              {entry.children !== undefined ? (
+                <ul className="mt-1 space-y-1 border-l border-line pl-3 ml-5">
+                  {entry.children
+                    .filter((child) => child.permission === null || can(child.permission))
+                    .map((child) => (
+                      <li key={child.to}>
+                        <NavLink
+                          to={child.to}
+                          onClick={onNavigate}
+                          className={({ isActive }) =>
+                            cn(
+                              "flex min-h-11 items-center rounded-lg px-3 text-sm transition-colors",
+                              isActive ? LINK_ACTIVE : LINK_IDLE,
+                            )
+                          }
+                        >
+                          {child.label}
+                        </NavLink>
+                      </li>
+                    ))}
+                </ul>
+              ) : null}
             </li>
           ))}
         </ul>
       </nav>
-
-      <div className="border-t border-slate-200 dark:border-slate-800 p-3 flex-shrink-0">
-        <div className="mb-2 rounded-lg bg-slate-50 dark:bg-slate-950 p-3 border dark:border-slate-800">
-          <p className="text-sm font-medium text-slate-900 dark:text-slate-100">{user?.displayName}</p>
-          <p className="text-xs text-slate-500 dark:text-slate-400">
-            {user === null ? "" : USER_ROLE_LABELS[user.role]}
-          </p>
-        </div>
-        <Button
-          variant="ghost"
-          className="w-full justify-center min-h-[44px] dark:text-slate-300 dark:hover:bg-slate-800"
-          onClick={() => {
-            void logout();
-          }}
-        >
-          Keluar
-        </Button>
-      </div>
     </aside>
   );
 }

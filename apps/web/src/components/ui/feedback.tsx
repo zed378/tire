@@ -3,6 +3,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useId,
   useMemo,
   useRef,
   useState,
@@ -11,7 +12,7 @@ import {
 import { INSPECTION_STATUS_LABELS, type InspectionStatus } from "@c26/contracts";
 import { cn } from "../../lib/cn.ts";
 import { isApiError } from "../../lib/api-client.ts";
-import { Button } from "./primitives.tsx";
+import { Badge, Button } from "./primitives.tsx";
 
 /**
  * The three error channels (PLAN/05 §5.1).
@@ -37,10 +38,10 @@ export interface BannerProps {
 }
 
 const BANNER_TONES = {
-  error: "border-red-300 bg-red-50 text-red-900 dark:border-red-800 dark:bg-red-950/40 dark:text-red-200",
-  warning: "border-amber-300 bg-amber-50 text-amber-900 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-200",
-  info: "border-blue-300 bg-blue-50 text-blue-900 dark:border-blue-800 dark:bg-blue-950/40 dark:text-blue-200",
-  success: "border-green-300 bg-green-50 text-green-900 dark:border-green-800 dark:bg-green-950/40 dark:text-green-200",
+  error: "border-danger-line bg-danger-soft text-danger-text",
+  warning: "border-warning-line bg-warning-soft text-warning-text",
+  info: "border-info-line bg-info-soft text-info-text",
+  success: "border-success-line bg-success-soft text-success-text",
 } as const;
 
 export function Banner({
@@ -57,14 +58,14 @@ export function Banner({
           {title !== undefined ? <p className="font-semibold">{title}</p> : null}
           <div className={cn(title !== undefined && "mt-0.5")}>{children}</div>
 
-           {requestId !== undefined ? (
-             <p className="mt-2 text-xs opacity-80">
-               Sebutkan kode ini saat melapor:{" "}
-               <code className="select-all rounded bg-white/60 dark:bg-slate-800/60 px-1 py-0.5 font-mono">
-                 {requestId}
-               </code>
-             </p>
-           ) : null}
+          {requestId !== undefined ? (
+            <p className="mt-2 text-xs opacity-80">
+              Sebutkan kode ini saat melapor:{" "}
+              <code className="select-all rounded bg-surface/60 px-1 py-0.5 font-mono">
+                {requestId}
+              </code>
+            </p>
+          ) : null}
         </div>
 
         {onDismiss !== undefined ? (
@@ -72,7 +73,9 @@ export function Banner({
             type="button"
             onClick={onDismiss}
             aria-label="Tutup pesan"
-            className="shrink-0 rounded px-2 py-1 text-lg leading-none hover:bg-black/5"
+            // `currentColor` at low opacity rather than a fixed black wash,
+            // which was invisible against the dark-theme banner fills.
+            className="shrink-0 rounded px-2 py-1 text-lg leading-none hover:bg-current/10"
           >
             &times;
           </button>
@@ -128,6 +131,12 @@ interface ToastContextValue {
 
 const ToastContext = createContext<ToastContextValue | null>(null);
 
+const TOAST_TONES: Record<Toast["tone"], string> = {
+  success: "border-success-line bg-success-soft text-success-text",
+  error: "border-danger-line bg-danger-soft text-danger-text",
+  info: "border-line bg-surface text-body",
+};
+
 export function ToastProvider({ children }: { children: ReactNode }): ReactNode {
   const [toasts, setToasts] = useState<Toast[]>([]);
   const timers = useRef(new Map<string, number>());
@@ -168,15 +177,13 @@ export function ToastProvider({ children }: { children: ReactNode }): ReactNode 
         className="pointer-events-none fixed inset-x-0 bottom-0 z-50 flex flex-col items-center gap-2 p-4 safe-bottom"
       >
         {toasts.map((toast) => (
-           <div
-             key={toast.id}
-             className={cn(
-               "pointer-events-auto flex w-full max-w-md items-center justify-between gap-3 rounded-md border px-4 py-3 text-sm shadow-lg",
-               toast.tone === "success" && "border-green-300 bg-green-50 text-green-900 dark:border-green-800 dark:bg-green-950/40 dark:text-green-200",
-               toast.tone === "error" && "border-red-300 bg-red-50 text-red-900 dark:border-red-800 dark:bg-red-950/40 dark:text-red-200",
-               toast.tone === "info" && "border-slate-300 bg-white text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100",
-             )}
-           >
+          <div
+            key={toast.id}
+            className={cn(
+              "pointer-events-auto flex w-full max-w-md items-center justify-between gap-3 rounded-md border px-4 py-3 text-sm shadow-lg",
+              TOAST_TONES[toast.tone],
+            )}
+          >
             <span className="min-w-0">{toast.message}</span>
             <div className="flex shrink-0 items-center gap-2">
               {toast.action !== undefined ? (
@@ -192,7 +199,7 @@ export function ToastProvider({ children }: { children: ReactNode }): ReactNode 
                 type="button"
                 onClick={() => dismiss(toast.id)}
                 aria-label="Tutup notifikasi"
-                className="rounded px-1 text-lg leading-none hover:bg-black/5"
+                className="rounded px-1 text-lg leading-none hover:bg-current/10"
               >
                 &times;
               </button>
@@ -211,6 +218,56 @@ export function useToast(): ToastContextValue {
 }
 
 // ── Dialog ──────────────────────────────────────────────────────────────────
+
+const FOCUSABLE =
+  'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
+/**
+ * Keeps the keyboard inside the dialog while it is open, and gives focus back
+ * to whatever opened it on the way out.
+ *
+ * Without this, opening a dialog left focus on the page behind it: a keyboard
+ * or screen-reader user pressing Tab walked straight out of the dialog and into
+ * the content it was covering, with no way to know they had left.
+ */
+function useFocusTrap(open: boolean, container: React.RefObject<HTMLElement | null>): void {
+  useEffect(() => {
+    if (!open) return;
+
+    const previouslyFocused = document.activeElement as HTMLElement | null;
+    const node = container.current;
+
+    const focusables = node?.querySelectorAll<HTMLElement>(FOCUSABLE);
+    // Prefer the first control; fall back to the dialog itself so focus is at
+    // least inside, and the title is announced.
+    (focusables?.[0] ?? node)?.focus();
+
+    const onKeyDown = (event: KeyboardEvent): void => {
+      if (event.key !== "Tab" || node === null) return;
+
+      const items = Array.from(node.querySelectorAll<HTMLElement>(FOCUSABLE));
+      if (items.length === 0) return;
+
+      const first = items[0];
+      const last = items[items.length - 1];
+      if (first === undefined || last === undefined) return;
+
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("keydown", onKeyDown);
+      previouslyFocused?.focus();
+    };
+  }, [open, container]);
+}
 
 /**
  * The replacement for `confirm()`.
@@ -232,6 +289,10 @@ export function Dialog({
   onClose: () => void;
   children: ReactNode;
 }): ReactNode {
+  const panel = useRef<HTMLDivElement>(null);
+  const titleId = useId();
+  const descriptionId = useId();
+
   useEffect(() => {
     if (!open) return;
 
@@ -242,20 +303,37 @@ export function Dialog({
     return () => document.removeEventListener("keydown", onKeyDown);
   }, [open, onClose]);
 
+  useFocusTrap(open, panel);
+
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-4 sm:items-center">
+    <div
+      className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-4 sm:items-center"
+      // Dismissing by clicking away is what people expect of an overlay, and
+      // the same click on the panel must not close it.
+      onClick={onClose}
+    >
       <div
+        ref={panel}
         role="dialog"
         aria-modal="true"
-        aria-label={title}
-        className="w-full max-w-lg rounded-lg bg-white dark:bg-slate-800 shadow-xl"
+        aria-labelledby={titleId}
+        aria-describedby={description !== undefined ? descriptionId : undefined}
+        tabIndex={-1}
+        onClick={(event) => {
+          event.stopPropagation();
+        }}
+        className="w-full max-w-lg rounded-lg bg-surface shadow-xl"
       >
-        <header className="border-b border-slate-200 dark:border-slate-700 px-4 py-3">
-          <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">{title}</h2>
+        <header className="border-b border-line px-4 py-3">
+          <h2 id={titleId} className="text-base font-semibold text-body">
+            {title}
+          </h2>
           {description !== undefined ? (
-            <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">{description}</p>
+            <p id={descriptionId} className="mt-0.5 text-sm text-muted">
+              {description}
+            </p>
           ) : null}
         </header>
         <div className="p-4">{children}</div>
@@ -276,25 +354,73 @@ export function CancelButton({ onClick }: { onClick: () => void }): ReactNode {
   );
 }
 
+/**
+ * A dialog that asks "are you sure" and nothing more.
+ *
+ * Four pages had rebuilt this by hand, and two of them had rebuilt the whole
+ * `Dialog` with it — losing Escape, the focus trap, and the dialog role in the
+ * process. PLAN/10 §3.2 rule 4 requires a two-step confirmation on every
+ * operational action, so it is worth having once and correct.
+ */
+export function ConfirmDialog({
+  open,
+  title,
+  description,
+  confirmLabel = "Lanjutkan",
+  tone = "danger",
+  loading = false,
+  onConfirm,
+  onClose,
+  children,
+}: {
+  open: boolean;
+  title: string;
+  description?: string;
+  confirmLabel?: string;
+  tone?: "danger" | "primary";
+  loading?: boolean;
+  onConfirm: () => void;
+  onClose: () => void;
+  children?: ReactNode;
+}): ReactNode {
+  return (
+    <Dialog open={open} title={title} description={description} onClose={onClose}>
+      {children}
+      <DialogFooter>
+        <CancelButton onClick={onClose} />
+        <Button
+          variant={tone === "danger" ? "danger" : "primary"}
+          loading={loading}
+          loadingText="Memproses…"
+          onClick={onConfirm}
+        >
+          {confirmLabel}
+        </Button>
+      </DialogFooter>
+    </Dialog>
+  );
+}
+
 // ── Status badge ────────────────────────────────────────────────────────────
 
-const STATUS_TONES: Record<InspectionStatus, string> = {
-  draft: "bg-slate-100 text-slate-700 border-slate-300 dark:bg-slate-700/40 dark:text-slate-300 dark:border-slate-600",
-  pending_qc: "bg-amber-50 text-amber-800 border-amber-300 dark:bg-amber-950/40 dark:text-amber-200 dark:border-amber-700",
-  needs_revision: "bg-orange-50 text-orange-800 border-orange-300 dark:bg-orange-950/40 dark:text-orange-200 dark:border-orange-700",
-  passed_qc: "bg-green-50 text-green-800 border-green-300 dark:bg-green-950/40 dark:text-green-200 dark:border-green-700",
-  dropped_qc: "bg-red-50 text-red-800 border-red-300 dark:bg-red-950/40 dark:text-red-200 dark:border-red-700",
-};
+/**
+ * Status colours, chosen by who has to act next rather than by how the status
+ * sounds.
+ *
+ * `pending_qc` is blue because nothing is required of the person reading it —
+ * the submission is with QC. `needs_revision` is amber because it is the one
+ * status that is asking the supplier to do something. The two used to be amber
+ * and orange, a distinction of hue with no meaning attached, and hard to tell
+ * apart at badge size anyway.
+ */
+const STATUS_TONES = {
+  draft: "neutral",
+  pending_qc: "info",
+  needs_revision: "warning",
+  passed_qc: "success",
+  dropped_qc: "danger",
+} as const satisfies Record<InspectionStatus, "neutral" | "info" | "warning" | "success" | "danger">;
 
 export function StatusBadge({ status }: { status: InspectionStatus }): ReactNode {
-  return (
-    <span
-      className={cn(
-        "inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium",
-        STATUS_TONES[status],
-      )}
-    >
-      {INSPECTION_STATUS_LABELS[status]}
-    </span>
-  );
+  return <Badge tone={STATUS_TONES[status]}>{INSPECTION_STATUS_LABELS[status]}</Badge>;
 }

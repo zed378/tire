@@ -87,3 +87,43 @@ export const tireBrandPatternListResponseSchema = z.object({
 });
 
 export type TireBrandPatternListResponse = z.infer<typeof tireBrandPatternListResponseSchema>;
+
+/**
+ * Tire Size schemas.
+ * Used for CRUD operations on standard tire sizes (TB & LT)
+ */
+
+export const tireSizeSchema = z.object({
+  id: z.number().int().positive(),
+  size: z.string().trim().min(1).max(50),
+  type: z.enum(["TB", "LT"]),
+  isActive: z.boolean(),
+  createdAt: z.string().datetime(),
+  updatedAt: z.string().datetime(),
+});
+
+export type TireSize = z.infer<typeof tireSizeSchema>;
+
+export const createTireSizeSchema = z.object({
+  size: z.string().trim().min(1).max(50),
+  type: z.enum(["TB", "LT"]),
+});
+
+export type CreateTireSizeInput = z.infer<typeof createTireSizeSchema>;
+
+export const updateTireSizeSchema = z.object({
+  size: z.string().trim().min(1).max(50).optional(),
+  isActive: z.boolean().optional(),
+});
+
+export type UpdateTireSizeInput = z.infer<typeof updateTireSizeSchema>;
+
+export const tireSizeListResponseSchema = z.object({
+  items: z.array(tireSizeSchema),
+  total: z.number().int().nonnegative(),
+  page: z.number().int().positive(),
+  perPage: z.number().int().positive(),
+});
+
+export type TireSizeListResponse = z.infer<typeof tireSizeListResponseSchema>;
+

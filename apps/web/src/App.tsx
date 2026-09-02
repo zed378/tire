@@ -1,5 +1,5 @@
 import { lazy, Suspense, type ReactNode } from "react";
-import { Navigate, Route, Routes, useLocation } from "react-router-dom";
+import { Link, Navigate, Route, Routes, useLocation } from "react-router-dom";
 import type { Permission } from "@c26/contracts";
 import { SessionProvider, useSession } from "./lib/session.tsx";
 import { ToastProvider } from "./components/ui/feedback.tsx";
@@ -7,9 +7,12 @@ import { AppShell } from "./components/layout/app-shell.tsx";
 import { Button, Spinner } from "./components/ui/primitives.tsx";
 import { ErrorBanner } from "./components/ui/feedback.tsx";
 import { LoginPage } from "./features/auth/login-page.tsx";
+import { RegisterPage } from "./features/auth/register-page.tsx";
 import { ChangePasswordPage } from "./features/auth/change-password-page.tsx";
 import { MfaEnrollPage } from "./features/auth/mfa-enroll-page.tsx";
 import { StepUpDialog } from "./features/auth/step-up-dialog.tsx";
+import { LandingPage } from "./features/landing/landing-page.tsx";
+import { WelcomePage } from "./features/welcome/welcome-page.tsx";
 import { InspectionListPage } from "./features/inspections/inspection-list-page.tsx";
 import { NewInspectionPage } from "./features/inspections/new-inspection-page.tsx";
 import { InspectionDetailPage } from "./features/inspections/inspection-detail-page.tsx";
@@ -21,6 +24,7 @@ import { UsersPage } from "./features/users/users-page.tsx";
 import { MasterDataPage } from "./features/master-data/master-data-page.tsx";
 import { VehicleBrandsPage } from "./features/master-data/vehicle-brands-page.tsx";
 import { TireBrandPatternsPage } from "./features/master-data/tire-brand-patterns-page.tsx";
+import { TireSizesPage } from "./features/master-data/tire-sizes-page.tsx";
 import { NotificationsPage } from "./features/notifications/notifications-page.tsx";
 import { AuditPage } from "./features/audit/audit-page.tsx";
 import { OpsPage } from "./features/ops/ops-page.tsx";
@@ -34,7 +38,8 @@ import { OpsPage } from "./features/ops/ops-page.tsx";
  * has a real URL.
  */
 
-// The dashboard pulls in Recharts, which is large and only this route needs it.
+// Reporting is the heaviest route and the one fewest people open, so it is
+// split out of the initial bundle to protect the 180 KB budget (PLAN/06 §7).
 const ReportsPage = lazy(() =>
   import("./features/reports/reports-page.tsx").then((module) => ({ default: module.ReportsPage })),
 );
@@ -59,8 +64,12 @@ export function App(): ReactNode {
 function AppRoutes(): ReactNode {
   return (
     <Routes>
+      {/* Public routes */}
+      <Route path="/" element={<LandingPage />} />
       <Route path="/login" element={<LoginPage />} />
+      <Route path="/register" element={<RegisterPage />} />
 
+      {/* Protected routes */}
       <Route
         path="/*"
         element={
@@ -68,7 +77,8 @@ function AppRoutes(): ReactNode {
             <AppShell>
               <Suspense fallback={<PageLoading />}>
                 <Routes>
-                  <Route index element={<Navigate to="/inspections" replace />} />
+                  <Route path="welcome" element={<WelcomePage />} />
+                  <Route index element={<Navigate to="/welcome" replace />} />
 
                   <Route path="inspections" element={<InspectionListPage />} />
                   <Route path="inspections/new" element={<NewInspectionPage />} />
@@ -130,6 +140,14 @@ function AppRoutes(): ReactNode {
                     element={
                       <RequirePermission permission="masterdata.manage">
                         <TireBrandPatternsPage />
+                      </RequirePermission>
+                    }
+                  />
+                  <Route
+                    path="master-data/tire-sizes"
+                    element={
+                      <RequirePermission permission="masterdata.manage">
+                        <TireSizesPage />
                       </RequirePermission>
                     }
                   />
@@ -205,6 +223,11 @@ function RequireSession({ children }: { children: ReactNode }): ReactNode {
     if (user.mfaEnrollmentRequired) return <Navigate to="/profile/mfa" replace />;
   }
 
+  // Redirect from public routes to welcome if authenticated
+  if (location.pathname === "/login" || location.pathname === "/register" || location.pathname === "/") {
+    return <Navigate to="/welcome" replace />;
+  }
+
   return <>{children}</>;
 }
 
@@ -225,7 +248,7 @@ function SessionUnavailable({
   return (
     <div className="mx-auto max-w-md px-4 py-16">
       <ErrorBanner error={error} />
-      <p className="mt-3 text-sm text-slate-600">
+      <p className="mt-3 text-sm text-muted">
         Sesi Anda kemungkinan besar masih aktif — sistem hanya sedang tidak dapat dihubungi.
         Coba lagi sebentar.
       </p>
@@ -251,13 +274,42 @@ function RequirePermission({
   children: ReactNode;
 }): ReactNode {
   const { can } = useSession();
-  if (!can(permission)) return <Navigate to="/inspections" replace />;
+  if (!can(permission)) return <PermissionDenied />;
   return <>{children}</>;
+}
+
+/**
+ * Shown instead of bouncing the user somewhere else.
+ *
+ * The redirect this replaces sent everyone to /inspections, which was wrong in
+ * two ways. It gave no reason, so a mistyped or stale link looked like a broken
+ * application. And /inspections is itself unreadable for the manager and
+ * operator roles, so the destination was frequently one more dead end.
+ *
+ * Same principle as SessionUnavailable above: say what happened, and leave the
+ * user somewhere they can act from.
+ */
+function PermissionDenied(): ReactNode {
+  return (
+    <div className="mx-auto max-w-md px-4 py-16 text-center">
+      <p className="text-lg font-semibold text-body">Halaman ini bukan untuk peran Anda</p>
+      <p className="mt-1 text-sm text-muted">
+        Akun Anda tidak memiliki akses ke halaman tersebut. Bila menurut Anda ini keliru,
+        hubungi admin.
+      </p>
+      <Link
+        to="/welcome"
+        className="mt-4 inline-flex min-h-11 items-center rounded-md bg-accent px-4 text-sm font-medium text-on-accent hover:bg-accent-hover"
+      >
+        Kembali ke Beranda
+      </Link>
+    </div>
+  );
 }
 
 function PageLoading(): ReactNode {
   return (
-    <div className="flex items-center justify-center py-20 text-slate-500">
+    <div className="flex items-center justify-center py-20 text-muted">
       <Spinner className="h-6 w-6" />
       <span className="ml-2 text-sm">Memuat…</span>
     </div>
@@ -267,8 +319,8 @@ function PageLoading(): ReactNode {
 function NotFound(): ReactNode {
   return (
     <div className="py-20 text-center">
-      <p className="text-lg font-semibold text-slate-800">Halaman tidak ditemukan</p>
-      <p className="mt-1 text-sm text-slate-500">Periksa kembali tautan yang Anda buka.</p>
+      <p className="text-lg font-semibold text-body">Halaman tidak ditemukan</p>
+      <p className="mt-1 text-sm text-muted">Periksa kembali tautan yang Anda buka.</p>
     </div>
   );
 }

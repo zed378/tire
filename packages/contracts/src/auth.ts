@@ -65,6 +65,40 @@ export const changePasswordSchema = z
 
 export type ChangePasswordInput = z.infer<typeof changePasswordSchema>;
 
+// ── Registration ─────────────────────────────────────────────────────────────
+
+/**
+ * Public self-registration (plan requirement).
+ * New users start with 'authenticated' role (read-only) until admin assigns a real role.
+ */
+export const registerSchema = z
+  .object({
+    username: z
+      .string({ required_error: "User ID wajib diisi." })
+      .trim()
+      .min(3, "User ID minimal 3 karakter.")
+      .max(64, "User ID maksimal 64 karakter.")
+      .regex(/^[A-Za-z0-9._-]+$/, "User ID hanya boleh berisi huruf, angka, titik, garis bawah, dan strip."),
+    displayName: z
+      .string({ required_error: "Nama wajib diisi." })
+      .trim()
+      .min(2, "Nama minimal 2 karakter.")
+      .max(120, "Nama maksimal 120 karakter."),
+    password: passwordSchema,
+    confirmPassword: z.string().min(1, "Konfirmasi password wajib diisi."),
+  })
+  .superRefine((value, ctx) => {
+    if (value.password !== value.confirmPassword) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["confirmPassword"],
+        message: "Konfirmasi password tidak sama.",
+      });
+    }
+  });
+
+export type RegisterInput = z.infer<typeof registerSchema>;
+
 // ── MFA (PLAN/13 §3) ────────────────────────────────────────────────────────
 
 export const totpCodeSchema = z.object({

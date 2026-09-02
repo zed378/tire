@@ -5,6 +5,8 @@ import {
   updateVehicleBrandSchema,
   createTireBrandPatternSchema,
   updateTireBrandPatternSchema,
+  createTireSizeSchema,
+  updateTireSizeSchema,
 } from "@c26/contracts";
 import { requirePermission } from "../../kernel/authorization.ts";
 import { wrapRoute } from "../../kernel/envelope/index.ts";
@@ -12,11 +14,13 @@ import { requireActor } from "../auth/index.ts";
 import { getPrisma } from "../../kernel/db.ts";
 import { VehicleBrandService } from "./vehicle-brand-service.js";
 import { TireBrandPatternService } from "./tire-brand-pattern-service.js";
+import { TireSizeService } from "./tire-size-service.js";
 
 export function registerMasterBrandRoutes(app: FastifyInstance): void {
   const prisma = getPrisma();
   const vehicleService = new VehicleBrandService(prisma);
   const patternService = new TireBrandPatternService(prisma);
+  const sizeService = new TireSizeService(prisma);
 
   // ── Vehicle Brands ──────────────────────────────────────────────────────
 
@@ -221,4 +225,107 @@ export function registerMasterBrandRoutes(app: FastifyInstance): void {
       return null;
     }),
   );
+
+  // ── Tire Sizes ──────────────────────────────────────────────────────────
+
+  /**
+   * GET /api/tire-sizes/:type
+   * List tire sizes (TB or LT) with pagination
+   */
+  app.get(
+    "/api/tire-sizes/:type",
+    wrapRoute(async (request) => {
+      const actor = requireActor(request);
+      requirePermission(actor, "masterdata.manage");
+
+      const type = (request.params as { type: string }).type as "TB" | "LT";
+      const parsed = paginationSchema.parse(request.query);
+
+      return sizeService.listTireSizes(type, parsed.page, parsed.perPage);
+    }),
+  );
+
+  /**
+   * GET /api/tire-sizes/detail/:id
+   * Get a specific tire size
+   */
+  app.get(
+    "/api/tire-sizes/detail/:id",
+    wrapRoute(async (request) => {
+      const actor = requireActor(request);
+      requirePermission(actor, "masterdata.manage");
+
+      const id = Number((request.params as { id: string }).id);
+      return sizeService.getTireSize(id);
+    }),
+  );
+
+  /**
+   * POST /api/tire-sizes
+   * Create a new tire size
+   */
+  app.post(
+    "/api/tire-sizes",
+    wrapRoute(async (request) => {
+      const actor = requireActor(request);
+      requirePermission(actor, "masterdata.manage");
+
+      const input = createTireSizeSchema.parse(request.body);
+      const auditActor = {
+        id: actor.id,
+        role: actor.role,
+        requestId: request.requestId,
+        ipAddress: request.clientIp,
+      };
+
+      return sizeService.createTireSize(actor, auditActor, input);
+    }),
+  );
+
+  /**
+   * PATCH /api/tire-sizes/:id
+   * Update a tire size
+   */
+  app.patch(
+    "/api/tire-sizes/:id",
+    wrapRoute(async (request) => {
+      const actor = requireActor(request);
+      requirePermission(actor, "masterdata.manage");
+
+      const id = Number((request.params as { id: string }).id);
+      const input = updateTireSizeSchema.parse(request.body);
+      const auditActor = {
+        id: actor.id,
+        role: actor.role,
+        requestId: request.requestId,
+        ipAddress: request.clientIp,
+      };
+
+      return sizeService.updateTireSize(actor, auditActor, id, input);
+    }),
+  );
+
+  /**
+   * DELETE /api/tire-sizes/:id
+   * Delete a tire size
+   */
+  app.delete(
+    "/api/tire-sizes/:id",
+    wrapRoute(async (request) => {
+      const actor = requireActor(request);
+      requirePermission(actor, "masterdata.manage");
+
+      const id = Number((request.params as { id: string }).id);
+      const auditActor = {
+        id: actor.id,
+        role: actor.role,
+        requestId: request.requestId,
+        ipAddress: request.clientIp,
+      };
+
+      await sizeService.deleteTireSize(actor, auditActor, id);
+      return null;
+    }),
+  );
 }
+

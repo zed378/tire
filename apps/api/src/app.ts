@@ -28,6 +28,7 @@ import { registerNotificationRoutes } from "./modules/notifications/index.ts";
 import { registerOpsRoutes } from "./modules/ops/index.ts";
 import { registerAuditRoutes } from "./modules/audit/index.ts";
 import { registerUploadRoutes } from "./modules/uploads/index.ts";
+import { registerDashboardRoutes } from "./modules/dashboard/index.ts";
 
 /**
  * Builds the Fastify application.
@@ -187,6 +188,7 @@ export function buildApp(): FastifyInstance {
   registerNotificationRoutes(app);
   registerOpsRoutes(app);
   registerAuditRoutes(app);
+  registerDashboardRoutes(app);
   // Only registered while STORAGE_DRIVER=local; with s3 the device uploads
   // straight to R2 and these routes do not exist.
   registerUploadRoutes(app);

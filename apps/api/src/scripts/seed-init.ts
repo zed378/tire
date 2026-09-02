@@ -54,8 +54,8 @@ async function main(): Promise<void> {
     process.stdout.write(
       `  CSV data: ${String(csv.vehicleBrandsCreated)} vehicle brands, ` +
         `${String(csv.tireBrandsCreated)} tire brands, ` +
-        `${String(csv.patternsCreated)} tire brand patterns created ` +
-        `(${String(csv.sizesParsed)} sizes parsed, not stored — no size table)\n`,
+        `${String(csv.patternsCreated)} tire brand patterns created, ` +
+        `${String(csv.sizesCreated)} tire sizes created (${String(csv.sizesTotal)} parsed)\n`,
     );
   }
 

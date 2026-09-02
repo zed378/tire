@@ -31,6 +31,7 @@ function fakePrisma(existing: { vehicleBrands?: string[]; tireBrands?: string[] 
   const vehicleBrands = new Set(existing.vehicleBrands ?? []);
   const tireBrands = new Set(existing.tireBrands ?? []);
   const patterns = new Set<string>();
+  const sizes = new Set<string>();
 
   const client = {
     vehicleBrand: {
@@ -63,6 +64,21 @@ function fakePrisma(existing: { vehicleBrands?: string[]; tireBrands?: string[] 
       create: ({ data }: { data: { brand: string; pattern: string; type: string } }) => {
         patterns.add(JSON.stringify({ brand: data.brand, pattern: data.pattern, type: data.type }));
         created.push({ table: "tireBrandPattern", data });
+        return Promise.resolve(data);
+      },
+    },
+    tireSize: {
+      findUnique: ({
+        where,
+      }: {
+        where: { size_type: { size: string; type: string } };
+      }) => {
+        const key = JSON.stringify(where.size_type);
+        return Promise.resolve(sizes.has(key) ? { id: 1n } : null);
+      },
+      create: ({ data }: { data: { size: string; type: string } }) => {
+        sizes.add(JSON.stringify({ size: data.size, type: data.type }));
+        created.push({ table: "tireSize", data });
         return Promise.resolve(data);
       },
     },
@@ -174,14 +190,19 @@ describe("seedCsvData", () => {
     expect(created).toHaveLength(0);
   });
 
-  it("does not store tire sizes, because no table holds them", async () => {
-    writeCsv("req-Size.csv", ["Group,SIZE", "TB,10.00-20", ",11.00-20"].join("\n"));
+  it("seeds tire sizes from req-Size.csv into tire_sizes", async () => {
+    writeCsv("req-Size.csv", ["Group,SIZE", "TB,10.00-20", ",11.00-20", "LT,7.50-16"].join("\n"));
 
     const { client, created } = fakePrisma();
     const result = await seedCsvData(client);
 
-    expect(result.sizesParsed).toBe(2);
-    expect(created).toHaveLength(0);
+    expect(result.sizesCreated).toBe(3);
+    expect(result.sizesTotal).toBe(3);
+    expect(created.filter((row) => row.table === "tireSize").map((row) => row.data)).toEqual([
+      { size: "10.00-20", type: "TB" },
+      { size: "11.00-20", type: "TB" },
+      { size: "7.50-16", type: "LT" },
+    ]);
   });
 });
 

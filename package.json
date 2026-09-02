@@ -2,6 +2,7 @@
   "name": "commercial2026",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "description": "Sistem Informasi Pengolahan Data Ban Bus & Truk — penulisan ulang dari Apps Script. Spesifikasi ada di PLAN/.",
   "engines": {
     "node": ">=22.0.0",

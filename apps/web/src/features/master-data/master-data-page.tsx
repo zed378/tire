@@ -1,4 +1,5 @@
 import { useState, type ReactNode } from "react";
+import { Link } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { MasterDataBundle, PendingBrandReview } from "@c26/contracts";
 import { api } from "../../lib/api-client.ts";
@@ -72,7 +73,29 @@ export function MasterDataPage(): ReactNode {
 
   return (
     <div className="space-y-4">
-      <h1 className="text-lg font-semibold text-slate-900">Master Data</h1>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h1 className="text-lg font-semibold text-slate-900 dark:text-white">Master Data</h1>
+        <div className="flex flex-wrap gap-2 text-xs">
+          <Link
+            to="/master-data/vehicle-brands"
+            className="rounded-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-2.5 py-1.5 font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700"
+          >
+            Merk Kendaraan →
+          </Link>
+          <Link
+            to="/master-data/tire-brand-patterns"
+            className="rounded-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-2.5 py-1.5 font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700"
+          >
+            Pattern Ban →
+          </Link>
+          <Link
+            to="/master-data/tire-sizes"
+            className="rounded-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-2.5 py-1.5 font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700"
+          >
+            Ukuran Ban →
+          </Link>
+        </div>
+      </div>
 
       {error !== null ? <ErrorBanner error={error} onDismiss={() => setError(null)} /> : null}
 

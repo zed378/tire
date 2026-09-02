@@ -1,28 +1,32 @@
-import { type KeyboardEvent, type ReactNode } from "react";
+import { type ReactNode } from "react";
+import { cn } from "../../lib/cn.ts";
 import { useTheme } from "../../lib/theme.tsx";
 
+/**
+ * Light/dark switch.
+ *
+ * A real `<button>` with `aria-pressed`, not a `<span tabIndex={0}>` with a
+ * keydown handler — the span had to reimplement Enter and Space by hand, was
+ * announced as nothing in particular, and did not report its state.
+ */
 export function ThemeToggle({ className }: { className?: string }): ReactNode {
   const { theme, toggleTheme } = useTheme();
-
-  const handleKeyDown = (event: KeyboardEvent<HTMLSpanElement>) => {
-    if (event.key === "Enter" || event.key === " ") {
-      event.preventDefault();
-      toggleTheme();
-    }
-  };
+  const isDark = theme === "dark";
 
   return (
-    <span
-      tabIndex={0}
+    <button
+      type="button"
       onClick={toggleTheme}
-      onKeyDown={handleKeyDown}
-      className={`relative inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white ${
-        className ?? ""
-      }`}
-      aria-label="Ubah tema"
-      title={theme === "dark" ? "Ubah ke tema terang" : "Ubah ke tema gelap"}
+      aria-pressed={isDark}
+      aria-label="Mode gelap"
+      title={isDark ? "Ubah ke tema terang" : "Ubah ke tema gelap"}
+      className={cn(
+        "inline-flex h-9 w-9 items-center justify-center rounded-lg border border-line",
+        "bg-surface text-muted transition-colors hover:bg-surface-sunken hover:text-body",
+        className,
+      )}
     >
-      {theme === "dark" ? (
+      {isDark ? (
         <svg
           width="18"
           height="18"
@@ -32,7 +36,6 @@ export function ThemeToggle({ className }: { className?: string }): ReactNode {
           strokeWidth="2"
           strokeLinecap="round"
           strokeLinejoin="round"
-          className="text-amber-400"
           aria-hidden="true"
         >
           <circle cx="12" cy="12" r="4" />
@@ -48,12 +51,11 @@ export function ThemeToggle({ className }: { className?: string }): ReactNode {
           strokeWidth="2"
           strokeLinecap="round"
           strokeLinejoin="round"
-          className="text-slate-700"
           aria-hidden="true"
         >
           <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" />
         </svg>
       )}
-    </span>
+    </button>
   );
 }

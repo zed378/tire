@@ -9,12 +9,211 @@
  */
 
 @layer base {
+  /*
+   * ── Design tokens ────────────────────────────────────────────────────────
+   *
+   * Semantic names, not colour names. A component asks for `bg-surface`, not
+   * `bg-white dark:bg-slate-900`, and the theme decides what that means.
+   *
+   * WHY THIS EXISTS: before it, every colour in the application was a literal
+   * `slate-N` paired by hand with a `dark:slate-N` twin, repeated across 20
+   * pages. Dark mode therefore arrived as four separate "add dark mode to X"
+   * commits and still left six files light-only — including two primary
+   * screens and the chart. A palette that has to be re-typed in every file
+   * will always drift; one that is declared once cannot.
+   *
+   * Values are space-separated RGB channels rather than hex so Tailwind's
+   * `<alpha-value>` placeholder works, which is what keeps `bg-surface/60` and
+   * `border-line/50` available.
+   *
+   * Contrast is a requirement here, not a preference: this application is used
+   * in garages with poor lighting (PLAN/00 §4 asks for WCAG AA). Every
+   * text-on-background pairing below is at or above 4.5:1.
+   */
+  :root {
+    /* Backgrounds, furthest back to nearest front. */
+    --color-canvas: 248 250 252; /* slate-50 */
+    --color-surface: 255 255 255; /* white */
+    --color-surface-sunken: 241 245 249; /* slate-100 — table headers, insets */
+
+    /* Separators. `strong` is for controls, which need to read as edges. */
+    --color-line: 226 232 240; /* slate-200 */
+    --color-line-strong: 203 213 225; /* slate-300 */
+
+    /* Text, most prominent to least. */
+    --color-body: 15 23 42; /* slate-900 — 16.8:1 on canvas */
+    --color-muted: 71 85 105; /* slate-600 — 7.5:1 on canvas */
+    --color-subtle: 100 116 139; /* slate-500 — 4.8:1 on canvas, the floor */
+
+    /*
+     * The accent is one blue in both themes. It used to be blue in light and
+     * cyan in dark, which is two brand identities wearing one name.
+     *
+     * `accent` is a fill that carries white text; `accent-text` is the accent
+     * used AS text on the canvas. They differ because a colour readable as a
+     * button background is not automatically readable as 14px text, and vice
+     * versa. Keeping them apart is what lets both themes hold AA.
+     */
+    --color-accent: 37 99 235; /* brand-600 — white on it is 5.2:1 */
+    --color-accent-hover: 29 78 216; /* brand-700 */
+    --color-accent-text: 29 78 216; /* brand-700 — 6.3:1 on canvas */
+    --color-accent-soft: 239 246 255; /* brand-50 — selected nav, subtle fills */
+    --color-on-accent: 255 255 255;
+
+    /* Feedback. Each is a trio: soft fill, line, and readable text. */
+    --color-danger: 220 38 38; /* red-600 */
+    --color-danger-soft: 254 242 242; /* red-50 */
+    --color-danger-line: 252 165 165; /* red-300 */
+    --color-danger-text: 153 27 27; /* red-800 */
+
+    --color-warning: 217 119 6; /* amber-600 */
+    --color-warning-soft: 255 251 235; /* amber-50 */
+    --color-warning-line: 252 211 77; /* amber-300 */
+    --color-warning-text: 146 64 14; /* amber-800 */
+
+    --color-success: 22 163 74; /* green-600 */
+    --color-success-soft: 240 253 244; /* green-50 */
+    --color-success-line: 134 239 172; /* green-300 */
+    --color-success-text: 22 101 52; /* green-800 */
+
+    --color-info: 37 99 235; /* blue-600 */
+    --color-info-soft: 239 246 255; /* blue-50 */
+    --color-info-line: 147 197 253; /* blue-300 */
+    --color-info-text: 30 64 175; /* blue-800 */
+  }
+
+  /*
+   * Dark theme, as an explicit choice.
+   *
+   * ThemeProvider always writes `.light` or `.dark` on the root element, so
+   * once the application has mounted exactly one of them is present and this
+   * rule decides. The media-query block below covers only the moment before
+   * that, and only for someone who has never chosen.
+   */
+  .dark {
+    --color-canvas: 2 6 23; /* slate-950 */
+    --color-surface: 15 23 42; /* slate-900 */
+    --color-surface-sunken: 30 41 59; /* slate-800 */
+
+    --color-line: 30 41 59; /* slate-800 */
+    --color-line-strong: 51 65 85; /* slate-700 */
+
+    --color-body: 241 245 249; /* slate-100 — 15.9:1 on canvas */
+    --color-muted: 148 163 184; /* slate-400 — 7.9:1 on canvas */
+    --color-subtle: 100 116 139; /* slate-500 — 4.6:1 on canvas */
+
+    /* The fill stays brand-600 so white text on it keeps its 5.2:1. Only the
+       text form lightens, because brand-700 on a near-black canvas is not
+       readable. */
+    --color-accent: 37 99 235; /* brand-600 */
+    --color-accent-hover: 59 130 246; /* brand-500 — lightens on hover in dark */
+    --color-accent-text: 96 165 250; /* brand-400 — 7.0:1 on canvas */
+    --color-accent-soft: 30 58 138; /* brand-900 */
+    --color-on-accent: 255 255 255;
+
+    --color-danger: 220 38 38;
+    --color-danger-soft: 69 10 10; /* red-950 */
+    --color-danger-line: 153 27 27; /* red-800 */
+    --color-danger-text: 254 202 202; /* red-200 */
+
+    --color-warning: 217 119 6;
+    --color-warning-soft: 69 26 3; /* amber-950 */
+    --color-warning-line: 146 64 14; /* amber-800 */
+    --color-warning-text: 253 230 138; /* amber-200 */
+
+    --color-success: 22 163 74;
+    --color-success-soft: 5 46 22; /* green-950 */
+    --color-success-line: 22 101 52; /* green-800 */
+    --color-success-text: 187 247 208; /* green-200 */
+
+    --color-info: 37 99 235;
+    --color-info-soft: 23 37 84; /* blue-950 */
+    --color-info-line: 30 64 175; /* blue-800 */
+    --color-info-text: 191 219 254; /* blue-200 */
+  }
+
+  /*
+   * The same values again, for a visitor who has not chosen a theme and
+   * whose operating system asks for dark.
+   *
+   * Duplicated rather than shared with the rule above, because CSS cannot
+   * apply one declaration block from two unrelated conditions without a
+   * preprocessor. It gzips to almost nothing — the two blocks are
+   * byte-identical — and the alternative was `light-dark()`, which is newer
+   * than the browsers PLAN/00 §4 commits to supporting.
+   *
+   * This block is what paints the correct background before React mounts,
+   * which is the whole reason a dark-mode user no longer gets a white flash
+   * on every page load. It cannot be done with an inline <script>: the CSP
+   * carries no 'unsafe-inline' (PLAN/13 §7).
+   */
+  @media (prefers-color-scheme: dark) {
+    :root:not(.light):not(.dark) {
+      --color-canvas: 2 6 23; /* slate-950 */
+      --color-surface: 15 23 42; /* slate-900 */
+      --color-surface-sunken: 30 41 59; /* slate-800 */
+
+      --color-line: 30 41 59; /* slate-800 */
+      --color-line-strong: 51 65 85; /* slate-700 */
+
+      --color-body: 241 245 249; /* slate-100 — 15.9:1 on canvas */
+      --color-muted: 148 163 184; /* slate-400 — 7.9:1 on canvas */
+      --color-subtle: 100 116 139; /* slate-500 — 4.6:1 on canvas */
+
+      /* The fill stays brand-600 so white text on it keeps its 5.2:1. Only the
+         text form lightens, because brand-700 on a near-black canvas is not
+         readable. */
+      --color-accent: 37 99 235; /* brand-600 */
+      --color-accent-hover: 59 130 246; /* brand-500 — lightens on hover in dark */
+      --color-accent-text: 96 165 250; /* brand-400 — 7.0:1 on canvas */
+      --color-accent-soft: 30 58 138; /* brand-900 */
+      --color-on-accent: 255 255 255;
+
+      --color-danger: 220 38 38;
+      --color-danger-soft: 69 10 10; /* red-950 */
+      --color-danger-line: 153 27 27; /* red-800 */
+      --color-danger-text: 254 202 202; /* red-200 */
+
+      --color-warning: 217 119 6;
+      --color-warning-soft: 69 26 3; /* amber-950 */
+      --color-warning-line: 146 64 14; /* amber-800 */
+      --color-warning-text: 253 230 138; /* amber-200 */
+
+      --color-success: 22 163 74;
+      --color-success-soft: 5 46 22; /* green-950 */
+      --color-success-line: 22 101 52; /* green-800 */
+      --color-success-text: 187 247 208; /* green-200 */
+
+      --color-info: 37 99 235;
+      --color-info-soft: 23 37 84; /* blue-950 */
+      --color-info-line: 30 64 175; /* blue-800 */
+      --color-info-text: 191 219 254; /* blue-200 */
+
+    }
+  }
+
+  /*
+   * Tells the browser which built-in light/dark styling to use for form
+   * controls, scrollbars, and the like — the parts we do not draw ourselves.
+   */
+  :root:not(.light):not(.dark) {
+    color-scheme: light dark;
+  }
+
+  .light {
+    color-scheme: light;
+  }
+
+  .dark {
+    color-scheme: dark;
+  }
+
   html {
     -webkit-text-size-adjust: 100%;
   }
 
   body {
-    @apply bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100 antialiased selection:bg-brand-500/20 selection:text-brand-900 dark:selection:bg-cyan-500/30 dark:selection:text-cyan-200 transition-colors duration-200;
+    @apply bg-canvas text-body antialiased selection:bg-accent/20;
   }
 
   /*
@@ -23,7 +222,7 @@
    * (PLAN/00 §4).
    */
   :focus-visible {
-    @apply outline-none ring-2 ring-brand-600 dark:ring-cyan-400 ring-offset-2 ring-offset-white dark:ring-offset-slate-950;
+    @apply outline-none ring-2 ring-accent ring-offset-2 ring-offset-canvas;
   }
 
   /* Inputs at 16px so iOS Safari does not zoom on focus mid-form. */
@@ -39,15 +238,25 @@
     padding-bottom: env(safe-area-inset-bottom);
   }
 
+  /*
+   * Decoration for the public landing and login pages only. Tailwind drops
+   * whatever the content scan does not find, so these cost nothing on the
+   * authenticated routes.
+   */
   .bg-cyber-grid {
     background-size: 40px 40px;
-    background-image: 
+    background-image:
       linear-gradient(to right, rgba(255, 255, 255, 0.04) 1px, transparent 1px),
       linear-gradient(to bottom, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
   }
 
   .bg-tire-radial {
-    background: radial-gradient(circle at 50% 35%, rgba(37, 99, 235, 0.22) 0%, rgba(6, 182, 212, 0.1) 40%, rgba(2, 6, 23, 0.98) 100%);
+    background: radial-gradient(
+      circle at 50% 35%,
+      rgba(37, 99, 235, 0.22) 0%,
+      rgba(6, 182, 212, 0.1) 40%,
+      rgba(2, 6, 23, 0.98) 100%
+    );
   }
 
   .animate-glow-pulse {
@@ -60,6 +269,18 @@
 
   .animate-spin-very-slow {
     animation: spinSlow 40s linear infinite;
+  }
+}
+
+/*
+ * Respect a user who has asked their system for less motion. The landing
+ * animations are decorative, so they simply stop.
+ */
+@media (prefers-reduced-motion: reduce) {
+  .animate-glow-pulse,
+  .animate-float-slow,
+  .animate-spin-very-slow {
+    animation: none;
   }
 }
 

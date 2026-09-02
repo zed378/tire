@@ -114,8 +114,8 @@ export interface CsvSeedResult {
   vehicleBrandsCreated: number;
   tireBrandsCreated: number;
   patternsCreated: number;
-  /** Parsed but not stored: no table holds sizes. See the note below. */
-  sizesParsed: number;
+  sizesCreated: number;
+  sizesTotal: number;
 }
 
 export async function seedCsvData(prisma: PrismaClient): Promise<CsvSeedResult> {
@@ -127,7 +127,8 @@ export async function seedCsvData(prisma: PrismaClient): Promise<CsvSeedResult> 
       vehicleBrandsCreated: 0,
       tireBrandsCreated: 0,
       patternsCreated: 0,
-      sizesParsed: 0,
+      sizesCreated: 0,
+      sizesTotal: 0,
     };
   }
 
@@ -186,17 +187,23 @@ export async function seedCsvData(prisma: PrismaClient): Promise<CsvSeedResult> 
     }
   }
 
-  // Sizes are parsed to report the file was read, and deliberately not stored:
-  // there is no tire size table. `tire_specs.size` is free text captured per
-  // tire (PLAN/02 §7). Earlier versions printed a size count as though rows had
-  // been written, which is the kind of log line that makes an empty table look
-  // like a seeded one.
+  let sizesCreated = 0;
+  for (const { group, size } of sizes) {
+    const existing = await prisma.tireSize.findUnique({
+      where: { size_type: { size, type: group } },
+    });
+    if (existing !== null) continue;
+    await prisma.tireSize.create({ data: { size, type: group } });
+    sizesCreated++;
+  }
+
   return {
     directory,
     missingFiles,
     vehicleBrandsCreated,
     tireBrandsCreated,
     patternsCreated,
-    sizesParsed: sizes.length,
+    sizesCreated,
+    sizesTotal: sizes.length,
   };
 }

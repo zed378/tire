@@ -39,6 +39,11 @@ export type TireBrand = $Result.DefaultSelection<Prisma.$TireBrandPayload>
  */
 export type TireBrandPattern = $Result.DefaultSelection<Prisma.$TireBrandPatternPayload>
 /**
+ * Model TireSize
+ * 
+ */
+export type TireSize = $Result.DefaultSelection<Prisma.$TireSizePayload>
+/**
  * Model User
  * 
  */
@@ -505,6 +510,16 @@ export class PrismaClient<
     * ```
     */
   get tireBrandPattern(): Prisma.TireBrandPatternDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.tireSize`: Exposes CRUD operations for the **TireSize** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more TireSizes
+    * const tireSizes = await prisma.tireSize.findMany()
+    * ```
+    */
+  get tireSize(): Prisma.TireSizeDelegate<ExtArgs, ClientOptions>;
 
   /**
    * `prisma.user`: Exposes CRUD operations for the **User** model.
@@ -1201,6 +1216,7 @@ export namespace Prisma {
     VehicleBrand: 'VehicleBrand',
     TireBrand: 'TireBrand',
     TireBrandPattern: 'TireBrandPattern',
+    TireSize: 'TireSize',
     User: 'User',
     UserRegion: 'UserRegion',
     Session: 'Session',
@@ -1244,7 +1260,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "province" | "city" | "vehicleBrand" | "tireBrand" | "tireBrandPattern" | "user" | "userRegion" | "session" | "loginAttempt" | "userMfa" | "mfaRecoveryCode" | "mfaUsedCode" | "vehicle" | "vehiclePlateHistory" | "axleConfig" | "inspection" | "serialCounter" | "tirePosition" | "tireSpec" | "photo" | "pendingUpload" | "qcReview" | "qcComment" | "auditLog" | "outbox" | "notification" | "notificationPreference" | "exportJob" | "dailyMetric" | "migrationQuarantine"
+      modelProps: "province" | "city" | "vehicleBrand" | "tireBrand" | "tireBrandPattern" | "tireSize" | "user" | "userRegion" | "session" | "loginAttempt" | "userMfa" | "mfaRecoveryCode" | "mfaUsedCode" | "vehicle" | "vehiclePlateHistory" | "axleConfig" | "inspection" | "serialCounter" | "tirePosition" | "tireSpec" | "photo" | "pendingUpload" | "qcReview" | "qcComment" | "auditLog" | "outbox" | "notification" | "notificationPreference" | "exportJob" | "dailyMetric" | "migrationQuarantine"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -1615,6 +1631,80 @@ export namespace Prisma {
           count: {
             args: Prisma.TireBrandPatternCountArgs<ExtArgs>
             result: $Utils.Optional<TireBrandPatternCountAggregateOutputType> | number
+          }
+        }
+      }
+      TireSize: {
+        payload: Prisma.$TireSizePayload<ExtArgs>
+        fields: Prisma.TireSizeFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.TireSizeFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TireSizePayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.TireSizeFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TireSizePayload>
+          }
+          findFirst: {
+            args: Prisma.TireSizeFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TireSizePayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.TireSizeFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TireSizePayload>
+          }
+          findMany: {
+            args: Prisma.TireSizeFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TireSizePayload>[]
+          }
+          create: {
+            args: Prisma.TireSizeCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TireSizePayload>
+          }
+          createMany: {
+            args: Prisma.TireSizeCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.TireSizeCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TireSizePayload>[]
+          }
+          delete: {
+            args: Prisma.TireSizeDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TireSizePayload>
+          }
+          update: {
+            args: Prisma.TireSizeUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TireSizePayload>
+          }
+          deleteMany: {
+            args: Prisma.TireSizeDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.TireSizeUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.TireSizeUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TireSizePayload>[]
+          }
+          upsert: {
+            args: Prisma.TireSizeUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TireSizePayload>
+          }
+          aggregate: {
+            args: Prisma.TireSizeAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateTireSize>
+          }
+          groupBy: {
+            args: Prisma.TireSizeGroupByArgs<ExtArgs>
+            result: $Utils.Optional<TireSizeGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.TireSizeCountArgs<ExtArgs>
+            result: $Utils.Optional<TireSizeCountAggregateOutputType> | number
           }
         }
       }
@@ -3569,6 +3659,7 @@ export namespace Prisma {
     vehicleBrand?: VehicleBrandOmit
     tireBrand?: TireBrandOmit
     tireBrandPattern?: TireBrandPatternOmit
+    tireSize?: TireSizeOmit
     user?: UserOmit
     userRegion?: UserRegionOmit
     session?: SessionOmit
@@ -9824,6 +9915,1048 @@ export namespace Prisma {
      * Omit specific fields from the TireBrandPattern
      */
     omit?: TireBrandPatternOmit<ExtArgs> | null
+  }
+
+
+  /**
+   * Model TireSize
+   */
+
+  export type AggregateTireSize = {
+    _count: TireSizeCountAggregateOutputType | null
+    _avg: TireSizeAvgAggregateOutputType | null
+    _sum: TireSizeSumAggregateOutputType | null
+    _min: TireSizeMinAggregateOutputType | null
+    _max: TireSizeMaxAggregateOutputType | null
+  }
+
+  export type TireSizeAvgAggregateOutputType = {
+    id: number | null
+  }
+
+  export type TireSizeSumAggregateOutputType = {
+    id: bigint | null
+  }
+
+  export type TireSizeMinAggregateOutputType = {
+    id: bigint | null
+    size: string | null
+    type: string | null
+    isActive: boolean | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type TireSizeMaxAggregateOutputType = {
+    id: bigint | null
+    size: string | null
+    type: string | null
+    isActive: boolean | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type TireSizeCountAggregateOutputType = {
+    id: number
+    size: number
+    type: number
+    isActive: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type TireSizeAvgAggregateInputType = {
+    id?: true
+  }
+
+  export type TireSizeSumAggregateInputType = {
+    id?: true
+  }
+
+  export type TireSizeMinAggregateInputType = {
+    id?: true
+    size?: true
+    type?: true
+    isActive?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type TireSizeMaxAggregateInputType = {
+    id?: true
+    size?: true
+    type?: true
+    isActive?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type TireSizeCountAggregateInputType = {
+    id?: true
+    size?: true
+    type?: true
+    isActive?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type TireSizeAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which TireSize to aggregate.
+     */
+    where?: TireSizeWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of TireSizes to fetch.
+     */
+    orderBy?: TireSizeOrderByWithRelationInput | TireSizeOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: TireSizeWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` TireSizes from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` TireSizes.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned TireSizes
+    **/
+    _count?: true | TireSizeCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: TireSizeAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: TireSizeSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: TireSizeMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: TireSizeMaxAggregateInputType
+  }
+
+  export type GetTireSizeAggregateType<T extends TireSizeAggregateArgs> = {
+        [P in keyof T & keyof AggregateTireSize]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateTireSize[P]>
+      : GetScalarType<T[P], AggregateTireSize[P]>
+  }
+
+
+
+
+  export type TireSizeGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: TireSizeWhereInput
+    orderBy?: TireSizeOrderByWithAggregationInput | TireSizeOrderByWithAggregationInput[]
+    by: TireSizeScalarFieldEnum[] | TireSizeScalarFieldEnum
+    having?: TireSizeScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: TireSizeCountAggregateInputType | true
+    _avg?: TireSizeAvgAggregateInputType
+    _sum?: TireSizeSumAggregateInputType
+    _min?: TireSizeMinAggregateInputType
+    _max?: TireSizeMaxAggregateInputType
+  }
+
+  export type TireSizeGroupByOutputType = {
+    id: bigint
+    size: string
+    type: string
+    isActive: boolean
+    createdAt: Date
+    updatedAt: Date
+    _count: TireSizeCountAggregateOutputType | null
+    _avg: TireSizeAvgAggregateOutputType | null
+    _sum: TireSizeSumAggregateOutputType | null
+    _min: TireSizeMinAggregateOutputType | null
+    _max: TireSizeMaxAggregateOutputType | null
+  }
+
+  type GetTireSizeGroupByPayload<T extends TireSizeGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<TireSizeGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof TireSizeGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], TireSizeGroupByOutputType[P]>
+            : GetScalarType<T[P], TireSizeGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type TireSizeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    size?: boolean
+    type?: boolean
+    isActive?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }, ExtArgs["result"]["tireSize"]>
+
+  export type TireSizeSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    size?: boolean
+    type?: boolean
+    isActive?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }, ExtArgs["result"]["tireSize"]>
+
+  export type TireSizeSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    size?: boolean
+    type?: boolean
+    isActive?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }, ExtArgs["result"]["tireSize"]>
+
+  export type TireSizeSelectScalar = {
+    id?: boolean
+    size?: boolean
+    type?: boolean
+    isActive?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type TireSizeOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "size" | "type" | "isActive" | "createdAt" | "updatedAt", ExtArgs["result"]["tireSize"]>
+
+  export type $TireSizePayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "TireSize"
+    objects: {}
+    scalars: $Extensions.GetPayloadResult<{
+      id: bigint
+      size: string
+      type: string
+      isActive: boolean
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["tireSize"]>
+    composites: {}
+  }
+
+  type TireSizeGetPayload<S extends boolean | null | undefined | TireSizeDefaultArgs> = $Result.GetResult<Prisma.$TireSizePayload, S>
+
+  type TireSizeCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<TireSizeFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: TireSizeCountAggregateInputType | true
+    }
+
+  export interface TireSizeDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['TireSize'], meta: { name: 'TireSize' } }
+    /**
+     * Find zero or one TireSize that matches the filter.
+     * @param {TireSizeFindUniqueArgs} args - Arguments to find a TireSize
+     * @example
+     * // Get one TireSize
+     * const tireSize = await prisma.tireSize.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends TireSizeFindUniqueArgs>(args: SelectSubset<T, TireSizeFindUniqueArgs<ExtArgs>>): Prisma__TireSizeClient<$Result.GetResult<Prisma.$TireSizePayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one TireSize that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {TireSizeFindUniqueOrThrowArgs} args - Arguments to find a TireSize
+     * @example
+     * // Get one TireSize
+     * const tireSize = await prisma.tireSize.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends TireSizeFindUniqueOrThrowArgs>(args: SelectSubset<T, TireSizeFindUniqueOrThrowArgs<ExtArgs>>): Prisma__TireSizeClient<$Result.GetResult<Prisma.$TireSizePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first TireSize that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TireSizeFindFirstArgs} args - Arguments to find a TireSize
+     * @example
+     * // Get one TireSize
+     * const tireSize = await prisma.tireSize.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends TireSizeFindFirstArgs>(args?: SelectSubset<T, TireSizeFindFirstArgs<ExtArgs>>): Prisma__TireSizeClient<$Result.GetResult<Prisma.$TireSizePayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first TireSize that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TireSizeFindFirstOrThrowArgs} args - Arguments to find a TireSize
+     * @example
+     * // Get one TireSize
+     * const tireSize = await prisma.tireSize.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends TireSizeFindFirstOrThrowArgs>(args?: SelectSubset<T, TireSizeFindFirstOrThrowArgs<ExtArgs>>): Prisma__TireSizeClient<$Result.GetResult<Prisma.$TireSizePayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more TireSizes that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TireSizeFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all TireSizes
+     * const tireSizes = await prisma.tireSize.findMany()
+     * 
+     * // Get first 10 TireSizes
+     * const tireSizes = await prisma.tireSize.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const tireSizeWithIdOnly = await prisma.tireSize.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends TireSizeFindManyArgs>(args?: SelectSubset<T, TireSizeFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$TireSizePayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a TireSize.
+     * @param {TireSizeCreateArgs} args - Arguments to create a TireSize.
+     * @example
+     * // Create one TireSize
+     * const TireSize = await prisma.tireSize.create({
+     *   data: {
+     *     // ... data to create a TireSize
+     *   }
+     * })
+     * 
+     */
+    create<T extends TireSizeCreateArgs>(args: SelectSubset<T, TireSizeCreateArgs<ExtArgs>>): Prisma__TireSizeClient<$Result.GetResult<Prisma.$TireSizePayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many TireSizes.
+     * @param {TireSizeCreateManyArgs} args - Arguments to create many TireSizes.
+     * @example
+     * // Create many TireSizes
+     * const tireSize = await prisma.tireSize.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends TireSizeCreateManyArgs>(args?: SelectSubset<T, TireSizeCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many TireSizes and returns the data saved in the database.
+     * @param {TireSizeCreateManyAndReturnArgs} args - Arguments to create many TireSizes.
+     * @example
+     * // Create many TireSizes
+     * const tireSize = await prisma.tireSize.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many TireSizes and only return the `id`
+     * const tireSizeWithIdOnly = await prisma.tireSize.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends TireSizeCreateManyAndReturnArgs>(args?: SelectSubset<T, TireSizeCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$TireSizePayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a TireSize.
+     * @param {TireSizeDeleteArgs} args - Arguments to delete one TireSize.
+     * @example
+     * // Delete one TireSize
+     * const TireSize = await prisma.tireSize.delete({
+     *   where: {
+     *     // ... filter to delete one TireSize
+     *   }
+     * })
+     * 
+     */
+    delete<T extends TireSizeDeleteArgs>(args: SelectSubset<T, TireSizeDeleteArgs<ExtArgs>>): Prisma__TireSizeClient<$Result.GetResult<Prisma.$TireSizePayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one TireSize.
+     * @param {TireSizeUpdateArgs} args - Arguments to update one TireSize.
+     * @example
+     * // Update one TireSize
+     * const tireSize = await prisma.tireSize.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends TireSizeUpdateArgs>(args: SelectSubset<T, TireSizeUpdateArgs<ExtArgs>>): Prisma__TireSizeClient<$Result.GetResult<Prisma.$TireSizePayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more TireSizes.
+     * @param {TireSizeDeleteManyArgs} args - Arguments to filter TireSizes to delete.
+     * @example
+     * // Delete a few TireSizes
+     * const { count } = await prisma.tireSize.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends TireSizeDeleteManyArgs>(args?: SelectSubset<T, TireSizeDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more TireSizes.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TireSizeUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many TireSizes
+     * const tireSize = await prisma.tireSize.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends TireSizeUpdateManyArgs>(args: SelectSubset<T, TireSizeUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more TireSizes and returns the data updated in the database.
+     * @param {TireSizeUpdateManyAndReturnArgs} args - Arguments to update many TireSizes.
+     * @example
+     * // Update many TireSizes
+     * const tireSize = await prisma.tireSize.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more TireSizes and only return the `id`
+     * const tireSizeWithIdOnly = await prisma.tireSize.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends TireSizeUpdateManyAndReturnArgs>(args: SelectSubset<T, TireSizeUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$TireSizePayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one TireSize.
+     * @param {TireSizeUpsertArgs} args - Arguments to update or create a TireSize.
+     * @example
+     * // Update or create a TireSize
+     * const tireSize = await prisma.tireSize.upsert({
+     *   create: {
+     *     // ... data to create a TireSize
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the TireSize we want to update
+     *   }
+     * })
+     */
+    upsert<T extends TireSizeUpsertArgs>(args: SelectSubset<T, TireSizeUpsertArgs<ExtArgs>>): Prisma__TireSizeClient<$Result.GetResult<Prisma.$TireSizePayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of TireSizes.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TireSizeCountArgs} args - Arguments to filter TireSizes to count.
+     * @example
+     * // Count the number of TireSizes
+     * const count = await prisma.tireSize.count({
+     *   where: {
+     *     // ... the filter for the TireSizes we want to count
+     *   }
+     * })
+    **/
+    count<T extends TireSizeCountArgs>(
+      args?: Subset<T, TireSizeCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], TireSizeCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a TireSize.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TireSizeAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends TireSizeAggregateArgs>(args: Subset<T, TireSizeAggregateArgs>): Prisma.PrismaPromise<GetTireSizeAggregateType<T>>
+
+    /**
+     * Group by TireSize.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TireSizeGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends TireSizeGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: TireSizeGroupByArgs['orderBy'] }
+        : { orderBy?: TireSizeGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, TireSizeGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetTireSizeGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the TireSize model
+   */
+  readonly fields: TireSizeFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for TireSize.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__TireSizeClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the TireSize model
+   */
+  interface TireSizeFieldRefs {
+    readonly id: FieldRef<"TireSize", 'BigInt'>
+    readonly size: FieldRef<"TireSize", 'String'>
+    readonly type: FieldRef<"TireSize", 'String'>
+    readonly isActive: FieldRef<"TireSize", 'Boolean'>
+    readonly createdAt: FieldRef<"TireSize", 'DateTime'>
+    readonly updatedAt: FieldRef<"TireSize", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * TireSize findUnique
+   */
+  export type TireSizeFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TireSize
+     */
+    select?: TireSizeSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TireSize
+     */
+    omit?: TireSizeOmit<ExtArgs> | null
+    /**
+     * Filter, which TireSize to fetch.
+     */
+    where: TireSizeWhereUniqueInput
+  }
+
+  /**
+   * TireSize findUniqueOrThrow
+   */
+  export type TireSizeFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TireSize
+     */
+    select?: TireSizeSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TireSize
+     */
+    omit?: TireSizeOmit<ExtArgs> | null
+    /**
+     * Filter, which TireSize to fetch.
+     */
+    where: TireSizeWhereUniqueInput
+  }
+
+  /**
+   * TireSize findFirst
+   */
+  export type TireSizeFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TireSize
+     */
+    select?: TireSizeSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TireSize
+     */
+    omit?: TireSizeOmit<ExtArgs> | null
+    /**
+     * Filter, which TireSize to fetch.
+     */
+    where?: TireSizeWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of TireSizes to fetch.
+     */
+    orderBy?: TireSizeOrderByWithRelationInput | TireSizeOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for TireSizes.
+     */
+    cursor?: TireSizeWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` TireSizes from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` TireSizes.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of TireSizes.
+     */
+    distinct?: TireSizeScalarFieldEnum | TireSizeScalarFieldEnum[]
+  }
+
+  /**
+   * TireSize findFirstOrThrow
+   */
+  export type TireSizeFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TireSize
+     */
+    select?: TireSizeSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TireSize
+     */
+    omit?: TireSizeOmit<ExtArgs> | null
+    /**
+     * Filter, which TireSize to fetch.
+     */
+    where?: TireSizeWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of TireSizes to fetch.
+     */
+    orderBy?: TireSizeOrderByWithRelationInput | TireSizeOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for TireSizes.
+     */
+    cursor?: TireSizeWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` TireSizes from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` TireSizes.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of TireSizes.
+     */
+    distinct?: TireSizeScalarFieldEnum | TireSizeScalarFieldEnum[]
+  }
+
+  /**
+   * TireSize findMany
+   */
+  export type TireSizeFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TireSize
+     */
+    select?: TireSizeSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TireSize
+     */
+    omit?: TireSizeOmit<ExtArgs> | null
+    /**
+     * Filter, which TireSizes to fetch.
+     */
+    where?: TireSizeWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of TireSizes to fetch.
+     */
+    orderBy?: TireSizeOrderByWithRelationInput | TireSizeOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing TireSizes.
+     */
+    cursor?: TireSizeWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` TireSizes from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` TireSizes.
+     */
+    skip?: number
+    distinct?: TireSizeScalarFieldEnum | TireSizeScalarFieldEnum[]
+  }
+
+  /**
+   * TireSize create
+   */
+  export type TireSizeCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TireSize
+     */
+    select?: TireSizeSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TireSize
+     */
+    omit?: TireSizeOmit<ExtArgs> | null
+    /**
+     * The data needed to create a TireSize.
+     */
+    data: XOR<TireSizeCreateInput, TireSizeUncheckedCreateInput>
+  }
+
+  /**
+   * TireSize createMany
+   */
+  export type TireSizeCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many TireSizes.
+     */
+    data: TireSizeCreateManyInput | TireSizeCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * TireSize createManyAndReturn
+   */
+  export type TireSizeCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TireSize
+     */
+    select?: TireSizeSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the TireSize
+     */
+    omit?: TireSizeOmit<ExtArgs> | null
+    /**
+     * The data used to create many TireSizes.
+     */
+    data: TireSizeCreateManyInput | TireSizeCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * TireSize update
+   */
+  export type TireSizeUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TireSize
+     */
+    select?: TireSizeSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TireSize
+     */
+    omit?: TireSizeOmit<ExtArgs> | null
+    /**
+     * The data needed to update a TireSize.
+     */
+    data: XOR<TireSizeUpdateInput, TireSizeUncheckedUpdateInput>
+    /**
+     * Choose, which TireSize to update.
+     */
+    where: TireSizeWhereUniqueInput
+  }
+
+  /**
+   * TireSize updateMany
+   */
+  export type TireSizeUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update TireSizes.
+     */
+    data: XOR<TireSizeUpdateManyMutationInput, TireSizeUncheckedUpdateManyInput>
+    /**
+     * Filter which TireSizes to update
+     */
+    where?: TireSizeWhereInput
+    /**
+     * Limit how many TireSizes to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * TireSize updateManyAndReturn
+   */
+  export type TireSizeUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TireSize
+     */
+    select?: TireSizeSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the TireSize
+     */
+    omit?: TireSizeOmit<ExtArgs> | null
+    /**
+     * The data used to update TireSizes.
+     */
+    data: XOR<TireSizeUpdateManyMutationInput, TireSizeUncheckedUpdateManyInput>
+    /**
+     * Filter which TireSizes to update
+     */
+    where?: TireSizeWhereInput
+    /**
+     * Limit how many TireSizes to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * TireSize upsert
+   */
+  export type TireSizeUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TireSize
+     */
+    select?: TireSizeSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TireSize
+     */
+    omit?: TireSizeOmit<ExtArgs> | null
+    /**
+     * The filter to search for the TireSize to update in case it exists.
+     */
+    where: TireSizeWhereUniqueInput
+    /**
+     * In case the TireSize found by the `where` argument doesn't exist, create a new TireSize with this data.
+     */
+    create: XOR<TireSizeCreateInput, TireSizeUncheckedCreateInput>
+    /**
+     * In case the TireSize was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<TireSizeUpdateInput, TireSizeUncheckedUpdateInput>
+  }
+
+  /**
+   * TireSize delete
+   */
+  export type TireSizeDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TireSize
+     */
+    select?: TireSizeSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TireSize
+     */
+    omit?: TireSizeOmit<ExtArgs> | null
+    /**
+     * Filter which TireSize to delete.
+     */
+    where: TireSizeWhereUniqueInput
+  }
+
+  /**
+   * TireSize deleteMany
+   */
+  export type TireSizeDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which TireSizes to delete
+     */
+    where?: TireSizeWhereInput
+    /**
+     * Limit how many TireSizes to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * TireSize without action
+   */
+  export type TireSizeDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TireSize
+     */
+    select?: TireSizeSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TireSize
+     */
+    omit?: TireSizeOmit<ExtArgs> | null
   }
 
 
@@ -39805,6 +40938,18 @@ export namespace Prisma {
   export type TireBrandPatternScalarFieldEnum = (typeof TireBrandPatternScalarFieldEnum)[keyof typeof TireBrandPatternScalarFieldEnum]
 
 
+  export const TireSizeScalarFieldEnum: {
+    id: 'id',
+    size: 'size',
+    type: 'type',
+    isActive: 'isActive',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type TireSizeScalarFieldEnum = (typeof TireSizeScalarFieldEnum)[keyof typeof TireSizeScalarFieldEnum]
+
+
   export const UserScalarFieldEnum: {
     id: 'id',
     username: 'username',
@@ -40842,6 +41987,66 @@ export namespace Prisma {
     isActive?: BoolWithAggregatesFilter<"TireBrandPattern"> | boolean
     createdAt?: DateTimeWithAggregatesFilter<"TireBrandPattern"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"TireBrandPattern"> | Date | string
+  }
+
+  export type TireSizeWhereInput = {
+    AND?: TireSizeWhereInput | TireSizeWhereInput[]
+    OR?: TireSizeWhereInput[]
+    NOT?: TireSizeWhereInput | TireSizeWhereInput[]
+    id?: BigIntFilter<"TireSize"> | bigint | number
+    size?: StringFilter<"TireSize"> | string
+    type?: StringFilter<"TireSize"> | string
+    isActive?: BoolFilter<"TireSize"> | boolean
+    createdAt?: DateTimeFilter<"TireSize"> | Date | string
+    updatedAt?: DateTimeFilter<"TireSize"> | Date | string
+  }
+
+  export type TireSizeOrderByWithRelationInput = {
+    id?: SortOrder
+    size?: SortOrder
+    type?: SortOrder
+    isActive?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type TireSizeWhereUniqueInput = Prisma.AtLeast<{
+    id?: bigint | number
+    size_type?: TireSizeSizeTypeCompoundUniqueInput
+    AND?: TireSizeWhereInput | TireSizeWhereInput[]
+    OR?: TireSizeWhereInput[]
+    NOT?: TireSizeWhereInput | TireSizeWhereInput[]
+    size?: StringFilter<"TireSize"> | string
+    type?: StringFilter<"TireSize"> | string
+    isActive?: BoolFilter<"TireSize"> | boolean
+    createdAt?: DateTimeFilter<"TireSize"> | Date | string
+    updatedAt?: DateTimeFilter<"TireSize"> | Date | string
+  }, "id" | "size_type">
+
+  export type TireSizeOrderByWithAggregationInput = {
+    id?: SortOrder
+    size?: SortOrder
+    type?: SortOrder
+    isActive?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: TireSizeCountOrderByAggregateInput
+    _avg?: TireSizeAvgOrderByAggregateInput
+    _max?: TireSizeMaxOrderByAggregateInput
+    _min?: TireSizeMinOrderByAggregateInput
+    _sum?: TireSizeSumOrderByAggregateInput
+  }
+
+  export type TireSizeScalarWhereWithAggregatesInput = {
+    AND?: TireSizeScalarWhereWithAggregatesInput | TireSizeScalarWhereWithAggregatesInput[]
+    OR?: TireSizeScalarWhereWithAggregatesInput[]
+    NOT?: TireSizeScalarWhereWithAggregatesInput | TireSizeScalarWhereWithAggregatesInput[]
+    id?: BigIntWithAggregatesFilter<"TireSize"> | bigint | number
+    size?: StringWithAggregatesFilter<"TireSize"> | string
+    type?: StringWithAggregatesFilter<"TireSize"> | string
+    isActive?: BoolWithAggregatesFilter<"TireSize"> | boolean
+    createdAt?: DateTimeWithAggregatesFilter<"TireSize"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"TireSize"> | Date | string
   }
 
   export type UserWhereInput = {
@@ -43255,6 +44460,69 @@ export namespace Prisma {
     id?: BigIntFieldUpdateOperationsInput | bigint | number
     brand?: StringFieldUpdateOperationsInput | string
     pattern?: StringFieldUpdateOperationsInput | string
+    type?: StringFieldUpdateOperationsInput | string
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type TireSizeCreateInput = {
+    id?: bigint | number
+    size: string
+    type: string
+    isActive?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type TireSizeUncheckedCreateInput = {
+    id?: bigint | number
+    size: string
+    type: string
+    isActive?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type TireSizeUpdateInput = {
+    id?: BigIntFieldUpdateOperationsInput | bigint | number
+    size?: StringFieldUpdateOperationsInput | string
+    type?: StringFieldUpdateOperationsInput | string
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type TireSizeUncheckedUpdateInput = {
+    id?: BigIntFieldUpdateOperationsInput | bigint | number
+    size?: StringFieldUpdateOperationsInput | string
+    type?: StringFieldUpdateOperationsInput | string
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type TireSizeCreateManyInput = {
+    id?: bigint | number
+    size: string
+    type: string
+    isActive?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type TireSizeUpdateManyMutationInput = {
+    id?: BigIntFieldUpdateOperationsInput | bigint | number
+    size?: StringFieldUpdateOperationsInput | string
+    type?: StringFieldUpdateOperationsInput | string
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type TireSizeUncheckedUpdateManyInput = {
+    id?: BigIntFieldUpdateOperationsInput | bigint | number
+    size?: StringFieldUpdateOperationsInput | string
     type?: StringFieldUpdateOperationsInput | string
     isActive?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -45801,6 +47069,46 @@ export namespace Prisma {
   }
 
   export type TireBrandPatternSumOrderByAggregateInput = {
+    id?: SortOrder
+  }
+
+  export type TireSizeSizeTypeCompoundUniqueInput = {
+    size: string
+    type: string
+  }
+
+  export type TireSizeCountOrderByAggregateInput = {
+    id?: SortOrder
+    size?: SortOrder
+    type?: SortOrder
+    isActive?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type TireSizeAvgOrderByAggregateInput = {
+    id?: SortOrder
+  }
+
+  export type TireSizeMaxOrderByAggregateInput = {
+    id?: SortOrder
+    size?: SortOrder
+    type?: SortOrder
+    isActive?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type TireSizeMinOrderByAggregateInput = {
+    id?: SortOrder
+    size?: SortOrder
+    type?: SortOrder
+    isActive?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type TireSizeSumOrderByAggregateInput = {
     id?: SortOrder
   }
 

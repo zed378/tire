@@ -55,7 +55,17 @@ test.describe("Login", () => {
 
     expect(content).not.toContain("login sebagai");
     expect(content).not.toContain("demo");
-    await expect(page.getByRole("button")).toHaveCount(1);
+
+    // The only button that submits credentials is the real one. This used to
+    // assert that the page held exactly one button at all, which passed for the
+    // wrong reason: the theme switch beside it was a `<span tabIndex={0}>` and
+    // so was invisible to `getByRole("button")`. Counting every button on the
+    // page made an accessibility defect look like a security property, and it
+    // would have failed the moment that span became the button it should have
+    // been. What D-16 actually forbids is a control that signs someone in
+    // without credentials, so that is what is asserted.
+    await expect(page.getByRole("button", { name: /login sebagai|masuk sebagai/i })).toHaveCount(0);
+    await expect(page.getByRole("button", { name: "Masuk" })).toHaveCount(1);
   });
 });
 

@@ -8,6 +8,7 @@ import {
   type CurrentUser,
   type LoginInput,
   type LoginResult,
+  type RegisterInput,
   type SessionSummary,
 } from "@c26/contracts";
 import { recordAudit } from "../../kernel/audit.ts";
@@ -53,6 +54,103 @@ export interface LoginContext {
 function invalidCredentials(): AppError {
   return new AppError("INVALID_CREDENTIALS");
 }
+
+// ── Registration ───────────────────────────────────────────────────────────────
+
+/**
+ * Public self-registration: new users start with 'authenticated' role.
+ * Admin later changes the role to 'supplier', 'admin', 'manager', or 'operator'.
+ */
+export interface RegisterOutcome {
+  result: { status: "registered"; user: CurrentUser };
+  session: CreatedSession;
+}
+
+export async function register(input: RegisterInput, context: LoginContext): Promise<RegisterOutcome> {
+  const username = input.username.trim().toLowerCase();
+  const displayName = input.displayName.trim();
+
+  // Check for duplicate username (case-insensitive)
+  const existing = await getPrisma().user.findFirst({
+    where: { username, deletedAt: null },
+  });
+
+  if (existing !== null) {
+    throw new AppError("VALIDATION_ERROR", {
+      fieldErrors: [
+        { field: "username", code: "DUPLICATE_USERNAME", message: "User ID ini sudah terdaftar." },
+      ],
+    });
+  }
+
+  // Validate password policy
+  assertPasswordPolicy(input.password);
+
+  // Check against breached password list
+  if (await isPasswordBreached(input.password)) {
+    throw new AppError("VALIDATION_ERROR", {
+      fieldErrors: [
+        {
+          field: "password",
+          code: "PASSWORD_TOO_COMMON",
+          message: "Password ini pernah bocor dalam kebocoran data publik. Pilih yang lain.",
+        },
+      ],
+    });
+  }
+
+  const passwordHash = await hashPassword(input.password);
+
+  const outcome = await withTransaction(async (tx) => {
+    // Create user with 'supplier' role initially. Admin can change role later.
+    const user = await tx.user.create({
+      data: {
+        username,
+        displayName,
+        passwordHash,
+        role: "supplier",
+        isActive: true,
+        mustChangePassword: false,
+      },
+      include: { mfa: true, regions: true },
+    });
+
+    // Create session immediately (login on register)
+    const session = await createSession(tx, {
+      userId: user.id,
+      userAgent: context.userAgent,
+      ipAddress: context.ipAddress,
+      mfaSatisfied: false,
+    });
+
+    // Audit log
+    await recordAudit(
+      tx,
+      { id: user.id, role: user.role, requestId: context.requestId, ipAddress: context.ipAddress },
+      {
+        action: "user.created",
+        entity: "user",
+        entityId: user.id,
+        after: { role: "supplier", source: "self_registration" },
+      },
+    );
+
+    return { user, session };
+  });
+
+  const mfaEnrolled = outcome.user.mfa !== null && outcome.user.mfa.confirmedAt !== null;
+  const mfaRequired = ROLES_REQUIRING_MFA.includes(outcome.user.role);
+
+  return {
+    result: {
+      status: "registered",
+      user: toCurrentUser(outcome.user, mfaEnrolled, mfaRequired),
+    },
+    session: outcome.session,
+  };
+}
+
+// ── Login ──────────────────────────────────────────────────────────────────────
 
 async function isAccountLocked(username: string): Promise<boolean> {
   const since = new Date(Date.now() - LOGIN_ATTEMPT_WINDOW_MINUTES * 60 * 1000);

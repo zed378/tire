@@ -28,3 +28,4 @@ export * from "./tire-spec.ts";
 export * from "./report.ts";
 export * from "./notification.ts";
 export * from "./ops.ts";
+export * from "./dashboard.ts";

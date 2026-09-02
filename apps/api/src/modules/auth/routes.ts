@@ -3,6 +3,7 @@ import {
   changePasswordSchema,
   loginSchema,
   permissionsFor,
+  registerSchema,
   ROLES_REQUIRING_MFA,
   totpCodeSchema,
   type CurrentUser,
@@ -16,6 +17,7 @@ import {
   changePassword,
   listSessions,
   login,
+  register,
 } from "./auth-service.ts";
 import { confirmEnrollment, remainingRecoveryCodes, startEnrollment } from "./mfa-service.ts";
 import {
@@ -36,6 +38,23 @@ import {
  * credentials at all.
  */
 export function registerAuthRoutes(app: FastifyInstance): void {
+  app.post(
+    "/api/auth/register",
+    { config: { rateLimit: RATE_LIMITS.login } },
+    wrapRoute(async (request, reply) => {
+      const input = registerSchema.parse(request.body);
+
+      const outcome = await register(input, {
+        requestId: request.requestId,
+        ipAddress: request.clientIp,
+        userAgent: request.headers["user-agent"],
+      });
+
+      attachSessionCookies(reply, outcome.session);
+      return outcome.result;
+    }),
+  );
+
   app.post(
     "/api/auth/login",
     { config: { rateLimit: RATE_LIMITS.login } },
