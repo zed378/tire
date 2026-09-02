@@ -83,13 +83,13 @@ export function QcReviewPage(): ReactNode {
     onError: setError,
   });
 
-  if (detail.isLoading) {
-    return (
-      <div className="flex justify-center py-16 text-slate-500">
-        <Spinner className="h-6 w-6" />
-      </div>
-    );
-  }
+   if (detail.isLoading) {
+     return (
+       <div className="flex justify-center py-16 text-slate-500 dark:text-slate-400">
+         <Spinner className="h-6 w-6" />
+       </div>
+     );
+   }
   if (detail.error !== null) return <ErrorBanner error={detail.error} />;
   if (detail.data === undefined) return null;
 
@@ -126,10 +126,10 @@ export function QcReviewPage(): ReactNode {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-start justify-between gap-2">
-        <div>
-          <h1 className="text-lg font-semibold text-slate-900">{inspection.serialNumber}</h1>
-          <p className="text-sm text-slate-600">
+       <div className="flex flex-wrap items-start justify-between gap-2">
+         <div>
+           <h1 className="text-lg font-semibold text-slate-900 dark:text-slate-100">{inspection.serialNumber}</h1>
+           <p className="text-sm text-slate-600 dark:text-slate-300">
             {inspection.plateDisplay} · {inspection.cityName} · {inspection.totalTires} ban ·{" "}
             dikirim {formatDateTime(inspection.submittedAt)}
           </p>
@@ -148,23 +148,23 @@ export function QcReviewPage(): ReactNode {
         />
       ) : null}
 
-      <Card title="Galeri Foto" description="Periksa setiap posisi ban sebelum memutuskan.">
-        {photoList.length === 0 ? (
-          <p className="text-sm text-slate-500">Tidak ada foto pada pengajuan ini.</p>
-        ) : (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {photoList.map((photo) => (
-              <figure key={photo.id} className="rounded-md border border-slate-200 p-2">
-                <img
-                  src={photo.url}
-                  alt={photo.tirePositionLabel ?? photo.slot}
-                  loading="lazy"
-                  className="h-40 w-full rounded object-cover"
-                />
-                <figcaption className="mt-2 text-sm font-medium text-slate-800">
-                  {photo.tirePositionLabel ?? photo.slot}
-                </figcaption>
-                <p className="text-xs text-slate-500">
+       <Card title="Galeri Foto" description="Periksa setiap posisi ban sebelum memutuskan.">
+         {photoList.length === 0 ? (
+           <p className="text-sm text-slate-500 dark:text-slate-400">Tidak ada foto pada pengajuan ini.</p>
+         ) : (
+           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+             {photoList.map((photo) => (
+               <figure key={photo.id} className="rounded-md border border-slate-200 dark:border-slate-700 p-2">
+                 <img
+                   src={photo.url}
+                   alt={photo.tirePositionLabel ?? photo.slot}
+                   loading="lazy"
+                   className="h-40 w-full rounded object-cover"
+                 />
+                 <figcaption className="mt-2 text-sm font-medium text-slate-800 dark:text-slate-200">
+                   {photo.tirePositionLabel ?? photo.slot}
+                 </figcaption>
+                 <p className="text-xs text-slate-500 dark:text-slate-400">
                   {photo.capturedAt === null
                     ? "Waktu pengambilan tidak tersedia"
                     : `Diambil ${formatDateTime(photo.capturedAt)}`}
@@ -189,27 +189,27 @@ export function QcReviewPage(): ReactNode {
         )}
       </Card>
 
-      {inspection.status === "pending_qc" ? (
-        <Card title="Keputusan QC">
-          <fieldset className="space-y-2">
-            <legend className="text-sm font-medium text-slate-700">Pilih keputusan</legend>
-            {QC_DECISIONS.map((value) => (
-              <label
-                key={value}
-                className="flex cursor-pointer items-start gap-2 rounded-md border border-slate-200 p-3 hover:bg-slate-50"
-              >
-                <input
-                  type="radio"
-                  name="decision"
-                  value={value}
-                  checked={decision === value}
-                  onChange={() => {
-                    setDecision(value);
-                    setNotesError(undefined);
-                  }}
-                  className="mt-1"
-                />
-                <span className="text-sm text-slate-800">{QC_DECISION_LABELS[value]}</span>
+       {inspection.status === "pending_qc" ? (
+         <Card title="Keputusan QC">
+           <fieldset className="space-y-2">
+             <legend className="text-sm font-medium text-slate-700 dark:text-slate-300">Pilih keputusan</legend>
+             {QC_DECISIONS.map((value) => (
+               <label
+                 key={value}
+                 className="flex cursor-pointer items-start gap-2 rounded-md border border-slate-200 dark:border-slate-700 p-3 hover:bg-slate-50 dark:hover:bg-slate-800/50"
+               >
+                 <input
+                   type="radio"
+                   name="decision"
+                   value={value}
+                   checked={decision === value}
+                   onChange={() => {
+                     setDecision(value);
+                     setNotesError(undefined);
+                   }}
+                   className="mt-1"
+                 />
+                 <span className="text-sm text-slate-800 dark:text-slate-200">{QC_DECISION_LABELS[value]}</span>
               </label>
             ))}
           </fieldset>

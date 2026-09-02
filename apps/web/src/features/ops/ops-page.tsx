@@ -108,37 +108,37 @@ export function OpsPage(): ReactNode {
         </Banner>
       ) : null}
 
-      <Card title="Kesehatan Sistem">
-        {report === undefined ? (
-          <div className="flex justify-center py-6 text-slate-500">
-            <Spinner className="h-5 w-5" />
-          </div>
-        ) : (
-          <>
-            <div className="mb-3 flex items-center gap-2">
-              <span
-                className={
-                  report.status === "ok"
-                    ? "rounded-full border border-green-300 bg-green-50 px-3 py-1 text-sm text-green-800"
-                    : report.status === "degraded"
-                      ? "rounded-full border border-amber-300 bg-amber-50 px-3 py-1 text-sm text-amber-800"
-                      : "rounded-full border border-red-300 bg-red-50 px-3 py-1 text-sm text-red-800"
-                }
-              >
-                {report.status === "ok"
-                  ? "Normal"
-                  : report.status === "degraded"
-                    ? "Terganggu"
-                    : "Tidak berjalan"}
-              </span>
-              <span className="text-sm text-slate-500">versi {report.version}</span>
-            </div>
+       <Card title="Kesehatan Sistem">
+         {report === undefined ? (
+           <div className="flex justify-center py-6 text-slate-500 dark:text-slate-400">
+             <Spinner className="h-5 w-5" />
+           </div>
+         ) : (
+           <>
+             <div className="mb-3 flex items-center gap-2">
+               <span
+                 className={
+                   report.status === "ok"
+                     ? "rounded-full border border-green-300 bg-green-50 dark:border-green-800 dark:bg-green-900/30 px-3 py-1 text-sm text-green-800 dark:text-green-200"
+                     : report.status === "degraded"
+                       ? "rounded-full border border-amber-300 bg-amber-50 dark:border-amber-800 dark:bg-amber-900/30 px-3 py-1 text-sm text-amber-800 dark:text-amber-200"
+                       : "rounded-full border border-red-300 bg-red-50 dark:border-red-800 dark:bg-red-900/30 px-3 py-1 text-sm text-red-800 dark:text-red-200"
+                 }
+               >
+                 {report.status === "ok"
+                   ? "Normal"
+                   : report.status === "degraded"
+                     ? "Terganggu"
+                     : "Tidak berjalan"}
+               </span>
+               <span className="text-sm text-slate-500 dark:text-slate-400">versi {report.version}</span>
+             </div>
 
-            <ul className="divide-y divide-slate-200">
-              {report.checks.map((check) => (
-                <li key={check.name} className="flex items-center justify-between py-2 text-sm">
-                  <span className="text-slate-800">{check.name}</span>
-                  <span className="text-slate-600">
+             <ul className="divide-y divide-slate-200 dark:divide-slate-700">
+               {report.checks.map((check) => (
+                 <li key={check.name} className="flex items-center justify-between py-2 text-sm">
+                   <span className="text-slate-800 dark:text-slate-200">{check.name}</span>
+                   <span className="text-slate-600 dark:text-slate-400">
                     {check.detail}
                     {check.latencyMs !== null ? ` · ${check.latencyMs} ms` : ""}
                   </span>
@@ -183,21 +183,21 @@ export function OpsPage(): ReactNode {
           </Button>
         </form>
 
-        {searchedRequestId !== "" ? (
-          logs.data === undefined ? (
-            <div className="mt-3 flex justify-center py-4 text-slate-500">
-              <Spinner className="h-5 w-5" />
-            </div>
-          ) : logs.data.length === 0 ? (
-            <p className="mt-3 text-sm text-slate-500">
-              Tidak ada catatan untuk kode ini. Eskalasi ke pemilik sistem dengan menyertakan kodenya.
-            </p>
-          ) : (
-            <ul className="mt-3 divide-y divide-slate-200">
-              {logs.data.map((entry, index) => (
-                <li key={`${entry.timestamp}-${String(index)}`} className="py-2 text-sm">
-                  <p className="text-slate-800">{entry.message}</p>
-                  <p className="text-xs text-slate-500">
+         {searchedRequestId !== "" ? (
+           logs.data === undefined ? (
+             <div className="mt-3 flex justify-center py-4 text-slate-500 dark:text-slate-400">
+               <Spinner className="h-5 w-5" />
+             </div>
+           ) : logs.data.length === 0 ? (
+             <p className="mt-3 text-sm text-slate-500 dark:text-slate-400">
+               Tidak ada catatan untuk kode ini. Eskalasi ke pemilik sistem dengan menyertakan kodenya.
+             </p>
+           ) : (
+             <ul className="mt-3 divide-y divide-slate-200 dark:divide-slate-700">
+               {logs.data.map((entry, index) => (
+                 <li key={`${entry.timestamp}-${String(index)}`} className="py-2 text-sm">
+                   <p className="text-slate-800 dark:text-slate-200">{entry.message}</p>
+                   <p className="text-xs text-slate-500 dark:text-slate-400">
                     {formatDateTime(entry.timestamp)}
                     {entry.role !== null ? ` · ${entry.role}` : ""}
                   </p>
@@ -223,22 +223,22 @@ export function OpsPage(): ReactNode {
           ) : undefined
         }
       >
-        {jobs.data === undefined ? (
-          <div className="flex justify-center py-6 text-slate-500">
-            <Spinner className="h-5 w-5" />
-          </div>
-        ) : jobs.data.length === 0 ? (
-          <EmptyState
-            title="Tidak ada pekerjaan yang gagal"
-            description="Semua pekerjaan latar berjalan normal."
-          />
-        ) : (
-          <ul className="divide-y divide-slate-200">
-            {jobs.data.map((job) => (
-              <li key={job.id} className="flex flex-wrap items-center justify-between gap-2 py-2">
-                <div className="min-w-0">
-                  <p className="text-sm font-medium text-slate-900">{job.name}</p>
-                  <p className="text-xs text-slate-500">
+         {jobs.data === undefined ? (
+           <div className="flex justify-center py-6 text-slate-500 dark:text-slate-400">
+             <Spinner className="h-5 w-5" />
+           </div>
+         ) : jobs.data.length === 0 ? (
+           <EmptyState
+             title="Tidak ada pekerjaan yang gagal"
+             description="Semua pekerjaan latar berjalan normal."
+           />
+         ) : (
+           <ul className="divide-y divide-slate-200 dark:divide-slate-700">
+             {jobs.data.map((job) => (
+               <li key={job.id} className="flex flex-wrap items-center justify-between gap-2 py-2">
+                 <div className="min-w-0">
+                   <p className="text-sm font-medium text-slate-900 dark:text-slate-100">{job.name}</p>
+                   <p className="text-xs text-slate-500 dark:text-slate-400">
                     {formatDateTime(job.createdAt)} · {job.retryCount} percobaan
                     {job.requestId !== null ? ` · ${job.requestId}` : ""}
                   </p>
@@ -291,11 +291,11 @@ export function OpsPage(): ReactNode {
               Pembersihan ini hanya menyentuh objek yang tidak pernah punya baris foto yang selesai.
               Foto yang sudah tercatat tidak akan terpengaruh.
             </Banner>
-            <ul className="mt-3 divide-y divide-slate-200">
-              {orphans.data.slice(0, 20).map((orphan) => (
-                <li key={orphan.storageKey} className="py-2 text-sm">
-                  <p className="break-all font-mono text-xs text-slate-700">{orphan.storageKey}</p>
-                  <p className="text-xs text-slate-500">
+             <ul className="mt-3 divide-y divide-slate-200 dark:divide-slate-700">
+               {orphans.data.slice(0, 20).map((orphan) => (
+                 <li key={orphan.storageKey} className="py-2 text-sm">
+                   <p className="break-all font-mono text-xs text-slate-700 dark:text-slate-300">{orphan.storageKey}</p>
+                   <p className="text-xs text-slate-500 dark:text-slate-400">
                     {formatBytes(orphan.byteSize)} · {orphan.ageHours} jam
                   </p>
                 </li>
