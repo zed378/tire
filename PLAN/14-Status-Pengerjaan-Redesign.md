@@ -153,6 +153,40 @@ Ditemukan saat memindahkan form ke `zodResolver`:
 | `tire-brand-patterns-page` mengirim `type` dua kali (dari dialog dan dari tab) | Tidak salah selama keduanya sama, tapi dua sumber untuk satu nilai |
 | Ganti nama inline (merk kendaraan, pattern, ukuran ban) tidak divalidasi sama sekali | Nama satu huruf dikirim, ditolak server 422, dan klien tidak punya tempat menaruh jawabannya — galat jatuh ke banner halaman tanpa menunjuk field |
 
+Ditemukan oleh sapuan aksesibilitas dan pengukuran LCP (Fase 6). Rinciannya,
+dengan angka kontras dan cara mengulang, ada di `docs/redesign-report.md`:
+
+| Cacat | Akibat sebelum diperbaiki |
+| --- | --- |
+| `--color-subtle` di tema terang = `--steel`, yang sebenarnya **3,75:1** di atas concrete — bukan 4,0 seperti tertulis, dan di bawah AA | Empat belas elemen di landing saja, plus footer login dan daftar, di bawah AA. Komentarnya membatasi token itu ke "teks besar dan UI"; setiap penggunanya teks 11–12px |
+| `accent-text` di atas `accent-soft` di tema gelap = **4,07:1** | Pasangan ini dipakai sidebar aktif, opsi tersorot `SearchableSelect`, lencana aksen, kartu sambutan. Semuanya di bawah AA di mode gelap, dan tidak satu pun terjangkau sapuan ini — yang membuka kedok cuma kartu preview di landing |
+| Kartu terpilih di preview landing memakai token netral di atas isian aksen | 3,14:1. Satu-satunya `bg-accent-soft` di aplikasi yang tidak dipasangkan dengan `text-accent-text` |
+| Halaman `/__styleguide` mencetak label di atas swatch-nya | Tujuh label di bawah AA — dan `--ok` (#1E8E5A) tidak bisa diperbaiki dengan tinta apa pun: 4,14:1 terhadap putih, 4,29:1 terhadap graphite |
+| Halaman `/__styleguide` menaruh komponen nyata di atas `bg-paper`/`bg-concrete` | Di mode gelap seluruh label form di sana adalah teks nyaris-putih di atas putih. Kegagalan dua sistem token yang redesign ini ada untuk menghilangkan, di halaman yang mendokumentasikan tokennya |
+| `vite.config.ts` menyajikan `127.0.0.1:5573`, `playwright.config.ts` menunggu `localhost:5173` | `pnpm test:e2e` habis waktu enam puluh detik menunggu server yang sudah hidup. Inilah sebab G-11 tidak pernah berjalan |
+
+### Resep LCP di catatan sebelumnya salah sasaran
+
+Catatan ini pernah menulis: "Kalau meleset dari 2,5 detik, IBM Plex Mono yang
+dilepas duluan." Pengukurannya menyanggah itu. Elemen yang tergambar terakhir
+adalah **foto**, di ketiga rute publik — bukan teks. Melepas Plex Mono akan
+menghilangkan huruf data dari seluruh aplikasi dan tidak menggerakkan angkanya.
+Huruf itu tetap.
+
+Yang dicoba sebagai gantinya: seluruh aplikasi ber-sesi dipisahkan ke satu chunk
+lazy. JS awal turun **171,1 KB → 146,6 KB**, tapi LCP tidak bergerak (4,27 → 4,14
+detik di `/`; derau, bukan perbaikan). Pemisahan itu dipertahankan atas alasannya
+sendiri — 24,5 KB adalah sebagian besar sisa ruang anggaran `PLAN/06` §7, dan
+pengunjung tanpa sesi tidak seharusnya mengunduh layar yang tidak boleh ia buka.
+
+> Perlu keputusan Anda. Pengungkit terbesar yang tersisa adalah
+> `<link rel="preload" as="image">` untuk foto LCP, tapi aplikasi disajikan dari
+> satu `index.html` statis sementara foto hero berbeda antara `/` dan halaman
+> auth — preload yang benar untuk `/` memboroskan 96 KB di `/login`. Pilihannya:
+> HTML per rute di Caddy, menurunkan kualitas AVIF `tire-tread` (~0,4 detik di
+> `/` saja), atau menerima angkanya. `PLAN/01` §4.2 memilih SPA tanpa SSR dengan
+> sadar; ini harga yang dibayarkannya, terukur.
+
 ---
 
 ## Yang belum dikerjakan
