@@ -205,7 +205,12 @@ export async function getInspectionDetail(
   }));
 
   const filled = positions.filter((p) => p.hasSpec).length;
-  const blocked = await computeSubmitBlocker(row.id, row.vehicleId, row.status, positions);
+
+  // Every photograph on the inspection, general slots included: a front and a
+  // side shot are evidence too.
+  const photoCount =
+    row.photos.length + positions.reduce((total, position) => total + position.photoCount, 0);
+  const blocked = await computeSubmitBlocker(row.id, row.vehicleId, row.status, photoCount);
 
   const generalPhotos = GENERAL_PHOTO_SLOTS.map((slot) => ({
     slot,
@@ -237,25 +242,38 @@ export async function getInspectionDetail(
 /**
  * Why the submit button is disabled, in Indonesian, ready to render.
  *
- * PLAN/06 §2 makes this a product decision worth stating: submission waits for
- * the photos to finish uploading. The alternative — submit now, photos follow —
- * puts half-finished inspections in the QC queue with no evidence attached, and
- * an admin cannot tell those apart from ones that genuinely have no photos.
+ * WHAT THE DOCUMENTS ASK FOR, and only that. `PLAN/03` §7.1 gives the condition
+ * on `draft → pending_qc` as "V-01…V-11 lolos", and none of V-01 to V-11
+ * concerns photographs. The one photo rule that is written down is `PLAN/06` §2:
+ * submission waits for the queue to drain, because submitting now with the
+ * photos to follow puts half-finished inspections in the QC queue with no
+ * evidence attached, and an admin cannot tell those apart from ones that
+ * genuinely have none.
+ *
+ * WHAT WAS HERE BEFORE: a requirement that EVERY tire position carry at least
+ * one photograph. No document asks for it. It also produced a message that
+ * contradicted the screen it sat on — a supplier who had taken photographs but
+ * was still waiting for signal saw "0 dari 6 posisi ban sudah ada fotonya"
+ * directly below six thumbnails marked "Menunggu unggah". The photographs were
+ * there; they simply had not reached the server yet, which is the pending-upload
+ * case immediately below, with its own and far clearer message.
+ *
+ * A count of zero is still refused. That is not the per-position rule returning
+ * by another name: `PLAN/06` §2's stated worry is an inspection reaching QC
+ * "tanpa bukti", and no photograph at all is exactly that.
  */
 async function computeSubmitBlocker(
   inspectionId: bigint,
   vehicleId: bigint,
   status: string,
-  positions: { photoCount: number }[],
+  photoCount: number,
 ): Promise<string | null> {
   if (status !== "draft" && status !== "needs_revision") {
     return `Pengajuan berstatus ${INSPECTION_STATUS_LABELS[status as keyof typeof INSPECTION_STATUS_LABELS]} tidak dapat dikirim.`;
   }
 
-  const withoutPhotos = positions.filter((position) => position.photoCount === 0).length;
-  if (withoutPhotos > 0) {
-    const done = positions.length - withoutPhotos;
-    return `${done} dari ${positions.length} posisi ban sudah ada fotonya. Lengkapi sisanya sebelum mengirim.`;
+  if (photoCount === 0) {
+    return "Pengajuan belum memiliki satu foto pun. Ambil minimal satu foto sebelum mengirim.";
   }
 
   const pending = await getPrisma().pendingUpload.count({ where: { inspectionId } });
@@ -462,22 +480,22 @@ export async function submitInspection(
       }
     }
 
-    const positions = await tx.tirePosition.findMany({
-      where: { inspectionId: inspection.id },
-      select: { id: true, positionLabel: true, _count: { select: { photos: true } } },
+    // The server decides, not the client — `computeSubmitBlocker` above only
+    // explains the same rule to the screen. One photograph is the floor, for
+    // the reason `PLAN/06` §2 gives: an inspection must not reach QC with no
+    // evidence at all. Which positions carry it is the inspector's judgement,
+    // not this function's; no document says otherwise.
+    const photoCount = await tx.photo.count({
+      where: { inspectionId: inspection.id, deletedAt: null },
     });
 
-    const missing = positions.filter((position) => position._count.photos === 0);
-    if (missing.length > 0) {
+    if (photoCount === 0) {
       throw new AppError("VALIDATION_ERROR", {
         fieldErrors: [
           {
             field: "photos",
             code: "REQUIRED",
-            message: `${positions.length - missing.length} dari ${positions.length} posisi ban sudah ada fotonya. Lengkapi: ${missing
-              .slice(0, 3)
-              .map((m) => m.positionLabel)
-              .join(", ")}${missing.length > 3 ? `, dan ${missing.length - 3} lainnya` : ""}.`,
+            message: "Pengajuan belum memiliki satu foto pun. Ambil minimal satu foto sebelum mengirim.",
           },
         ],
       });

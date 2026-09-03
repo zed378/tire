@@ -203,12 +203,37 @@ export default {
         raised: "0 1px 2px rgb(22 24 28 / 0.06), 0 2px 8px rgb(22 24 28 / 0.06)",
         overlay: "0 8px 24px rgb(22 24 28 / 0.16)",
       },
+      /*
+       * The stacking order, named — and actually used.
+       *
+       * This scale existed before and nothing referenced it. Every layer was a
+       * literal instead (`z-30`, `z-40`, `z-[70]`), the scale's numbers had
+       * drifted away from the code's, and the answer to "what sits above what"
+       * lived in five files at once. It is the same silent failure as
+       * `duration-180` compiling to nothing: a token that describes the system
+       * without governing it.
+       *
+       * Deciding it here is what stops the next layer being placed by trying a
+       * number until it looks right. The order, bottom to top:
+       *
+       *   float          sticky things inside content
+       *   header         the application header
+       *   drawer-scrim   the dim behind the mobile navigation
+       *   drawer         the mobile navigation itself
+       *   dialog         a modal, which must cover the drawer
+       *   step-up        re-verification, which can open ON TOP of a modal —
+       *                  changing a role opens a dialog, and the server answers
+       *                  that with STEP_UP_REQUIRED
+       *   toast          always readable, even over a modal
+       */
       zIndex: {
         float: "10",
-        header: "20",
-        drawer: "30",
+        header: "30",
+        "drawer-scrim": "40",
+        drawer: "45",
         dialog: "50",
-        toast: "60",
+        "step-up": "60",
+        toast: "70",
       },
       maxWidth: {
         // One container width for the whole site, and one measure for prose.

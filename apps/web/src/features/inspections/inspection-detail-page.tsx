@@ -176,9 +176,9 @@ export function InspectionDetailPage(): ReactNode {
           {inspection.submitBlockedReason !== null ? (
             <Banner tone="warning">{inspection.submitBlockedReason}</Banner>
           ) : (
-           <p className="text-sm text-muted">
-             Semua posisi ban sudah ada fotonya. Pengajuan siap dikirim ke antrean QC.
-             </p>
+            <p className="text-sm text-muted">
+              Semua foto sudah terunggah. Pengajuan siap dikirim ke antrean QC.
+            </p>
           )}
 
           <Button

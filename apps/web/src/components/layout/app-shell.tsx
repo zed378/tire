@@ -53,7 +53,7 @@ export function AppShell({ children }: { children: ReactNode }): ReactNode {
       {/* Accessibility skip link */}
       <a
         href="#konten-utama"
-        className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-accent focus:px-4 focus:py-2 focus:text-on-accent"
+        className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-dialog focus:rounded-md focus:bg-accent focus:px-4 focus:py-2 focus:text-on-accent"
       >
         Lewati ke konten
       </a>
@@ -64,7 +64,7 @@ export function AppShell({ children }: { children: ReactNode }): ReactNode {
       {/* Right Main Content Area */}
       <div className="flex min-h-dvh w-full min-w-0 flex-col">
         {/* Sticky Header */}
-        <header className="sticky top-0 z-30 flex-shrink-0 border-b border-line bg-surface/90 backdrop-blur-md">
+        <header className="sticky top-0 z-header flex-shrink-0 border-b border-line bg-surface/90 backdrop-blur-md">
           <div className="flex h-16 items-center justify-between px-4 sm:px-6">
             {/* Mobile Hamburger Button */}
             <button
@@ -183,12 +183,12 @@ export function AppShell({ children }: { children: ReactNode }): ReactNode {
           <button
             type="button"
             aria-label="Tutup menu"
-            className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm md:hidden transition-opacity"
+            className="fixed inset-0 z-drawer-scrim bg-black/60 backdrop-blur-sm md:hidden transition-opacity"
             onClick={() => {
               setSidebarOpen(false);
             }}
           />
-          <div className="fixed inset-y-0 left-0 z-50 w-72 max-w-[85vw] shadow-2xl md:hidden">
+          <div className="fixed inset-y-0 left-0 z-drawer w-72 max-w-[85vw] shadow-2xl md:hidden">
             <Sidebar
               onNavigate={() => {
                 setSidebarOpen(false);

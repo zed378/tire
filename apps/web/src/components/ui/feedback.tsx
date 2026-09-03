@@ -174,7 +174,7 @@ export function ToastProvider({ children }: { children: ReactNode }): ReactNode 
       {children}
       <div
         aria-live="polite"
-        className="pointer-events-none fixed inset-x-0 bottom-0 z-[70] flex flex-col items-center gap-2 p-4 safe-bottom"
+        className="pointer-events-none fixed inset-x-0 bottom-0 z-toast flex flex-col items-center gap-2 p-4 safe-bottom"
       >
         {toasts.map((toast) => (
           <div
@@ -312,7 +312,7 @@ export function Dialog({
   return (
     <div
       className={cn(
-        "fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-4 sm:items-center",
+        "fixed inset-0 z-dialog flex items-end justify-center bg-black/50 p-4 sm:items-center",
         className,
       )}
       // Dismissing by clicking away is what people expect of an overlay, and

@@ -86,8 +86,15 @@ export function StepUpDialog(): ReactNode {
      * of all places — this is the screen asking for a second factor. It had no
      * focus trap, so Tab walked straight out of a modal and into the page
      * behind it. It rendered its overlay permanently and merely hid it, so the
-     * markup sat in the document at all times. And it sat at `z-[9999]` while
-     * the toast layer sits at `z-50`, which put every toast underneath it.
+     * markup sat in the document at all times. And it sat at `z-[9999]`, above
+     * the toast layer, which put every toast underneath it.
+     *
+     * `z-step-up` rather than the shared `z-dialog`, because this one opens ON
+     * TOP of other dialogs: changing a role opens a confirmation, and the
+     * server answers that request with STEP_UP_REQUIRED. Both at `z-dialog`
+     * would leave DOM order to decide, and this component is mounted at the
+     * root — which is to say, first. The whole order is named in
+     * `tailwind.config.js`.
      */
     <Dialog
       open={open}
@@ -96,7 +103,7 @@ export function StepUpDialog(): ReactNode {
       onClose={() => {
         finish(false);
       }}
-      className="z-[60]"
+      className="z-step-up"
     >
       <form noValidate onSubmit={(event) => void onSubmit(event)} className="space-y-3">
         <Field

@@ -35,10 +35,10 @@ export function App(): ReactNode {
     <ThemeProvider>
       <SessionProvider>
         <ToastProvider>
+          <AppRoutes />
           {/* Mounted once: any request answered with STEP_UP_REQUIRED opens this
               and is replayed after a successful verification (PLAN/13 §4). */}
           <StepUpDialog />
-          <AppRoutes />
         </ToastProvider>
       </SessionProvider>
     </ThemeProvider>

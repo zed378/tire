@@ -278,7 +278,7 @@ const SearchableSelectInner = forwardRef(
         {isOpen ? (
           <div
             className={cn(
-              "absolute left-0 top-full z-50 mt-1 w-full rounded-lg border border-line bg-surface p-1.5 shadow-xl backdrop-blur-xl animate-in fade-in-0 zoom-in-95",
+              "absolute left-0 top-full z-float mt-1 w-full rounded-lg border border-line bg-surface p-1.5 shadow-xl backdrop-blur-xl animate-in fade-in-0 zoom-in-95",
             )}
           >
             {/* Search Input */}
