@@ -467,6 +467,22 @@ const ROUTES: { match: (path: string) => boolean; body: unknown }[] = [
   { match: (p) => p === "/api/vehicles/search", body: [] },
 ];
 
+/**
+ * The same answer with nothing in it.
+ *
+ * A screen with rows and a screen with none are two different renderings, and
+ * only one of them was being audited. Empty states are where a heading turns
+ * into a paragraph, where a table becomes a message, and where a button that
+ * was beside a list is suddenly alone — all of it markup nobody had looked at.
+ */
+function emptied(body: unknown): unknown {
+  if (Array.isArray(body)) return [];
+  if (body !== null && typeof body === "object" && "items" in body) {
+    return { ...body, items: [], total: 0, totalPages: 1 };
+  }
+  return body;
+}
+
 async function answer(route: Route, body: unknown): Promise<void> {
   await route.fulfill({
     status: 200,
@@ -484,11 +500,19 @@ async function answer(route: Route, body: unknown): Promise<void> {
  * unstubbed endpoint should leave the screen thin, not leave the sweep waiting
  * for a network timeout it will then blame on the page.
  */
-export async function stubSignedInApi(page: Page): Promise<void> {
+export async function stubSignedInApi(
+  page: Page,
+  options: { empty?: boolean } = {},
+): Promise<void> {
   await page.route("**/api/**", async (route) => {
     const path = new URL(route.request().url()).pathname;
     const matched = ROUTES.find((entry) => entry.match(path));
-    await answer(route, matched?.body ?? {});
+    const body = matched?.body ?? {};
+
+    // The session itself is never emptied — an empty list is a screen with no
+    // rows, not a user who is suddenly signed out.
+    const isSession = path === "/api/auth/me" || path === "/api/dashboard/metrics";
+    await answer(route, options.empty === true && !isSession ? emptied(body) : body);
   });
 }
 

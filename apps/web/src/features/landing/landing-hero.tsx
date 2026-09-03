@@ -25,6 +25,21 @@ interface Callout {
   label: string;
 }
 
+/**
+ * SAMPLE VALUES. Nobody measured these.
+ *
+ * They are plausible for a truck tire — a new tread is 14–16 mm, the change
+ * limit is 3 mm, pressure runs 100–130 psi — but plausible is not measured, and
+ * the brief forbids inventing figures. They are logged in `TODO-CONTENT.md`
+ * with the fallback already decided: if no real reading is supplied, the
+ * callouts name the quantities without values ("Kedalaman tapak · Tekanan angin
+ * · Umur pakai"), which still says what the system records without claiming a
+ * number that does not exist.
+ *
+ * The product preview further down the page solves the same problem the other
+ * way, by saying so in the copy a visitor reads: "angkanya contoh, strukturnya
+ * nyata".
+ */
 const CALLOUTS: readonly Callout[] = [
   { anchor: "top-[26%]", value: "8,4 mm", label: "Kedalaman tapak" },
   { anchor: "top-[47%]", value: "120 psi", label: "Tekanan angin" },
@@ -157,6 +172,9 @@ export function LandingHero(): ReactNode {
           ties the photograph to the product — without it the hero is a stock
           tire and a paragraph, which describes any tire company at all.
         */}
+        {/* The serial number format is real — `PLAN/03` composes them exactly
+            this way — but this particular number is not. Logged in
+            `TODO-CONTENT.md`. */}
         <div className="absolute bottom-4 right-4 rounded-base border border-paper/15 bg-graphite/85 px-3.5 py-2.5 backdrop-blur-sm sm:bottom-6 sm:right-6">
           <p className="font-data text-[0.6875rem] uppercase tracking-wide text-paper/60">
             SN2026-00148

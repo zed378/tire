@@ -144,6 +144,155 @@ for (const theme of THEMES) {
   });
 }
 
+/**
+ * Screens with nothing on them.
+ *
+ * A list with rows and a list with none are two different renderings, and only
+ * one of them was being audited. The empty state is where a table becomes a
+ * message and a heading becomes a paragraph — markup nobody had looked at.
+ */
+test.describe("Keadaan kosong", () => {
+  for (const route of PRIVATE_ROUTES) {
+    test(`${route.name} tanpa data tidak melanggar WCAG 2.1 AA`, async ({ page }) => {
+      await stubSignedInApi(page, { empty: true });
+      await page.goto(route.path);
+      await page.waitForLoadState("networkidle");
+      await expect(page.getByRole("navigation", { name: "Navigasi utama" })).toBeVisible();
+
+      const results = await new AxeBuilder({ page })
+        .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
+        .analyze();
+
+      expect(
+        results.violations.map((violation) => ({
+          rule: violation.id,
+          impact: violation.impact,
+          nodes: violation.nodes.map((node) => node.target.join(" ")),
+        })),
+      ).toEqual([]);
+    });
+  }
+});
+
+/**
+ * Dialogs, which nothing had audited because nothing had opened one.
+ *
+ * `Dialog` carries the whole modal contract — `aria-modal`, a labelled title, a
+ * focus trap, Escape to close, focus handed back to whatever opened it. A
+ * contract that is never exercised is a contract nobody knows the state of.
+ */
+const DIALOGS = [
+  { route: "/users", opener: "Tambah Pengguna", name: "tambah-pengguna" },
+  { route: "/master-data/vehicle-brands", opener: "Tambah Merk", name: "tambah-merk" },
+  { route: "/master-data/tire-sizes", opener: "Tambah Ukuran", name: "tambah-ukuran" },
+  // A ConfirmDialog rather than a form: no fields, two buttons, and a
+  // description that carries the consequence.
+  { route: "/ops", opener: "Coba Lagi Semua", name: "konfirmasi-operasional" },
+] as const;
+
+test.describe("Dialog", () => {
+  for (const dialog of DIALOGS) {
+    test(`${dialog.name} tidak melanggar WCAG 2.1 AA`, async ({ page }) => {
+      await stubSignedInApi(page);
+      await page.goto(dialog.route);
+      await page.getByRole("button", { name: dialog.opener }).click();
+      await expect(page.getByRole("dialog")).toBeVisible();
+
+      const results = await new AxeBuilder({ page })
+        .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
+        .analyze();
+
+      expect(
+        results.violations.map((violation) => ({
+          rule: violation.id,
+          impact: violation.impact,
+          nodes: violation.nodes.map((node) => node.target.join(" ")),
+        })),
+      ).toEqual([]);
+    });
+  }
+
+  test("Tab tidak bisa keluar dari dialog yang terbuka", async ({ page }) => {
+    // Without the trap, Tab walks out of the dialog and into the page it is
+    // covering, with nothing to tell the user they have left.
+    await stubSignedInApi(page);
+    await page.goto("/users");
+    await page.getByRole("button", { name: "Tambah Pengguna" }).click();
+    await expect(page.getByRole("dialog")).toBeVisible();
+
+    const escaped: string[] = [];
+    for (let step = 0; step < 15; step += 1) {
+      await page.keyboard.press("Tab");
+      const inside = await page.evaluate(
+        () => document.activeElement?.closest('[role="dialog"]') !== null,
+      );
+      if (!inside) escaped.push(await page.evaluate(() => document.activeElement?.tagName ?? "?"));
+    }
+
+    expect(escaped).toEqual([]);
+  });
+
+  test("Escape menutup dialog dan mengembalikan fokus ke pembukanya", async ({ page }) => {
+    await stubSignedInApi(page);
+    await page.goto("/users");
+
+    const opener = page.getByRole("button", { name: "Tambah Pengguna" });
+    await opener.click();
+    await expect(page.getByRole("dialog")).toBeVisible();
+
+    await page.keyboard.press("Escape");
+    await expect(page.getByRole("dialog")).toBeHidden();
+
+    // Focus returning to the opener is what keeps a keyboard user's place. If it
+    // is lost, focus falls back to the document and the next Tab starts from the
+    // top of the page.
+    await expect(opener).toBeFocused();
+  });
+});
+
+/**
+ * A form that has just been refused.
+ *
+ * Error rendering is markup that only exists after a failed submit, so it had
+ * never been audited: the message, the field it belongs to, and the wiring
+ * between them.
+ */
+test.describe("Keadaan galat", () => {
+  test("form pengguna yang ditolak menautkan setiap pesan ke fieldnya", async ({ page }) => {
+    await stubSignedInApi(page);
+    await page.goto("/users");
+    await page.getByRole("button", { name: "Tambah Pengguna" }).click();
+
+    // Submit with nothing filled in: the shared schema refuses it, and the
+    // messages appear under the fields. The message is the length rule, not the
+    // required rule — the form starts the field at "" rather than leaving it
+    // undefined, so `usernameSchema` reaches its `min(3)` first.
+    await page.getByRole("button", { name: "Tambah Pengguna" }).last().click();
+    await expect(page.getByText("User ID minimal 3 karakter.")).toBeVisible();
+
+    const results = await new AxeBuilder({ page })
+      .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
+      .analyze();
+
+    expect(
+      results.violations.map((violation) => ({
+        rule: violation.id,
+        impact: violation.impact,
+        nodes: violation.nodes.map((node) => node.target.join(" ")),
+      })),
+    ).toEqual([]);
+
+    // `aria-invalid` and `aria-describedby` are what carry the message to a
+    // screen reader. Red text alone says nothing to someone not looking at it.
+    const field = page.getByLabel("User ID");
+    await expect(field).toHaveAttribute("aria-invalid", "true");
+
+    const describedBy = await field.getAttribute("aria-describedby");
+    expect(describedBy).not.toBeNull();
+    await expect(page.locator(`#${String(describedBy)}`)).toContainText("minimal 3 karakter");
+  });
+});
+
 test.describe("Lebar layar", () => {
   for (const route of PUBLIC_ROUTES) {
     for (const size of WIDTHS) {
