@@ -1,11 +1,17 @@
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type {
-  CreateTireBrandPatternInput,
-  TireBrandPattern,
-  TireBrandPatternListResponse,
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  createTireBrandPatternSchema,
+  updateTireBrandPatternSchema,
+  type CreateTireBrandPatternInput,
+  type TireBrandPattern,
+  type TireBrandPatternListResponse,
+  type UpdateTireBrandPatternInput,
 } from "@c26/contracts";
 import { api } from "../../lib/api-client.ts";
+import { applyFieldErrors } from "../../lib/form-errors.ts";
 import {
   CancelButton,
   ConfirmDialog,
@@ -34,9 +40,7 @@ export function TireBrandPatternsPage(): ReactNode {
   const [page, setPage] = useState(1);
   const [error, setError] = useState<unknown>(null);
   const [creating, setCreating] = useState(false);
-  const [editingId, setEditingId] = useState<number | null>(null);
-  const [editPattern, setEditPattern] = useState("");
-  const [editBrand, setEditBrand] = useState("");
+  const [editing, setEditing] = useState<TireBrandPattern | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
 
   const patterns = useQuery({
@@ -62,34 +66,23 @@ export function TireBrandPatternsPage(): ReactNode {
 
   const create = useMutation({
     mutationFn: (body: CreateTireBrandPatternInput) =>
-      api.post("/api/tire-brand-patterns", { ...body, type: tab }),
+      api.post("/api/tire-brand-patterns", body),
     onSuccess: async () => {
       toast.push({ tone: "success", message: "Pattern ban ditambahkan." });
       setCreating(false);
       await queryClient.invalidateQueries({ queryKey: ["tire-brand-patterns"] });
       await queryClient.invalidateQueries({ queryKey: ["tire-brands"] });
     },
-    onError: setError,
   });
 
   const update = useMutation({
-    mutationFn: ({
-      id,
-      pattern,
-      brand,
-    }: {
-      id: number;
-      pattern: string;
-      brand: string;
-    }) => api.patch(`/api/tire-brand-patterns/${String(id)}`, { pattern, brand }),
+    mutationFn: ({ id, body }: { id: number; body: UpdateTireBrandPatternInput }) =>
+      api.patch(`/api/tire-brand-patterns/${String(id)}`, body),
     onSuccess: async () => {
       toast.push({ tone: "success", message: "Pattern ban diperbarui." });
-      setEditingId(null);
-      setEditPattern("");
-      setEditBrand("");
+      setEditing(null);
       await queryClient.invalidateQueries({ queryKey: ["tire-brand-patterns"] });
     },
-    onError: setError,
   });
 
   const remove = useMutation({
@@ -101,17 +94,6 @@ export function TireBrandPatternsPage(): ReactNode {
     },
     onError: setError,
   });
-
-  const startEdit = (pattern: TireBrandPattern): void => {
-    setEditingId(pattern.id);
-    setEditPattern(pattern.pattern);
-    setEditBrand(pattern.brand);
-  };
-
-  const submitEdit = (): void => {
-    if (editingId === null || editPattern.trim() === "" || editBrand === "") return;
-    update.mutate({ id: editingId, pattern: editPattern.trim(), brand: editBrand.trim() });
-  };
 
    return (
      <div className="space-y-4">
@@ -147,37 +129,13 @@ export function TireBrandPatternsPage(): ReactNode {
           <ul className="divide-y divide-line">
             {(patterns.data?.items ?? []).map((pattern) => (
               <li key={pattern.id} className="flex flex-wrap items-center justify-between gap-3 py-3">
-                {editingId === pattern.id ? (
-                  <div className="flex flex-1 items-center gap-2">
-                    <Field label="Pattern" htmlFor={`edit-pattern-${pattern.id}`}>
-                      <Input
-                        id={`edit-pattern-${pattern.id}`}
-                        value={editPattern}
-                        onChange={(event) => setEditPattern(event.target.value)}
-                        autoFocus
-                      />
-                    </Field>
-                    <Field label="Brand" htmlFor={`edit-brand-${pattern.id}`}>
-                      <Input
-                        id={`edit-brand-${pattern.id}`}
-                        value={editBrand}
-                        onChange={(event) => setEditBrand(event.target.value)}
-                      />
-                    </Field>
-                    <Button onClick={submitEdit} loading={update.isPending}>
-                      Simpan
-                    </Button>
-                    <Button
-                      variant="secondary"
-                      onClick={() => {
-                        setEditingId(null);
-                        setEditPattern("");
-                        setEditBrand("");
-                      }}
-                    >
-                      Batal
-                    </Button>
-                  </div>
+                {editing?.id === pattern.id ? (
+                  <EditPatternForm
+                    pattern={pattern}
+                    submitting={update.isPending}
+                    onSubmit={(body) => update.mutateAsync({ id: pattern.id, body })}
+                    onCancel={() => setEditing(null)}
+                  />
                  ) : (
                    <>
                      <div className="min-w-0">
@@ -192,7 +150,7 @@ export function TireBrandPatternsPage(): ReactNode {
                        </p>
                      </div>
                     <div className="flex flex-wrap items-center gap-2">
-                      <Button variant="secondary" onClick={() => startEdit(pattern)}>
+                      <Button variant="secondary" onClick={() => setEditing(pattern)}>
                         Edit
                       </Button>
                       <Button variant="danger" onClick={() => setDeletingId(pattern.id)}>
@@ -218,7 +176,7 @@ export function TireBrandPatternsPage(): ReactNode {
       {creating ? (
         <CreatePatternDialog
           type={tab}
-          onSubmit={(body) => create.mutate(body)}
+          onSubmit={(body) => create.mutateAsync(body)}
           onClose={() => setCreating(false)}
           submitting={create.isPending}
         />
@@ -241,6 +199,73 @@ export function TireBrandPatternsPage(): ReactNode {
   );
 }
 
+/**
+ * The inline rename on a row, as a real form with the shared schema behind it.
+ *
+ * The server rejects an empty pattern and a one-character brand. Before this the
+ * client let the user send either and then had nowhere to put the answer.
+ */
+function EditPatternForm({
+  pattern,
+  submitting,
+  onSubmit,
+  onCancel,
+}: {
+  pattern: TireBrandPattern;
+  submitting: boolean;
+  onSubmit: (body: UpdateTireBrandPatternInput) => Promise<unknown>;
+  onCancel: () => void;
+}): ReactNode {
+  const {
+    register,
+    handleSubmit,
+    setError,
+    formState: { errors },
+  } = useForm<UpdateTireBrandPatternInput>({
+    resolver: zodResolver(updateTireBrandPatternSchema),
+    defaultValues: { pattern: pattern.pattern, brand: pattern.brand },
+  });
+
+  const submit = handleSubmit(async (values) => {
+    try {
+      await onSubmit({ pattern: values.pattern, brand: values.brand });
+    } catch (caught) {
+      if (!applyFieldErrors(caught, setError)) {
+        setError("pattern", { message: "Gagal menyimpan. Silakan coba lagi." });
+      }
+    }
+  });
+
+  const patternFieldId = `edit-pattern-${String(pattern.id)}`;
+  const brandFieldId = `edit-brand-${String(pattern.id)}`;
+
+  return (
+    <form
+      noValidate
+      onSubmit={(event) => void submit(event)}
+      className="flex flex-1 flex-wrap items-start gap-2"
+    >
+      <Field label="Pattern" htmlFor={patternFieldId} error={errors.pattern?.message}>
+        <Input
+          id={patternFieldId}
+          autoFocus
+          invalid={errors.pattern !== undefined}
+          {...register("pattern")}
+        />
+      </Field>
+      <Field label="Brand" htmlFor={brandFieldId} error={errors.brand?.message}>
+        <Input id={brandFieldId} invalid={errors.brand !== undefined} {...register("brand")} />
+      </Field>
+      <Button type="submit" loading={submitting} loadingText="Menyimpan…">
+        Simpan
+      </Button>
+      <Button type="button" variant="secondary" onClick={onCancel}>
+        Batal
+      </Button>
+    </form>
+  );
+}
+
 function CreatePatternDialog({
   type,
   onSubmit,
@@ -248,58 +273,61 @@ function CreatePatternDialog({
   submitting,
 }: {
   type: Tab;
-  onSubmit: (body: CreateTireBrandPatternInput) => void;
+  onSubmit: (body: CreateTireBrandPatternInput) => Promise<unknown>;
   onClose: () => void;
   submitting: boolean;
 }): ReactNode {
-  const [pattern, setPattern] = useState("");
-  const [brand, setBrand] = useState("");
+  const {
+    register,
+    handleSubmit,
+    setError,
+    setFocus,
+    formState: { errors },
+  } = useForm<CreateTireBrandPatternInput>({
+    resolver: zodResolver(createTireBrandPatternSchema),
+    // The tab decides the category; it is a value the form carries, not one the
+    // user is asked for a second time.
+    defaultValues: { pattern: "", brand: "", type },
+  });
 
-  const handleClose = (): void => {
-    setPattern("");
-    setBrand("");
-    onClose();
-  };
+  // The dialog takes focus itself when it opens, so `autoFocus` on a child that
+  // mounts in the same commit loses the race.
+  useEffect(() => {
+    setFocus("pattern");
+  }, [setFocus]);
 
-  const submit = (): void => {
-    if (pattern.trim() === "" || brand.trim() === "") return;
-    const pat = pattern.trim();
-    const br = brand.trim();
-    setPattern("");
-    setBrand("");
-    onSubmit({ pattern: pat, brand: br, type });
-  };
+  const submit = handleSubmit(async (values) => {
+    try {
+      await onSubmit(values);
+    } catch (caught) {
+      if (!applyFieldErrors(caught, setError)) {
+        setError("pattern", { message: "Gagal menyimpan. Silakan coba lagi." });
+      }
+    }
+  });
 
   return (
-    <Dialog open title={`Tambah Pattern Ban (${type})`} onClose={handleClose}>
-      <form
-        noValidate
-        onSubmit={(event) => {
-          event.preventDefault();
-          submit();
-        }}
-        className="space-y-3"
-      >
-        <Field label="Pattern" htmlFor="new-pattern-name" required>
+    <Dialog open title={`Tambah Pattern Ban (${type})`} onClose={onClose}>
+      <form noValidate onSubmit={(event) => void submit(event)} className="space-y-3">
+        <Field label="Pattern" htmlFor="new-pattern-name" error={errors.pattern?.message} required>
           <Input
             id="new-pattern-name"
-            value={pattern}
-            onChange={(event) => setPattern(event.target.value)}
             placeholder="Contoh: Ecopia"
-            autoFocus
+            invalid={errors.pattern !== undefined}
+            {...register("pattern")}
           />
         </Field>
-        <Field label="Brand" htmlFor="new-pattern-brand" required>
+        <Field label="Brand" htmlFor="new-pattern-brand" error={errors.brand?.message} required>
           <Input
             id="new-pattern-brand"
-            value={brand}
-            onChange={(event) => setBrand(event.target.value)}
             placeholder="Contoh: Bridgestone"
+            invalid={errors.brand !== undefined}
+            {...register("brand")}
           />
         </Field>
 
         <DialogFooter>
-          <CancelButton onClick={handleClose} />
+          <CancelButton onClick={onClose} />
           <Button type="submit" loading={submitting} loadingText="Menyimpan…">
             Tambah
           </Button>
