@@ -40,11 +40,23 @@
     --ok: 30 142 90; /* #1E8E5A */
 
     /*
-     * `--steel` reaches only 4.0:1 on concrete — short of AA for normal text.
-     * Secondary text on a concrete ground uses this instead, at 6.1:1. It is a
-     * derived value, not a seventh colour.
+     * `--steel` reaches only 3.75:1 on concrete and 4.65:1 on paper — short of
+     * AA for normal text on the page ground. Two derived steps carry the text
+     * that `--steel` cannot. Neither is a new colour: same hue, less light.
+     *
+     * `--steel-ink` is secondary text, 5.6:1 on concrete and 6.95:1 on paper.
+     * `--steel-dim` is the least prominent text that is still text — captions,
+     * photo credits, the numbers on the landing journey — and is the darkest
+     * point of the hue that still reads as "quieter than secondary" while
+     * clearing AA on BOTH light grounds: 4.53:1 on concrete, 5.62:1 on paper.
+     *
+     * That second step is why the audit found fourteen elements failing
+     * contrast on the landing page alone. `--color-subtle` used to point at
+     * raw `--steel`, marked in a comment as "large text and UI only" — and then
+     * every one of its users was 11px or 12px text.
      */
     --steel-ink: 84 90 100; /* #545A64 */
+    --steel-dim: 97 104 115; /* #616873 */
 
     /*
      * The dark side of the same materials. `--steel` is only 3.7:1 on
@@ -91,7 +103,7 @@
     /* Text, most prominent to least. */
     --color-body: var(--graphite); /* 14.8:1 on concrete */
     --color-muted: var(--steel-ink); /* 6.1:1 on concrete */
-    --color-subtle: var(--steel); /* 4.0:1 — large text and UI only */
+    --color-subtle: var(--steel-dim); /* 4.53:1 on concrete, 5.62:1 on paper */
 
     /*
      * The accent is one blue in both themes. It used to be blue in light and
@@ -156,7 +168,21 @@
        readable. */
     --color-accent: 37 99 235; /* brand-600 */
     --color-accent-hover: 59 130 246; /* brand-500 — lightens on hover in dark */
-    --color-accent-text: 96 165 250; /* brand-400 — 7.0:1 on canvas */
+    /*
+     * brand-300, not brand-400.
+     *
+     * `accent-text` and `accent-soft` are a pair everywhere they appear — the
+     * active sidebar item, the highlighted option in a searchable select, the
+     * accent badge — and brand-400 on brand-900 is 4.07:1, under AA for every
+     * one of them. Reading it on the canvas was never the problem; reading it
+     * on its own fill was. brand-300 is 5.74:1 on the fill and 9.86:1 on the
+     * canvas.
+     *
+     * The fill is deliberately NOT darkened to fix this instead: brand-950 is
+     * 1.02:1 against the dark surface, which would leave "selected" and "not
+     * selected" looking the same.
+     */
+    --color-accent-text: 147 197 253; /* brand-300 — 9.9:1 on canvas, 5.7:1 on accent-soft */
     --color-accent-soft: 30 58 138; /* brand-900 */
     --color-on-accent: 255 255 255;
 
@@ -214,7 +240,7 @@
          readable. */
       --color-accent: 37 99 235; /* brand-600 */
       --color-accent-hover: 59 130 246; /* brand-500 — lightens on hover in dark */
-      --color-accent-text: 96 165 250; /* brand-400 — 7.0:1 on canvas */
+      --color-accent-text: 147 197 253; /* brand-300 — see the .dark block above */
       --color-accent-soft: 30 58 138; /* brand-900 */
       --color-on-accent: 255 255 255;
 

@@ -120,11 +120,27 @@ export function LandingPreview(): ReactNode {
                         aria-hidden="true"
                         className={`h-1.5 w-1.5 flex-none rounded-full ${CONDITION_DOT[demoFor(position).condition]}`}
                       />
+                      {/*
+                        A selected tile is painted `bg-accent-soft`, and every
+                        other selected thing in the application — the sidebar
+                        item, the highlighted option in a searchable select —
+                        pairs that fill with `text-accent-text`. This tile kept
+                        the neutral text tokens instead, and `text-subtle` on
+                        the dark theme's accent fill is 3.14:1.
+                      */}
                       <span className="min-w-0">
-                        <span className="block truncate text-xs font-medium text-body">
+                        <span
+                          className={`block truncate text-xs font-medium ${
+                            isActive ? "text-accent-text" : "text-body"
+                          }`}
+                        >
                           {position.positionLabel}
                         </span>
-                        <span className="block truncate font-data text-[0.6875rem] text-subtle">
+                        <span
+                          className={`block truncate font-data text-[0.6875rem] ${
+                            isActive ? "text-accent-text" : "text-subtle"
+                          }`}
+                        >
                           {position.positionCode}
                         </span>
                       </span>

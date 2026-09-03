@@ -1,4 +1,5 @@
 import { defineConfig, devices } from "@playwright/test";
+import { DEV_SERVER_URL } from "./dev-server.ts";
 
 /**
  * End-to-end tests — CI gate G-11 (PLAN/09 §5).
@@ -19,7 +20,7 @@ export default defineConfig({
   workers: 1,
   reporter: [["html", { open: "never" }], ["list"]],
   use: {
-    baseURL: process.env.E2E_BASE_URL ?? "http://localhost:5173",
+    baseURL: process.env.E2E_BASE_URL ?? DEV_SERVER_URL,
     trace: "retain-on-failure",
     screenshot: "only-on-failure",
   },
@@ -29,6 +30,6 @@ export default defineConfig({
   ],
   webServer:
     process.env.E2E_BASE_URL === undefined
-      ? { command: "pnpm dev", url: "http://localhost:5173", reuseExistingServer: true, timeout: 60_000 }
+      ? { command: "pnpm dev", url: DEV_SERVER_URL, reuseExistingServer: true, timeout: 60_000 }
       : undefined,
 });

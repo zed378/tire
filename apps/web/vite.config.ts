@@ -1,5 +1,6 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
+import { DEV_SERVER_HOST, DEV_SERVER_PORT } from './dev-server.ts';
 
 /**
  * A plain Vite SPA (PLAN/01 §4.2).
@@ -17,8 +18,8 @@ import react from '@vitejs/plugin-react';
 export default defineConfig({
   plugins: [react()],
   server: {
-    host: '127.0.0.1',
-    port: 5573,
+    host: DEV_SERVER_HOST,
+    port: DEV_SERVER_PORT,
     proxy: {
       // Development only. In production the SPA is static files served by Caddy
       // and talks to tire-api.zedth.my.id across origins.

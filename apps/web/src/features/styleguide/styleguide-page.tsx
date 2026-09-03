@@ -31,18 +31,18 @@ export function StyleguidePage(): ReactNode {
 
         <Section title="Warna">
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-7">
-            <Swatch name="ink" hex="#16181C" className="bg-graphite" onDark />
+            <Swatch name="ink" hex="#16181C" className="bg-graphite" />
             <Swatch name="concrete" hex="#E7E7E3" className="bg-concrete" />
             <Swatch name="paper" hex="#FFFFFF" className="bg-paper" />
-            <Swatch name="steel" hex="#6E7580" className="bg-steel" onDark />
-            <Swatch name="blue" hex="#1D4ED8" className="bg-blue" onDark />
+            <Swatch name="steel" hex="#6E7580" className="bg-steel" />
+            <Swatch name="blue" hex="#1D4ED8" className="bg-blue" />
             <Swatch name="amber" hex="#F0B429" className="bg-amber" />
           </div>
           <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
-            <Swatch name="blue-deep" hex="#16307E" className="bg-blue-deep" onDark />
-            <Swatch name="danger" hex="#C0392B" className="bg-signal-danger" onDark />
-            <Swatch name="ok" hex="#1E8E5A" className="bg-signal-ok" onDark />
-            <Swatch name="steel-ink" hex="#545A64" className="bg-steel-ink" onDark />
+            <Swatch name="blue-deep" hex="#16307E" className="bg-blue-deep" />
+            <Swatch name="danger" hex="#C0392B" className="bg-signal-danger" />
+            <Swatch name="ok" hex="#1E8E5A" className="bg-signal-ok" />
+            <Swatch name="steel-ink" hex="#545A64" className="bg-steel-ink" />
           </div>
           <p className="mt-3 max-w-prose text-sm text-steel-ink">
             <span className="font-medium text-graphite">steel</span> hanya 4,0:1 di atas concrete —
@@ -102,7 +102,11 @@ export function StyleguidePage(): ReactNode {
         </Section>
 
         <Section title="Tombol">
-          <div className="flex flex-wrap items-center gap-3">
+          {/* Same reason as the form panel below: these are real components, so
+              they need the semantic surface. On the page's raw `bg-concrete`
+              ground the ghost button's `text-muted` is dark-theme grey on a
+              light material, which is 2.4:1. */}
+          <div className="flex flex-wrap items-center gap-3 rounded-panel bg-surface p-6">
             <Button>Primary</Button>
             <Button variant="secondary">Secondary</Button>
             <Button variant="ghost">Ghost</Button>
@@ -120,7 +124,14 @@ export function StyleguidePage(): ReactNode {
         </Section>
 
         <Section title="Form">
-          <div className="grid gap-6 rounded-panel bg-paper p-6 sm:grid-cols-2">
+          {/*
+            `bg-surface`, not `bg-paper`. The components inside this panel follow
+            the theme; a hard-coded white ground does not, so in dark mode every
+            label in here was near-white text on white. That is the two-token-
+            systems failure the redesign exists to remove, reproduced on the page
+            that documents the tokens.
+          */}
+          <div className="grid gap-6 rounded-panel bg-surface p-6 sm:grid-cols-2">
             <Field label="User ID" htmlFor="sg-user" hint="3–64 karakter" required>
               <Input id="sg-user" placeholder="joko_inspector" />
             </Field>
@@ -249,17 +260,27 @@ function Swatch({
   name,
   hex,
   className,
-  onDark = false,
 }: {
   name: string;
   hex: string;
   className: string;
-  onDark?: boolean;
 }): ReactNode {
+  /*
+   * The name and the hex sit BELOW the swatch, not on it.
+   *
+   * They used to be printed on the colour, which put seven labels under 4.5:1
+   * — and one of them could not be fixed by choosing a different ink at all:
+   * `--ok` (#1E8E5A) reaches only 4.14:1 against white and 4.29:1 against
+   * graphite, so no label reads on it. A swatch's job is to show a colour, and
+   * a swatch that has to carry text is no longer only showing it. Printing the
+   * label on the page ground removes the problem rather than tuning it, and it
+   * is what the elevation specimens further down already do.
+   */
   return (
-    <div className={`rounded-panel border border-steel/20 p-4 ${className}`}>
-      <p className={`text-sm font-semibold ${onDark ? "text-paper" : "text-graphite"}`}>{name}</p>
-      <p className={`font-data text-xs ${onDark ? "text-paper/70" : "text-steel-ink"}`}>{hex}</p>
+    <div>
+      <div className={`h-16 rounded-panel border border-steel/20 ${className}`} />
+      <p className="mt-1.5 text-sm font-semibold text-graphite">{name}</p>
+      <p className="font-data text-xs text-steel-ink">{hex}</p>
     </div>
   );
 }

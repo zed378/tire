@@ -11,7 +11,9 @@
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
     "test:e2e": "playwright test",
+    "test:a11y": "playwright test accessibility --project=desktop",
     "check:budget": "tsx scripts/check-bundle-budget.ts",
+    "measure:lcp": "tsx scripts/measure-lcp.ts",
     "images:fetch": "tsx scripts/fetch-images.ts",
     "images": "tsx scripts/process-images.ts"
   },

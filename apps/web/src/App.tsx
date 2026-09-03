@@ -1,28 +1,15 @@
 import { lazy, Suspense, type ReactNode } from "react";
-import { Link, Navigate, Route, Routes, useLocation } from "react-router-dom";
-import type { Permission } from "@c26/contracts";
+import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { SessionProvider, useSession } from "./lib/session.tsx";
-import { ToastProvider } from "./components/ui/feedback.tsx";
-import { AppShell } from "./components/layout/app-shell.tsx";
-import { Button, Spinner } from "./components/ui/primitives.tsx";
-import { ErrorBanner } from "./components/ui/feedback.tsx";
+import { ToastProvider, ErrorBanner } from "./components/ui/feedback.tsx";
+import { Button } from "./components/ui/primitives.tsx";
+import { PageLoading } from "./components/ui/page-loading.tsx";
 import { LoginPage } from "./features/auth/login-page.tsx";
 import { RegisterPage } from "./features/auth/register-page.tsx";
 import { StyleguidePage } from "./features/styleguide/styleguide-page.tsx";
-import { ChangePasswordPage } from "./features/auth/change-password-page.tsx";
-import { ProfilePage } from "./features/auth/profile-page.tsx";
-import { MfaEnrollPage } from "./features/auth/mfa-enroll-page.tsx";
 import { StepUpDialog } from "./features/auth/step-up-dialog.tsx";
 import { LandingPage } from "./features/landing/landing-page.tsx";
-import { WelcomePage } from "./features/welcome/welcome-page.tsx";
-import { InspectionListPage } from "./features/inspections/inspection-list-page.tsx";
-import { NewInspectionPage } from "./features/inspections/new-inspection-page.tsx";
-import { InspectionDetailPage } from "./features/inspections/inspection-detail-page.tsx";
-import { UploadQueuePage } from "./features/inspections/upload-queue-page.tsx";
-import { QcQueuePage } from "./features/qc/qc-queue-page.tsx";
-import { QcReviewPage } from "./features/qc/qc-review-page.tsx";
-import { TireSpecPage } from "./features/tire-specs/tire-spec-page.tsx";
-import { NotificationsPage } from "./features/notifications/notifications-page.tsx";
+import { ThemeProvider } from "./lib/theme.tsx";
 
 /**
  * Routing (PLAN/01 §4.1).
@@ -31,47 +18,17 @@ import { NotificationsPage } from "./features/notifications/notifications-page.t
  * sandbox, so nothing could be bookmarked, the browser's Back button did not
  * work, and a link to one Serial Number could not be shared. Every screen here
  * has a real URL.
- */
-
-// Reporting is the heaviest route and the one fewest people open, so it is
-// split out of the initial bundle to protect the 180 KB budget (PLAN/06 §7).
-/*
- * Administration, master data and operations, split out of the initial
- * bundle.
  *
- * A supplier is the majority user and never opens any of these, yet was
- * downloading all of them on every visit. The budget is 180 KB gzipped and
- * enforced (PLAN/06 §7, gate G-12); this is what keeps the field device — a
- * mid-range phone two or three years old, per PLAN/06 §7 — from paying for
- * screens it has no permission to see.
+ * What is imported here is what a signed-out visitor downloads: the landing
+ * page, the two auth screens, and the session logic that decides between them.
+ * Everything behind a session is one lazy chunk — see `routes/protected-routes`
+ * for the measurement that made it one.
  */
-const UsersPage = lazy(() =>
-  import("./features/users/users-page.tsx").then((module) => ({ default: module.UsersPage })),
+const ProtectedRoutes = lazy(() =>
+  import("./routes/protected-routes.tsx").then((module) => ({
+    default: module.ProtectedRoutes,
+  })),
 );
-const MasterDataPage = lazy(() =>
-  import("./features/master-data/master-data-page.tsx").then((module) => ({ default: module.MasterDataPage })),
-);
-const VehicleBrandsPage = lazy(() =>
-  import("./features/master-data/vehicle-brands-page.tsx").then((module) => ({ default: module.VehicleBrandsPage })),
-);
-const TireBrandPatternsPage = lazy(() =>
-  import("./features/master-data/tire-brand-patterns-page.tsx").then((module) => ({ default: module.TireBrandPatternsPage })),
-);
-const TireSizesPage = lazy(() =>
-  import("./features/master-data/tire-sizes-page.tsx").then((module) => ({ default: module.TireSizesPage })),
-);
-const AuditPage = lazy(() =>
-  import("./features/audit/audit-page.tsx").then((module) => ({ default: module.AuditPage })),
-);
-const OpsPage = lazy(() =>
-  import("./features/ops/ops-page.tsx").then((module) => ({ default: module.OpsPage })),
-);
-
-const ReportsPage = lazy(() =>
-  import("./features/reports/reports-page.tsx").then((module) => ({ default: module.ReportsPage })),
-);
-
-import { ThemeProvider } from "./lib/theme.tsx";
 
 export function App(): ReactNode {
   return (
@@ -104,109 +61,9 @@ function AppRoutes(): ReactNode {
         path="/*"
         element={
           <RequireSession>
-            <AppShell>
-              <Suspense fallback={<PageLoading />}>
-                <Routes>
-                  <Route path="welcome" element={<WelcomePage />} />
-                  <Route index element={<Navigate to="/welcome" replace />} />
-
-                  <Route path="inspections" element={<InspectionListPage />} />
-                  <Route path="inspections/new" element={<NewInspectionPage />} />
-                  <Route path="inspections/:sn" element={<InspectionDetailPage />} />
-                  <Route path="inspections/:sn/tire-specs" element={<TireSpecPage />} />
-                  <Route path="upload-queue" element={<UploadQueuePage />} />
-
-                  <Route
-                    path="qc"
-                    element={
-                      <RequirePermission permission="qc.review">
-                        <QcQueuePage />
-                      </RequirePermission>
-                    }
-                  />
-                  <Route
-                    path="qc/:sn"
-                    element={
-                      <RequirePermission permission="qc.review">
-                        <QcReviewPage />
-                      </RequirePermission>
-                    }
-                  />
-
-                  <Route
-                    path="reports"
-                    element={
-                      <RequirePermission permission="report.view">
-                        <ReportsPage />
-                      </RequirePermission>
-                    }
-                  />
-                  <Route
-                    path="users"
-                    element={
-                      <RequirePermission permission="user.manage">
-                        <UsersPage />
-                      </RequirePermission>
-                    }
-                  />
-                  <Route
-                    path="master-data"
-                    element={
-                      <RequirePermission permission="masterdata.manage">
-                        <MasterDataPage />
-                      </RequirePermission>
-                    }
-                  />
-                  <Route
-                    path="master-data/vehicle-brands"
-                    element={
-                      <RequirePermission permission="masterdata.manage">
-                        <VehicleBrandsPage />
-                      </RequirePermission>
-                    }
-                  />
-                  <Route
-                    path="master-data/tire-brand-patterns"
-                    element={
-                      <RequirePermission permission="masterdata.manage">
-                        <TireBrandPatternsPage />
-                      </RequirePermission>
-                    }
-                  />
-                  <Route
-                    path="master-data/tire-sizes"
-                    element={
-                      <RequirePermission permission="masterdata.manage">
-                        <TireSizesPage />
-                      </RequirePermission>
-                    }
-                  />
-                  <Route
-                    path="audit"
-                    element={
-                      <RequirePermission permission="audit.read">
-                        <AuditPage />
-                      </RequirePermission>
-                    }
-                  />
-                  <Route
-                    path="ops"
-                    element={
-                      <RequirePermission permission="ops.health.read">
-                        <OpsPage />
-                      </RequirePermission>
-                    }
-                  />
-
-                  <Route path="notifications" element={<NotificationsPage />} />
-                  <Route path="profile" element={<ProfilePage />} />
-                  <Route path="profile/password" element={<ChangePasswordPage />} />
-                  <Route path="profile/mfa" element={<MfaEnrollPage />} />
-
-                  <Route path="*" element={<NotFound />} />
-                </Routes>
-              </Suspense>
-            </AppShell>
+            <Suspense fallback={<PageLoading />}>
+              <ProtectedRoutes />
+            </Suspense>
           </RequireSession>
         }
       />
@@ -286,72 +143,6 @@ function SessionUnavailable({
       <Button className="mt-4 w-full" onClick={onRetry}>
         Coba Lagi
       </Button>
-    </div>
-  );
-}
-
-/**
- * Layer 1 and a half.
- *
- * This stops a user reaching a screen they have no business on, but it is not
- * the enforcement: the server rejects the request regardless, which is what
- * makes it real (PLAN/04 §2.2).
- */
-function RequirePermission({
-  permission,
-  children,
-}: {
-  permission: Permission;
-  children: ReactNode;
-}): ReactNode {
-  const { can } = useSession();
-  if (!can(permission)) return <PermissionDenied />;
-  return <>{children}</>;
-}
-
-/**
- * Shown instead of bouncing the user somewhere else.
- *
- * The redirect this replaces sent everyone to /inspections, which was wrong in
- * two ways. It gave no reason, so a mistyped or stale link looked like a broken
- * application. And /inspections is itself unreadable for the manager and
- * operator roles, so the destination was frequently one more dead end.
- *
- * Same principle as SessionUnavailable above: say what happened, and leave the
- * user somewhere they can act from.
- */
-function PermissionDenied(): ReactNode {
-  return (
-    <div className="mx-auto max-w-md px-4 py-16 text-center">
-      <p className="text-lg font-semibold text-body">Halaman ini bukan untuk peran Anda</p>
-      <p className="mt-1 text-sm text-muted">
-        Akun Anda tidak memiliki akses ke halaman tersebut. Bila menurut Anda ini keliru,
-        hubungi admin.
-      </p>
-      <Link
-        to="/welcome"
-        className="mt-4 inline-flex min-h-11 items-center rounded-md bg-accent px-4 text-sm font-medium text-on-accent hover:bg-accent-hover"
-      >
-        Kembali ke Beranda
-      </Link>
-    </div>
-  );
-}
-
-function PageLoading(): ReactNode {
-  return (
-    <div className="flex items-center justify-center py-20 text-muted">
-      <Spinner className="h-6 w-6" />
-      <span className="ml-2 text-sm">Memuat…</span>
-    </div>
-  );
-}
-
-function NotFound(): ReactNode {
-  return (
-    <div className="py-20 text-center">
-      <p className="text-lg font-semibold text-body">Halaman tidak ditemukan</p>
-      <p className="mt-1 text-sm text-muted">Periksa kembali tautan yang Anda buka.</p>
     </div>
   );
 }

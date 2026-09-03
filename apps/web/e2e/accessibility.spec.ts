@@ -150,35 +150,106 @@ test.describe("Navigasi papan ketik", () => {
     await expect(page.getByRole("button", { name: "Masuk" })).toBeVisible();
   });
 
-  test("setiap elemen yang dapat difokuskan punya cincin fokus yang terlihat", async ({ page }) => {
+  test("setiap perhentian Tab terlihat berubah saat difokuskan", async ({ page }) => {
     await stubSignedOutSession(page);
     await page.goto("/login");
 
-    const focusable = page.locator("a[href], button, input, select, textarea");
-    const count = await focusable.count();
-    expect(count).toBeGreaterThan(0);
+    /*
+     * What is asserted here is that focus is *visible*, not that it is drawn a
+     * particular way.
+     *
+     * An earlier version of this test looked for an outline or a box-shadow on
+     * the focused element, and reported the login password field as having no
+     * indicator. It has one: `auth.css` deliberately replaces the general amber
+     * ring with a border that goes blue and doubles in weight, plus an amber
+     * rule that wipes in on the wrapper's `::after` — because three indicators
+     * stacked on one 40px control drew over each other. A test that names the
+     * implementation fails the better implementation.
+     *
+     * So each Tab stop is compared against itself: the same element, focused
+     * and not focused. If nothing about it changes, a keyboard user cannot tell
+     * where they are — whatever the reason.
+     */
+    // Focus is moved with Tab, not `element.focus()`: Chromium decides
+    // `:focus-visible` from the modality of the last interaction, and a
+    // programmatic focus on a button matches nothing.
+    const focused: { label: string; fingerprint: string }[] = [];
 
-    for (let index = 0; index < count; index += 1) {
-      const element = focusable.nth(index);
-      if (!(await element.isVisible())) continue;
+    for (let step = 0; step < 20; step += 1) {
+      await page.keyboard.press("Tab");
 
-      await element.focus();
-      const outline = await element.evaluate((node) => {
-        const style = getComputedStyle(node);
+      const stop = await page.evaluate(() => {
+        const active = document.activeElement;
+        if (active === null || active === document.body) return null;
+
+        active.setAttribute(
+          "data-a11y-stop",
+          String(document.querySelectorAll("[data-a11y-stop]").length),
+        );
+
+        const own = getComputedStyle(active);
+        const wipe =
+          active.parentElement === null
+            ? ""
+            : getComputedStyle(active.parentElement, "::after").transform;
+
         return {
-          outlineWidth: style.outlineWidth,
-          outlineStyle: style.outlineStyle,
-          boxShadow: style.boxShadow,
+          label:
+            active.getAttribute("aria-label") ??
+            active.getAttribute("name") ??
+            active.textContent?.trim().slice(0, 40) ??
+            active.tagName,
+          fingerprint: [
+            own.outlineStyle,
+            own.outlineWidth,
+            own.outlineColor,
+            own.boxShadow,
+            own.borderColor,
+            own.borderWidth,
+            own.backgroundColor,
+            own.color,
+            own.textDecorationLine,
+            wipe,
+          ].join("|"),
         };
       });
 
-      // Either a real outline or a ring drawn with box-shadow. What is not
-      // acceptable is neither: `outline: none` with nothing in its place is the
-      // single most common way a keyboard user loses their place on a page.
-      const hasRing =
-        (outline.outlineStyle !== "none" && outline.outlineWidth !== "0px") ||
-        outline.boxShadow !== "none";
-      expect(hasRing, `element ${String(index)} has no visible focus indicator`).toBe(true);
+      if (stop === null) break;
+      focused.push(stop);
     }
+
+    expect(focused.length).toBeGreaterThan(0);
+
+    // Now with nothing focused, read the same elements again.
+    const resting = await page.evaluate(() => {
+      (document.activeElement as HTMLElement | null)?.blur();
+
+      return [...document.querySelectorAll("[data-a11y-stop]")].map((element) => {
+        const own = getComputedStyle(element);
+        const wipe =
+          element.parentElement === null
+            ? ""
+            : getComputedStyle(element.parentElement, "::after").transform;
+
+        return [
+          own.outlineStyle,
+          own.outlineWidth,
+          own.outlineColor,
+          own.boxShadow,
+          own.borderColor,
+          own.borderWidth,
+          own.backgroundColor,
+          own.color,
+          own.textDecorationLine,
+          wipe,
+        ].join("|");
+      });
+    });
+
+    const invisible = focused
+      .map((stop, index) => ({ label: stop.label, changed: stop.fingerprint !== resting[index] }))
+      .filter((stop) => !stop.changed);
+
+    expect(invisible).toEqual([]);
   });
 });

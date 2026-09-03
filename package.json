@@ -21,6 +21,7 @@
     "test:axle": "pnpm --filter @c26/contracts test -- axle",
     "test:mutation": "pnpm --filter @c26/contracts test:mutation",
     "test:e2e": "pnpm --filter @c26/web test:e2e",
+    "test:a11y": "pnpm --filter @c26/web test:a11y",
     "check:forbidden": "tsx scripts/check-forbidden.ts",
     "check:rules": "tsx scripts/check-rules.ts",
     "check:secrets": "tsx scripts/check-secrets.ts",
