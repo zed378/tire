@@ -35,7 +35,7 @@ Terakhir diperbarui: **03/09/2026 WIB.**
 Kondisi terukur saat ini:
 
 - `pnpm verify` **hijau** — typecheck, lint, 551 tes, dan empat gerbang statis.
-- `pnpm test:a11y` **hijau** — 97 pemeriksaan: axe-core WCAG 2.1 AA di **24
+- `pnpm test:a11y` **hijau** — 102 pemeriksaan: axe-core WCAG 2.1 AA di **24
   layar** × dua tema, **20 keadaan kosong**, **4 dialog** beserta jebakan
   fokusnya, sebuah form yang baru ditolak, lima lebar layar, dan navigasi papan
   ketik. Layar di balik sesi dijawab fixture ber-tipe (`e2e/api-stubs.ts`),
@@ -292,8 +292,10 @@ pengunjung tanpa sesi tidak seharusnya mengunduh layar yang tidak boleh ia buka.
       kontrak modalnya sebelum ada yang mengujinya.
 - [ ] **Pembaca layar sungguhan** (NVDA / TalkBack). Ini yang tersisa dan tidak
       bisa diotomatiskan.
-- [ ] Keadaan yang butuh jawaban server tertentu: 500 dengan `requestId`,
-      `SERVICE_UNAVAILABLE`, unggahan gagal. Fixture-nya selalu menjawab 200.
+- [x] ~~Keadaan yang butuh jawaban server tertentu~~ — 500 dengan `requestId`,
+      jaringan mati, dan satu query daftar yang gagal. **Menemukan C-10**: enam
+      halaman merender daftar kosong ketika query-nya gagal, melanggar
+      `PLAN/05` §5.2 aturan 6 secara langsung.
 - [x] ~~Uji di lebar 360 / 768 / 1024 / 1440 / 1920~~ — 20 dari 20 lulus sejak
       pengukuran pertama, tidak ada perbaikan yang diperlukan.
 - [x] ~~Ukur LCP di profil 4G~~ — **meleset di ketiga rute publik**

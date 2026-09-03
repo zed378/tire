@@ -86,6 +86,11 @@ export function TireSizesPage(): ReactNode {
 
       {error !== null ? <ErrorBanner error={error} onDismiss={() => setError(null)} /> : null}
 
+      {/* PLAN/05 §5.2 rule 6: a failure becomes a banner, never a silent one.
+          Without this the list rendered as "no rows" when it actually meant "we
+          could not ask" — and those look identical to the reader. */}
+      {sizes.error !== null ? <ErrorBanner error={sizes.error} /> : null}
+
       <Tabs
         label="Kategori ukuran ban"
         value={tab}

@@ -104,6 +104,11 @@ export function TireBrandPatternsPage(): ReactNode {
 
       {error !== null ? <ErrorBanner error={error} onDismiss={() => setError(null)} /> : null}
 
+      {/* PLAN/05 §5.2 rule 6: a failure becomes a banner, never a silent one.
+          Without this the list rendered as "no rows" when it actually meant "we
+          could not ask" — and those look identical to the reader. */}
+      {patterns.error !== null ? <ErrorBanner error={patterns.error} /> : null}
+
       <Tabs
         label="Kategori pattern ban"
         value={tab}

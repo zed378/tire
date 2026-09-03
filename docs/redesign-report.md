@@ -36,6 +36,7 @@ mematahkan typecheck, bukan diam-diam merender layar kosong yang lulus.
 | Tab tidak bisa keluar dari dialog | 15 perhentian |
 | Escape menutup dialog dan mengembalikan fokus ke pembukanya | — |
 | Form yang ditolak menautkan pesan ke fieldnya | `aria-invalid` + `aria-describedby` |
+| **Kanal galat** `PLAN/05` §5.2 aturan 6 dan 7 | 500 dengan `requestId`, jaringan mati, satu query daftar gagal — plus axe di kedua tema |
 | Tidak ada geser horizontal | 4 halaman publik × 5 lebar (360 / 768 / 1024 / 1440 / 1920) |
 | Login selesai tanpa tetikus | Enter mengirim dari dalam field |
 | Setiap perhentian Tab berubah tampilannya saat difokuskan | 20 perhentian pertama |
@@ -55,7 +56,8 @@ profil.
 | Sesudah C-01 … C-04 | 30 | 0 |
 | Pertama, dengan layar di balik sesi | 57 | **13** |
 | Sesudah C-05 … C-09 | 70 | 0 |
-| Ditambah keadaan kosong, dialog, dan galat | **97** | 0 |
+| Ditambah keadaan kosong, dialog, dan galat form | 97 | 0 |
+| Ditambah kanal galat server | **102** | **1** → 0 |
 
 Putaran terakhir itu lulus **sejak percobaan pertama**. Dua puluh keadaan
 kosong, empat dialog, jebakan fokusnya, Escape yang mengembalikan fokus ke
@@ -200,6 +202,46 @@ pengaturan, yang memang itulah wujudnya.
 Yang kedua kelas cacat yang sama dengan langkah `01–06` di landing yang dulu
 diredupkan `opacity: .55`. Peredupan adalah cara paling mudah menjatuhkan
 kontras tanpa ada yang menyadarinya.
+
+#### C-10 — daftar yang gagal dimuat tampil kosong, tanpa berkata apa-apa
+
+`PLAN/05` §5.2 aturan 6: *"Kegagalan jaringan menjadi banner `503`, bukan
+kegagalan senyap."*
+
+Enam halaman melanggarnya. Bila query daftarnya gagal, mereka merender
+`(data?.items ?? [])` — yaitu **daftar kosong**, tanpa pesan apa pun. Bagi
+pembacanya, "tidak ada baris" dan "kami tidak berhasil bertanya" terlihat
+persis sama. Seorang admin membaca tabel kosong dan menyimpulkan tidak ada
+data.
+
+| Halaman | Sebelum |
+| --- | --- |
+| `users-page` | daftar pengguna kosong tanpa penjelasan |
+| `master-data-page` | keempat tabnya kosong |
+| `vehicle-brands-page` | "Belum ada merk kendaraan" — pernyataan yang tidak diketahui benar |
+| `tire-sizes-page`, `tire-brand-patterns-page` | idem |
+| `ops-page` | panel kesehatan, pekerjaan gagal, dan unggahan terlantar semuanya diam |
+
+Lima halaman lain (`inspection-list`, `qc-queue`, `audit`, `notifications`,
+`reports`) **sudah** memasang `<ErrorBanner error={query.error} />`. Jadi
+idiomnya sudah ada di repositori; enam halaman ini yang tidak memakainya. Tidak
+ada abstraksi baru — baris yang sama, di enam tempat yang melewatkannya.
+
+Ditemukan lewat tes yang ditulis lebih dulu dan **merah sebelum perbaikan**,
+sesuai `.claude/rules/tests.md`.
+
+### Kanal galat: yang ternyata sudah benar
+
+Layak dicatat karena kekhawatiran saya keliru. Baris `requestId` di `Banner`
+memakai `opacity-80` — pola yang persis sama yang menjatuhkan label kartu QC ke
+bawah AA. Di sini ia **lulus**: palet danger punya ruang lebih (7,6:1 penuh →
+**5,13:1** pada 80% di tema terang; 11,16 → **7,53** di gelap). Peredupan tidak
+selalu salah; ia salah ketika pasangannya sudah mepet.
+
+Aturan 7 juga sudah dipenuhi seluruhnya: kode ditampilkan, kalimat "Sebutkan
+kode ini saat melapor" ada, dan `<code>` memakai `select-all` — satu ketukan
+untuk menyalin di ponsel, yang memang tempat petugas berada saat membacakan kode
+itu ke dukungan.
 
 ### Positif palsu yang dibuang dari tes
 

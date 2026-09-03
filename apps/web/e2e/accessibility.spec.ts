@@ -1,6 +1,11 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
-import { stubSignedInApi, stubSignedOutSession } from "./api-stubs.ts";
+import {
+  stubOffline,
+  stubServerError,
+  stubSignedInApi,
+  stubSignedOutSession,
+} from "./api-stubs.ts";
 
 /**
  * The accessibility and responsive sweep for the redesign (brief PART VIII/IX).
@@ -291,6 +296,96 @@ test.describe("Keadaan galat", () => {
     expect(describedBy).not.toBeNull();
     await expect(page.locator(`#${String(describedBy)}`)).toContainText("minimal 3 karakter");
   });
+});
+
+/**
+ * The three error channels of `PLAN/05` §5.1, and rules 6 and 7 of §5.2.
+ *
+ * These render markup that exists only when something has gone wrong, so no
+ * amount of sweeping healthy screens reaches them. Rule 6: a network failure
+ * becomes a banner, never a silent failure. Rule 7: every 500 shows its
+ * `requestId` in small copyable text, with the sentence asking the user to
+ * quote it.
+ */
+test.describe("Kanal galat", () => {
+  test("500 menampilkan requestId yang dapat disalin", async ({ page }) => {
+    await stubServerError(page);
+    await page.goto("/welcome");
+
+    // The session query rides out a few 500s before giving up — a restarting
+    // API should not read as a logout — so the banner takes a moment.
+    const banner = page.getByRole("alert");
+    await expect(banner).toBeVisible({ timeout: 15_000 });
+    await expect(banner).toContainText("Sebutkan kode ini saat melapor");
+    await expect(banner).toContainText("req_20260903_141500_e2e1");
+
+    // `select-all` is what makes it one click to copy on a phone, which is
+    // where a supplier is when they read a code out to support.
+    const code = banner.locator("code");
+    await expect(code).toHaveClass(/select-all/);
+  });
+
+  test("kegagalan jaringan jadi banner, bukan layar kosong", async ({ page }) => {
+    await stubOffline(page);
+    await page.goto("/welcome");
+
+    const banner = page.getByRole("alert");
+    await expect(banner).toBeVisible({ timeout: 15_000 });
+
+    // Not a redirect to /login either: that reads as "you have been signed
+    // out", which is a different and untrue thing to tell someone.
+    expect(new URL(page.url()).pathname).not.toBe("/login");
+    await expect(page.getByRole("button", { name: "Coba Lagi" })).toBeVisible();
+  });
+
+  test("daftar yang gagal dimuat mengatakannya, tidak tampil kosong", async ({ page }) => {
+    /*
+     * The session is fine; one list query is not. `PLAN/05` §5.2 rule 6 says a
+     * failure becomes a banner and never a silent one — and a list that renders
+     * as "no rows" when it actually means "we could not ask" is the silent
+     * failure that rule exists to forbid. An admin reads it as an empty table.
+     */
+    await stubSignedInApi(page);
+    // Registered after the catch-all, so it wins for this one path.
+    await page.route("**/api/users*", async (route) => {
+      await route.fulfill({
+        status: 500,
+        contentType: "application/json",
+        body: JSON.stringify({
+          ok: false,
+          code: "INTERNAL_ERROR",
+          message: "Terjadi kesalahan pada sistem. Silakan coba lagi.",
+          requestId: "req_20260903_141500_e2e2",
+        }),
+      });
+    });
+
+    await page.goto("/users");
+    await expect(page.getByRole("navigation", { name: "Navigasi utama" })).toBeVisible();
+
+    await expect(page.getByRole("alert")).toBeVisible({ timeout: 15_000 });
+  });
+
+  for (const theme of THEMES) {
+    test(`banner 500 memenuhi WCAG 2.1 AA di tema ${theme}`, async ({ page }) => {
+      await page.emulateMedia({ colorScheme: theme });
+      await stubServerError(page);
+      await page.goto("/welcome");
+      await expect(page.getByRole("alert")).toBeVisible({ timeout: 15_000 });
+
+      const results = await new AxeBuilder({ page })
+        .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
+        .analyze();
+
+      expect(
+        results.violations.map((violation) => ({
+          rule: violation.id,
+          impact: violation.impact,
+          nodes: violation.nodes.map((node) => node.target.join(" ")),
+        })),
+      ).toEqual([]);
+    });
+  }
 });
 
 test.describe("Lebar layar", () => {

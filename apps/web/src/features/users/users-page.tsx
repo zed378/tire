@@ -113,6 +113,9 @@ export function UsersPage(): ReactNode {
     },
   });
 
+  // Any one of this screen's queries failing is still a failure to report.
+  const loadError = users.error ?? master.error;
+
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
@@ -121,6 +124,11 @@ export function UsersPage(): ReactNode {
       </div>
 
       {error !== null ? <ErrorBanner error={error} onDismiss={() => setError(null)} /> : null}
+
+      {/* PLAN/05 §5.2 rule 6: a failure becomes a banner, never a silent one.
+          Without this the list rendered as "no rows" when it actually meant "we
+          could not ask" — and those look identical to the reader. */}
+      {loadError !== null ? <ErrorBanner error={loadError} /> : null}
 
       {temporaryPassword !== null ? (
         <Banner

@@ -110,6 +110,9 @@ export function MasterDataPage(): ReactNode {
     onError: setError,
   });
 
+  // Any one of this screen's queries failing is still a failure to report.
+  const loadError = master.error ?? reviews.error;
+
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
@@ -137,6 +140,11 @@ export function MasterDataPage(): ReactNode {
       </div>
 
       {error !== null ? <ErrorBanner error={error} onDismiss={() => setError(null)} /> : null}
+
+      {/* PLAN/05 §5.2 rule 6: a failure becomes a banner, never a silent one.
+          Without this the list rendered as "no rows" when it actually meant "we
+          could not ask" — and those look identical to the reader. */}
+      {loadError !== null ? <ErrorBanner error={loadError} /> : null}
 
       {/*
         The shared Tabs. The row of plain buttons this replaces had no

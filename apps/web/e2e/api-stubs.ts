@@ -517,6 +517,37 @@ export async function stubSignedInApi(
 }
 
 /**
+ * Answers everything with a 500 carrying a request id.
+ *
+ * `PLAN/05` §5.2 rule 7 asks for that id to be on screen, in small copyable
+ * text, with the sentence telling the user to quote it. Rule 6 asks for a
+ * network failure to become a banner rather than a silent nothing. Neither had
+ * a test, and neither renders on any screen the sweep had visited — an error
+ * channel is markup that only exists when something has gone wrong.
+ */
+export async function stubServerError(page: Page): Promise<void> {
+  await page.route("**/api/**", async (route) => {
+    await route.fulfill({
+      status: 500,
+      contentType: "application/json",
+      body: JSON.stringify({
+        ok: false,
+        code: "INTERNAL_ERROR",
+        message: "Terjadi kesalahan pada sistem. Silakan coba lagi.",
+        requestId: "req_20260903_141500_e2e1",
+      }),
+    });
+  });
+}
+
+/** The connection simply is not there — no response at all, not an error one. */
+export async function stubOffline(page: Page): Promise<void> {
+  await page.route("**/api/**", async (route) => {
+    await route.abort("connectionrefused");
+  });
+}
+
+/**
  * Answers the session bootstrap the way a visitor with no cookie is answered.
  *
  * `SESSION_EXPIRED` is a real answer — "there is no session" — and the session

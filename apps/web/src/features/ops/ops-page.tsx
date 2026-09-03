@@ -112,11 +112,19 @@ export function OpsPage(): ReactNode {
     defaultValues: { requestId: "" },
   });
 
+  // Any one of this screen's queries failing is still a failure to report.
+  const loadError = health.error ?? jobs.error ?? orphans.error ?? logs.error;
+
   return (
      <div className="space-y-4">
        <h1 className="text-lg font-semibold text-body">Panel Operasional</h1>
 
       {error !== null ? <ErrorBanner error={error} onDismiss={() => setError(null)} /> : null}
+
+      {/* PLAN/05 §5.2 rule 6: a failure becomes a banner, never a silent one.
+          Without this the list rendered as "no rows" when it actually meant "we
+          could not ask" — and those look identical to the reader. */}
+      {loadError !== null ? <ErrorBanner error={loadError} /> : null}
 
       {/* PLAN/12 §7.1: the signal most easily missed. An outbox that stops being
           processed raises no error at all — the system looks healthy while
