@@ -10,8 +10,13 @@ ada di `DESIGN_PLAN.md`.
 
 Terakhir diperbarui: **03/09/2026 WIB.**
 
-> Perubahan sejak catatan pertama hari ini: utang `zodResolver` lunas — delapan
-> form, bukan enam. Rinciannya di bawah, di bagian "Utang form: lunas".
+> Perubahan sejak catatan pertama hari ini:
+>
+> - Utang `zodResolver` lunas — delapan form, bukan enam. Lihat "Utang form:
+>   lunas".
+> - Fase 6 dimulai. Sapuan aksesibilitas dan lebar layar hijau untuk empat
+>   halaman publik; LCP diukur dan **meleset**. Angkanya di
+>   `docs/redesign-report.md`.
 
 ---
 
@@ -24,13 +29,17 @@ Terakhir diperbarui: **03/09/2026 WIB.**
 | 3 — Landing page | Selesai |
 | 4 — Login & Register | Selesai |
 | 5 — Aset gambar | Selesai, dengan satu penyimpangan sumber (lihat di bawah) |
-| 6 — QA, aksesibilitas, pembersihan | **Belum** |
+| 6 — QA, aksesibilitas, pembersihan | **Berjalan** — lihat di bawah |
 
 Kondisi terukur saat ini:
 
 - `pnpm verify` **hijau** — typecheck, lint, 551 tes, dan empat gerbang statis.
-- Bundel JS awal **169,3 KB** dari plafon 180 KB (G-12).
-- CSS **11,2 KB** gzip.
+- `pnpm test:a11y` **hijau** — 30 pemeriksaan: axe-core WCAG 2.1 AA di empat
+  halaman publik × dua tema, lima lebar layar, dan navigasi papan ketik.
+- Bundel JS awal **146,6 KB** dari plafon 180 KB (G-12), turun dari 169,3 KB.
+- CSS **11,25 KB** gzip.
+- LCP profil 4G: `/` **4,14 s**, `/login` **3,21 s**, `/register` **3,37 s** —
+  ketiganya di atas anggaran 2,5 detik.
 
 ---
 
@@ -148,19 +157,30 @@ Ditemukan saat memindahkan form ke `zodResolver`:
 
 ## Yang belum dikerjakan
 
-### Fase 6 — QA dan pembersihan (belum mulai)
+### Fase 6 — QA dan pembersihan (berjalan)
 
-- [ ] Audit aksesibilitas menyeluruh: urutan fokus, landmark, kontras seluruh
-      halaman di kedua tema.
-- [ ] Uji di lebar 360 / 768 / 1024 / 1440 / 1920.
-- [ ] Ukur LCP di profil 4G. Kalau meleset dari 2,5 detik, IBM Plex Mono yang
-      dilepas duluan.
-- [ ] `docs/redesign-report.md` dan `TODO-CONTENT.md`.
+- [x] ~~Audit aksesibilitas~~ untuk **halaman publik**. `pnpm test:a11y`,
+      axe-core WCAG 2.1 AA, dua tema. Berkasnya
+      `apps/web/e2e/accessibility.spec.ts`; ia menyetub `/api/auth/me` sendiri
+      sehingga tidak butuh basis data.
+- [ ] **Dua puluh layar di balik sesi belum pernah diperiksa axe.** Cacat C-02
+      di laporan itu justru kelas yang hidup di sana — pasangan `accent-text`
+      di atas `accent-soft` yang gagal di tema gelap dipakai sidebar,
+      `SearchableSelect`, dan lencana. Menjangkaunya butuh seed, sama seperti
+      G-11.
+- [x] ~~Uji di lebar 360 / 768 / 1024 / 1440 / 1920~~ — 20 dari 20 lulus sejak
+      pengukuran pertama, tidak ada perbaikan yang diperlukan.
+- [x] ~~Ukur LCP di profil 4G~~ — **meleset di ketiga rute publik**
+      (4,14 / 3,21 / 3,37 detik). Lihat catatan di bawah: resep "lepas IBM Plex
+      Mono duluan" menyasar hal yang salah.
+- [x] ~~`docs/redesign-report.md`~~
+- [ ] `TODO-CONTENT.md`.
 - [ ] Hapus rute sementara `/__styleguide` dan berkasnya. **Terakhir, bukan
       pertama**: brief §Lampiran A menaruhnya satu langkah dengan
       `docs/redesign-report.md`, dan halaman itu justru permukaan yang dipakai
-      untuk audit kontras dan sapuan lebar di atasnya. Catatan sebelumnya
-      menempatkannya di urutan pertama; urutan brief yang dipakai.
+      untuk audit kontras dan sapuan lebar di atasnya. Keputusan itu terbayar —
+      halaman itu sendiri menyumbang dua cacat (C-04 di laporan). Ketika
+      dihapus, hapus juga entrinya di `accessibility.spec.ts`.
 
 ### Berasal dari sebelum redesign, masih terbuka
 
@@ -170,7 +190,11 @@ Ditemukan saat memindahkan form ke `zodResolver`:
       `ACCEPTANCE/STATUS.md`). Perlu suite integrasi berbasis database.
 - [ ] **G-07** skor mutasi mesin poros belum pernah dijalankan.
 - [ ] **G-11** e2e alur QC belum pernah dijalankan; selektornya hampir pasti
-      patah setelah perubahan DOM redesign ini.
+      patah setelah perubahan DOM redesign ini. **Sebabnya sekarang diketahui
+      dan sudah diperbaiki**: Vite menyajikan di `127.0.0.1:5573`, Playwright
+      menunggu `localhost:5173`, jadi `pnpm test:e2e` habis waktu menunggu
+      server yang sudah hidup. Keduanya kini mengimpor `apps/web/dev-server.ts`.
+      Yang tersisa adalah menjalankannya dengan seed.
 - [ ] Beacon Cloudflare Insights diblokir CSP. Keputusan infrastruktur pemilik.
 
 ---
