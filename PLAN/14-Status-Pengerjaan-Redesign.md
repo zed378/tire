@@ -10,6 +10,9 @@ ada di `DESIGN_PLAN.md`.
 
 Terakhir diperbarui: **03/09/2026 WIB.**
 
+> Perubahan sejak catatan pertama hari ini: utang `zodResolver` lunas — delapan
+> form, bukan enam. Rinciannya di bawah, di bagian "Utang form: lunas".
+
 ---
 
 ## Ringkasan
@@ -89,6 +92,32 @@ kemampuan, CTA penutup, footer.
 - `docs/image-sources.md` dan `src/lib/photo-credits.ts` **dihasilkan**, bukan
   diketik — atribusi dibaca dari metadata berkasnya sendiri.
 
+### Utang form: lunas
+
+`.claude/rules/web.md` mewajibkan setiap `<form>` divalidasi lewat skema
+`@c26/contracts` melalui `zodResolver`. Catatan sebelumnya menyebut enam form
+yang belum. Sebenarnya **delapan** — `tire-brand-patterns-page` dan
+`tire-sizes-page` juga menyusun validasinya sendiri dan tidak masuk daftar.
+Semuanya sudah dipindahkan:
+
+| Berkas | Skema yang kini dipakai |
+| --- | --- |
+| `auth/step-up-dialog` | `totpCodeSchema` |
+| `inspections/new-inspection-page` | `vehicleSearchSchema`, `createVehicleSchema` |
+| `users/users-page` | `createUserSchema`, `deleteUserSchema` |
+| `master-data/master-data-page` | `createProvinceSchema`, `createCitySchema`, `createBrandSchema` |
+| `master-data/vehicle-brands-page` | `createVehicleBrandSchema`, `updateVehicleBrandSchema` |
+| `master-data/tire-brand-patterns-page` | `createTireBrandPatternSchema`, `updateTireBrandPatternSchema` |
+| `master-data/tire-sizes-page` | `createTireSizeSchema`, `updateTireSizeSchema` |
+| `ops/ops-page` | `logSearchSchema` |
+
+Satu penolong baru, `lib/form-errors.ts`: `applyFieldErrors` memindahkan galat
+422 dari amplop ke field yang disebutkannya, dan `hasFieldErrors` menjaga banner
+halaman tetap diam untuk galat yang sudah punya tempat. Pembagian tiga kanal di
+`PLAN/05` §5.1 sekarang diputuskan sekali, bukan delapan kali.
+
+`pnpm verify` hijau setelahnya: 551 tes, lint tanpa peringatan, empat gerbang.
+
 ---
 
 ## Cacat yang ditemukan dan diperbaiki
@@ -105,25 +134,38 @@ Semuanya ditemukan dengan menjalankan aplikasi, bukan dengan membaca kode.
 | Tanda wajib `*` memakai token `text-danger` (token isian, bukan teks) | 3,1:1 di atas kartu gelap |
 | Error field memakai `role="alert"` | Asertif — menyela pembaca layar untuk pesan yang lahir dari meninggalkan field |
 
+Ditemukan saat memindahkan form ke `zodResolver`:
+
+| Cacat | Akibat sebelum diperbaiki |
+| --- | --- |
+| `master-brand.ts` menulis `.min(2)`, `.max(120)` tanpa pesan | Begitu skema itu dipasang ke form, pengguna Indonesia akan membaca `String must contain at least 2 character(s)` — bawaan Zod, bahasa Inggris, melanggar `K-10`. Pesan ditambahkan di skema, bukan di layar, supaya server memakai kalimat yang sama |
+| `createCitySchema.provinceId` memakai `.positive()` tanpa pesan | Dropdown yang belum dipilih terkirim sebagai `0` dan dijawab `Number must be greater than 0` |
+| Empat tombol mati tanpa penjelasan: Verifikasi (step-up), Hapus Pengguna, Cari (log ops), Cari (plat) | Tombol yang tidak bereaksi dan tidak mengatakan sebabnya. Semua diganti pesan di bawah field — sama seperti 403 `STEP_UP_REQUIRED` yang dulu jadi jalan buntu |
+| `tire-brand-patterns-page` mengirim `type` dua kali (dari dialog dan dari tab) | Tidak salah selama keduanya sama, tapi dua sumber untuk satu nilai |
+| Ganti nama inline (merk kendaraan, pattern, ukuran ban) tidak divalidasi sama sekali | Nama satu huruf dikirim, ditolak server 422, dan klien tidak punya tempat menaruh jawabannya — galat jatuh ke banner halaman tanpa menunjuk field |
+
 ---
 
 ## Yang belum dikerjakan
 
 ### Fase 6 — QA dan pembersihan (belum mulai)
 
-- [ ] Hapus rute sementara `/__styleguide` dan berkasnya.
 - [ ] Audit aksesibilitas menyeluruh: urutan fokus, landmark, kontras seluruh
       halaman di kedua tema.
 - [ ] Uji di lebar 360 / 768 / 1024 / 1440 / 1920.
 - [ ] Ukur LCP di profil 4G. Kalau meleset dari 2,5 detik, IBM Plex Mono yang
       dilepas duluan.
 - [ ] `docs/redesign-report.md` dan `TODO-CONTENT.md`.
+- [ ] Hapus rute sementara `/__styleguide` dan berkasnya. **Terakhir, bukan
+      pertama**: brief §Lampiran A menaruhnya satu langkah dengan
+      `docs/redesign-report.md`, dan halaman itu justru permukaan yang dipakai
+      untuk audit kontras dan sapuan lebar di atasnya. Catatan sebelumnya
+      menempatkannya di urutan pertama; urutan brief yang dipakai.
 
 ### Berasal dari sebelum redesign, masih terbuka
 
-- [ ] **Enam form belum memakai `zodResolver`**: `new-inspection-page`,
-      `users-page`, `master-data-page`, `vehicle-brands-page`, `ops-page`,
-      `step-up-dialog`. `.claude/rules/web.md` mewajibkannya.
+- [x] ~~Enam form belum memakai `zodResolver`~~ — selesai, delapan form. Lihat
+      "Utang form: lunas" di atas.
 - [ ] **G-06** cakupan baris keseluruhan masih di bawah 70% (lihat
       `ACCEPTANCE/STATUS.md`). Perlu suite integrasi berbasis database.
 - [ ] **G-07** skor mutasi mesin poros belum pernah dijalankan.
