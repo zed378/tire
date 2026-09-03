@@ -174,7 +174,7 @@ export function ToastProvider({ children }: { children: ReactNode }): ReactNode 
       {children}
       <div
         aria-live="polite"
-        className="pointer-events-none fixed inset-x-0 bottom-0 z-50 flex flex-col items-center gap-2 p-4 safe-bottom"
+        className="pointer-events-none fixed inset-x-0 bottom-0 z-[70] flex flex-col items-center gap-2 p-4 safe-bottom"
       >
         {toasts.map((toast) => (
           <div
@@ -282,12 +282,14 @@ export function Dialog({
   description,
   onClose,
   children,
+  className,
 }: {
   open: boolean;
   title: string;
   description?: string;
   onClose: () => void;
   children: ReactNode;
+  className?: string;
 }): ReactNode {
   const panel = useRef<HTMLDivElement>(null);
   const titleId = useId();
@@ -309,7 +311,10 @@ export function Dialog({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-4 sm:items-center"
+      className={cn(
+        "fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-4 sm:items-center",
+        className,
+      )}
       // Dismissing by clicking away is what people expect of an overlay, and
       // the same click on the panel must not close it.
       onClick={onClose}
@@ -372,6 +377,7 @@ export function ConfirmDialog({
   onConfirm,
   onClose,
   children,
+  className,
 }: {
   open: boolean;
   title: string;
@@ -382,9 +388,10 @@ export function ConfirmDialog({
   onConfirm: () => void;
   onClose: () => void;
   children?: ReactNode;
+  className?: string;
 }): ReactNode {
   return (
-    <Dialog open={open} title={title} description={description} onClose={onClose}>
+    <Dialog open={open} title={title} description={description} onClose={onClose} className={className}>
       {children}
       <DialogFooter>
         <CancelButton onClick={onClose} />

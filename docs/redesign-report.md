@@ -31,6 +31,11 @@ mematahkan typecheck, bukan diam-diam merender layar kosong yang lulus.
 | Pemeriksaan | Cakupan |
 | --- | --- |
 | axe-core, tag `wcag2a` `wcag2aa` `wcag21a` `wcag21aa` | **24 halaman × 2 tema** |
+| axe-core, **keadaan kosong** | 20 layar di balik sesi, tanpa satu baris data |
+| axe-core, **dialog terbuka** | 4 dialog: tiga form, satu konfirmasi |
+| Tab tidak bisa keluar dari dialog | 15 perhentian |
+| Escape menutup dialog dan mengembalikan fokus ke pembukanya | — |
+| Form yang ditolak menautkan pesan ke fieldnya | `aria-invalid` + `aria-describedby` |
 | Tidak ada geser horizontal | 4 halaman publik × 5 lebar (360 / 768 / 1024 / 1440 / 1920) |
 | Login selesai tanpa tetikus | Enter mengirim dari dalam field |
 | Setiap perhentian Tab berubah tampilannya saat difokuskan | 20 perhentian pertama |
@@ -42,14 +47,22 @@ spesifikasi ban, antrean unggah, antrean dan tinjauan QC, laporan, pengguna,
 empat layar master data, audit, panel operasional, notifikasi, dan tiga layar
 profil.
 
-**Hasil akhir: 70 dari 70 lulus.**
+**Hasil akhir: 97 dari 97 lulus.**
 
 | Putaran | Lulus | Gagal |
 | --- | --- | --- |
 | Pertama, halaman publik saja | 23 | 7 |
 | Sesudah C-01 … C-04 | 30 | 0 |
 | Pertama, dengan layar di balik sesi | 57 | **13** |
-| Sesudah C-05 … C-09 | **70** | 0 |
+| Sesudah C-05 … C-09 | 70 | 0 |
+| Ditambah keadaan kosong, dialog, dan galat | **97** | 0 |
+
+Putaran terakhir itu lulus **sejak percobaan pertama**. Dua puluh keadaan
+kosong, empat dialog, jebakan fokusnya, Escape yang mengembalikan fokus ke
+pembuka, dan sebuah form yang baru saja ditolak — tidak satu pun melanggar.
+Yang layak dicatat bukan angkanya, melainkan bahwa `Dialog` sudah memenuhi
+seluruh kontrak modalnya sebelum ada yang mengujinya: `aria-modal`, judul yang
+menamai, jebakan fokus, Escape, dan fokus yang kembali ke tempatnya.
 
 ### Cacat yang ditemukan
 
@@ -204,12 +217,15 @@ tidak tahu di mana mereka berada — apa pun alasannya.
 
 ### Yang belum diaudit
 
-- **Kondisi, bukan halaman.** Sapuan ini merender tiap layar sekali, pada satu
-  himpunan data. Dialog yang belum terbuka, keadaan galat, dan daftar kosong
-  tidak ikut terperiksa.
 - **Pembaca layar sungguhan.** axe menangkap kelas cacat yang tidak terlihat
   mata; ia tidak menggantikan menjalankan halaman ini dengan NVDA atau
-  TalkBack.
+  TalkBack. Ini yang tersisa dan tidak bisa diotomatiskan.
+- **Keadaan yang butuh jawaban server tertentu**: 500 dengan `requestId` yang
+  bisa disalin, `SERVICE_UNAVAILABLE`, unggahan yang gagal, antrean offline.
+  Fixture-nya selalu menjawab 200; menjangkau ini berarti menambah varian gagal
+  di `api-stubs.ts`.
+- **Empat dialog dari sekian**, dipilih untuk mencakup dua bentuknya — form dan
+  konfirmasi. Dialog step-up, misalnya, belum terbuka dalam sapuan.
 - Satu hal yang saya lihat tapi **tidak** saya ubah: halaman profil memasang
   `<Button>` di dalam `<Link>` — sebuah `<button>` di dalam `<a>`. Itu HTML
   tidak sah dan dua kontrol bertumpuk, tapi axe tidak melaporkannya, dan

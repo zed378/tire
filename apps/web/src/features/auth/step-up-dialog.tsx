@@ -96,6 +96,7 @@ export function StepUpDialog(): ReactNode {
       onClose={() => {
         finish(false);
       }}
+      className="z-[60]"
     >
       <form noValidate onSubmit={(event) => void onSubmit(event)} className="space-y-3">
         <Field

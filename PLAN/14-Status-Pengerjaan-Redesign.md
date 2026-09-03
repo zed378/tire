@@ -35,9 +35,11 @@ Terakhir diperbarui: **03/09/2026 WIB.**
 Kondisi terukur saat ini:
 
 - `pnpm verify` **hijau** — typecheck, lint, 551 tes, dan empat gerbang statis.
-- `pnpm test:a11y` **hijau** — 70 pemeriksaan: axe-core WCAG 2.1 AA di **24
-  layar** × dua tema, lima lebar layar, dan navigasi papan ketik. Layar di balik
-  sesi dijawab fixture ber-tipe (`e2e/api-stubs.ts`), bukan basis data.
+- `pnpm test:a11y` **hijau** — 97 pemeriksaan: axe-core WCAG 2.1 AA di **24
+  layar** × dua tema, **20 keadaan kosong**, **4 dialog** beserta jebakan
+  fokusnya, sebuah form yang baru ditolak, lima lebar layar, dan navigasi papan
+  ketik. Layar di balik sesi dijawab fixture ber-tipe (`e2e/api-stubs.ts`),
+  bukan basis data.
 - Bundel JS awal **146,6 KB** dari plafon 180 KB (G-12), turun dari 169,3 KB.
 - CSS **11,25 KB** gzip.
 - LCP profil 4G: `/` **4,14 s**, `/login` **3,21 s**, `/register` **3,37 s** —
@@ -216,16 +218,26 @@ pengunjung tanpa sesi tidak seharusnya mengunduh layar yang tidak boleh ia buka.
       menunjuk panel yang tidak pernah dirender (**critical**), tombol di dalam
       tombol, akses papan ketik palsu di grafik, dan `<dl>` yang bukan daftar
       definisi.
-- [ ] Sapuan itu merender tiap layar **sekali**, pada satu himpunan data.
-      Dialog yang belum terbuka, keadaan galat, dan daftar kosong belum
-      terperiksa. Begitu pula pembaca layar sungguhan.
+- [x] ~~Keadaan, bukan cuma halaman~~ — daftar kosong, dialog, jebakan fokus,
+      Escape yang mengembalikan fokus, dan form yang ditolak. Semuanya lulus
+      **sejak percobaan pertama**: `Dialog` ternyata sudah memenuhi seluruh
+      kontrak modalnya sebelum ada yang mengujinya.
+- [ ] **Pembaca layar sungguhan** (NVDA / TalkBack). Ini yang tersisa dan tidak
+      bisa diotomatiskan.
+- [ ] Keadaan yang butuh jawaban server tertentu: 500 dengan `requestId`,
+      `SERVICE_UNAVAILABLE`, unggahan gagal. Fixture-nya selalu menjawab 200.
 - [x] ~~Uji di lebar 360 / 768 / 1024 / 1440 / 1920~~ — 20 dari 20 lulus sejak
       pengukuran pertama, tidak ada perbaikan yang diperlukan.
 - [x] ~~Ukur LCP di profil 4G~~ — **meleset di ketiga rute publik**
       (4,14 / 3,21 / 3,37 detik). Lihat catatan di bawah: resep "lepas IBM Plex
       Mono duluan" menyasar hal yang salah.
 - [x] ~~`docs/redesign-report.md`~~
-- [ ] `TODO-CONTENT.md`.
+- [x] ~~`TODO-CONTENT.md`~~ — dan ia menemukan sesuatu: tiga angka callout di
+      hero landing (`8,4 mm / 120 psi / 14 bln`) dan nomor seri contoh
+      `SN2026-00148` **karangan saya**, masih tayang. `DESIGN_PLAN.md`
+      §self-critique butir 3 sudah memutuskan agar dicatat; pencatatannya yang
+      belum pernah dilakukan. Sekarang tercatat, dengan jalan keluarnya bila
+      Anda tidak menyediakan angka nyata.
 - [ ] Hapus rute sementara `/__styleguide` dan berkasnya. **Terakhir, bukan
       pertama**: brief §Lampiran A menaruhnya satu langkah dengan
       `docs/redesign-report.md`, dan halaman itu justru permukaan yang dipakai
