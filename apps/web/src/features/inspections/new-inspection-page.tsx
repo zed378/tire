@@ -1,9 +1,8 @@
-import { useMemo, useState, type ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
 import {
   createVehicleSchema,
   normalizePlateDisplay,
@@ -256,35 +255,17 @@ function NewVehicleForm({
   onCancel,
   onSubmit,
 }: NewVehicleFormProps): ReactNode {
-  const formSchema = useMemo(
-    () =>
-      createVehicleSchema.superRefine((value: CreateVehicleInput, ctx: z.RefinementCtx) => {
-        // `provinceId` is stripped by the object schema, so it is read from the
-        // raw input rather than from the parsed value.
-        const provinceId = (value as NewVehicleFormValues).provinceId;
-
-        // V-11, from the same helper the server uses.
-        for (const cityError of validateCityInProvince(master.cities, value.cityId, provinceId)) {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            path: [cityError.field],
-            message: cityError.message,
-          });
-        }
-      }),
-    [master.cities],
-  );
-
   const {
     register,
     control,
     handleSubmit,
     watch,
+    getValues,
     setValue,
     setError,
     formState: { errors },
   } = useForm<NewVehicleFormValues>({
-    resolver: zodResolver(formSchema),
+    resolver: zodResolver(createVehicleSchema),
     defaultValues: {
       plateDisplay: initialPlate,
       chassisNumber: null,
@@ -316,6 +297,21 @@ function NewVehicleForm({
   );
 
   const submit = handleSubmit(async (values) => {
+    // V-11, from the same helper the server uses. It runs after the schema
+    // rather than inside it because `provinceId` never reaches the wire: the
+    // object schema strips it, so the parsed value has nothing to check.
+    const cityErrors = validateCityInProvince(
+      master.cities,
+      values.cityId,
+      getValues("provinceId"),
+    );
+    if (cityErrors.length > 0) {
+      for (const cityError of cityErrors) {
+        setError(cityError.field as "provinceId" | "cityId", { message: cityError.message });
+      }
+      return;
+    }
+
     try {
       await onSubmit(values);
     } catch (caught) {
