@@ -180,6 +180,37 @@ Ditemukan setelah sapuan diperluas ke layar di balik sesi:
 | Tombol peringatan layar sambutan: `bg-warning text-white` | **3,19:1**. Amber di palet ini warna sinyal terang; ia menuntut tinta gelap. Token `--color-on-warning` ditambahkan, melengkapi `on-accent` yang sudah ada |
 | Label kartu statistik antrean QC diredupkan `opacity-80` | 6,84 → 4,41:1. Kelas yang sama dengan langkah `01–06` di landing yang dulu diredupkan `opacity: .55` |
 
+### Aturan kirim pengajuan: satu gerbang yang tidak ada dasarnya
+
+Dilaporkan dari lapangan: layar detail pemeriksaan menampilkan enam posisi ban
+dengan foto bertanda **"Menunggu unggah"**, dan tepat di bawahnya menolak
+pengiriman dengan alasan **"0 dari 6 posisi ban sudah ada fotonya."** Fotonya
+ada; ia hanya belum sampai ke server.
+
+Menelusurinya menemukan hal yang lebih mendasar. `computeSubmitBlocker` dan
+transaksi kirim sama-sama mewajibkan **setiap posisi ban** punya minimal satu
+foto — dan **tidak ada dokumen yang memintanya**:
+
+- `PLAN/03` §7.1 menuliskan syarat `draft → pending_qc` sebagai "V-01…V-11
+  lolos". Tidak satu pun dari V-01 sampai V-11 menyangkut foto.
+- Satu-satunya aturan foto yang tertulis adalah `PLAN/06` §2: **pengiriman
+  menunggu antrean unggah selesai** — dan itu sudah punya pemeriksaannya
+  sendiri, tepat di bawah gerbang tadi, dengan pesan yang jauh lebih jelas
+  ("N foto masih menunggu selesai diunggah").
+- `V-13` mengatur **batas atas** 10 foto per slot. Batas bawah per posisi tidak
+  pernah ditulis siapa pun.
+
+Gerbang tak berdasar itu dihapus, di kedua tempat. Yang tersisa adalah aturan
+yang memang tertulis, ditambah satu lantai: **nol foto tetap ditolak**. Itu
+bukan aturan lama yang kembali dengan nama lain — kekhawatiran yang dinyatakan
+`PLAN/06` §2 adalah pengajuan yang sampai ke QC "tanpa bukti", dan nol foto
+persis itu.
+
+`V-13` tidak disentuh: maksimum tetap **10 foto per slot**, dan `contract.test.ts`
+sudah menguncinya. Yang perlu Anda ketahui: `MAX_PHOTOS_PER_INSPECTION` = **30**
+(`PLAN/06` §6) mengikat lebih dulu — pada kendaraan 6 posisi, 10 foto di setiap
+posisi tidak akan tercapai karena plafon 30 per pengajuan tercapai duluan.
+
 ### Resep LCP di catatan sebelumnya salah sasaran
 
 Catatan ini pernah menulis: "Kalau meleset dari 2,5 detik, IBM Plex Mono yang
