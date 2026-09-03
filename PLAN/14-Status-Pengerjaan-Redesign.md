@@ -14,9 +14,10 @@ Terakhir diperbarui: **03/09/2026 WIB.**
 >
 > - Utang `zodResolver` lunas — delapan form, bukan enam. Lihat "Utang form:
 >   lunas".
-> - Fase 6 dimulai. Sapuan aksesibilitas dan lebar layar hijau untuk empat
->   halaman publik; LCP diukur dan **meleset**. Angkanya di
->   `docs/redesign-report.md`.
+> - Fase 6 berjalan. Sapuan aksesibilitas kini menjangkau **24 layar** — empat
+>   publik dan dua puluh di balik sesi — di dua tema, dan hijau: 70 dari 70.
+>   Sembilan cacat ditemukan, salah satunya bertaraf **critical**. LCP diukur
+>   dan **meleset**. Semuanya di `docs/redesign-report.md`.
 
 ---
 
@@ -34,8 +35,9 @@ Terakhir diperbarui: **03/09/2026 WIB.**
 Kondisi terukur saat ini:
 
 - `pnpm verify` **hijau** — typecheck, lint, 551 tes, dan empat gerbang statis.
-- `pnpm test:a11y` **hijau** — 30 pemeriksaan: axe-core WCAG 2.1 AA di empat
-  halaman publik × dua tema, lima lebar layar, dan navigasi papan ketik.
+- `pnpm test:a11y` **hijau** — 70 pemeriksaan: axe-core WCAG 2.1 AA di **24
+  layar** × dua tema, lima lebar layar, dan navigasi papan ketik. Layar di balik
+  sesi dijawab fixture ber-tipe (`e2e/api-stubs.ts`), bukan basis data.
 - Bundel JS awal **146,6 KB** dari plafon 180 KB (G-12), turun dari 169,3 KB.
 - CSS **11,25 KB** gzip.
 - LCP profil 4G: `/` **4,14 s**, `/login` **3,21 s**, `/register` **3,37 s** —
@@ -165,6 +167,17 @@ dengan angka kontras dan cara mengulang, ada di `docs/redesign-report.md`:
 | Halaman `/__styleguide` menaruh komponen nyata di atas `bg-paper`/`bg-concrete` | Di mode gelap seluruh label form di sana adalah teks nyaris-putih di atas putih. Kegagalan dua sistem token yang redesign ini ada untuk menghilangkan, di halaman yang mendokumentasikan tokennya |
 | `vite.config.ts` menyajikan `127.0.0.1:5573`, `playwright.config.ts` menunggu `localhost:5173` | `pnpm test:e2e` habis waktu enam puluh detik menunggu server yang sudah hidup. Inilah sebab G-11 tidak pernah berjalan |
 
+Ditemukan setelah sapuan diperluas ke layar di balik sesi:
+
+| Cacat | Akibat sebelum diperbaiki |
+| --- | --- |
+| `Tabs` memasang `aria-controls` ke panel yang tidak dirender di `tire-brand-patterns-page` dan `tire-sizes-page` | Pembaca layar diberi tahu tab itu mengendalikan sebuah region, lalu region-nya tidak ada. Satu-satunya temuan bertaraf **critical** di seluruh sapuan |
+| Tanda silang "hapus pilihan" di `SearchableSelect` adalah `role="button"` **di dalam** tombol pemicu | Kontrol di dalam kontrol. Yang di dalam ikut terbaca sebagai bagian dari nama tombol luar dan tidak bisa dioperasikan sendiri. Dipakai di form pemeriksaan baru dan layar spesifikasi ban |
+| `line-chart` menaruh `<rect role="button" tabIndex={0}>` di dalam `<svg role="img">` | `role="img"` satu daun di pohon aksesibilitas — anaknya tidak dipaparkan. Akses papan ketik itu tidak pernah ada, dan angka grafiknya tidak pernah terbaca sama sekali. Diganti tabel `sr-only` berisi datanya |
+| `<dt>`/`<dd>` di halaman profil bersarang dua `<div>` dalam sebuah `<dl>` | Tidak sah, dan tiap barisnya membawa aksi — yang bukan "istilah dan definisi". Jadi `<ul>` |
+| Tombol peringatan layar sambutan: `bg-warning text-white` | **3,19:1**. Amber di palet ini warna sinyal terang; ia menuntut tinta gelap. Token `--color-on-warning` ditambahkan, melengkapi `on-accent` yang sudah ada |
+| Label kartu statistik antrean QC diredupkan `opacity-80` | 6,84 → 4,41:1. Kelas yang sama dengan langkah `01–06` di landing yang dulu diredupkan `opacity: .55` |
+
 ### Resep LCP di catatan sebelumnya salah sasaran
 
 Catatan ini pernah menulis: "Kalau meleset dari 2,5 detik, IBM Plex Mono yang
@@ -197,11 +210,15 @@ pengunjung tanpa sesi tidak seharusnya mengunduh layar yang tidak boleh ia buka.
       axe-core WCAG 2.1 AA, dua tema. Berkasnya
       `apps/web/e2e/accessibility.spec.ts`; ia menyetub `/api/auth/me` sendiri
       sehingga tidak butuh basis data.
-- [ ] **Dua puluh layar di balik sesi belum pernah diperiksa axe.** Cacat C-02
-      di laporan itu justru kelas yang hidup di sana — pasangan `accent-text`
-      di atas `accent-soft` yang gagal di tema gelap dipakai sidebar,
-      `SearchableSelect`, dan lencana. Menjangkaunya butuh seed, sama seperti
-      G-11.
+- [x] ~~Dua puluh layar di balik sesi~~ — ikut disapu, dijawab fixture
+      ber-tipe alih-alih basis data. Menemukan lima cacat lagi (C-05 … C-09),
+      dan hanya satu di antaranya soal kontras: sebuah `aria-controls` yang
+      menunjuk panel yang tidak pernah dirender (**critical**), tombol di dalam
+      tombol, akses papan ketik palsu di grafik, dan `<dl>` yang bukan daftar
+      definisi.
+- [ ] Sapuan itu merender tiap layar **sekali**, pada satu himpunan data.
+      Dialog yang belum terbuka, keadaan galat, dan daftar kosong belum
+      terperiksa. Begitu pula pembaca layar sungguhan.
 - [x] ~~Uji di lebar 360 / 768 / 1024 / 1440 / 1920~~ — 20 dari 20 lulus sejak
       pengukuran pertama, tidak ada perbaikan yang diperlukan.
 - [x] ~~Ukur LCP di profil 4G~~ — **meleset di ketiga rute publik**

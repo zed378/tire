@@ -33,7 +33,7 @@ export function SupplierWelcome({ metrics }: { metrics: SupplierMetrics }): Reac
             </div>
             <Link
               to="/inspections?status=needs_revision"
-              className="inline-flex min-h-10 items-center justify-center rounded-lg bg-warning text-white px-4 text-xs sm:text-sm font-semibold hover:opacity-95 shadow-sm transition-all"
+              className="inline-flex min-h-10 items-center justify-center rounded-lg bg-warning text-on-warning px-4 text-xs sm:text-sm font-semibold hover:opacity-95 shadow-sm transition-all"
             >
               Lihat Pengajuan Perlu Revisi →
             </Link>

@@ -69,7 +69,7 @@ export function AdminWelcome({ metrics }: { metrics: AdminMetrics }): ReactNode 
             </div>
             <Link
               to="/qc"
-              className="inline-flex min-h-10 items-center justify-center rounded-lg bg-warning text-white px-4 text-xs sm:text-sm font-semibold hover:opacity-95 shadow-sm transition-all"
+              className="inline-flex min-h-10 items-center justify-center rounded-lg bg-warning text-on-warning px-4 text-xs sm:text-sm font-semibold hover:opacity-95 shadow-sm transition-all"
             >
               Buka Antrean QC →
             </Link>

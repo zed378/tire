@@ -209,7 +209,11 @@ function StatCard({
 
   return (
     <div className={`rounded-lg border p-3 ${tones[tone]}`}>
-      <p className="text-xs font-medium uppercase tracking-wide opacity-80">{label}</p>
+      {/* No `opacity-80`. It took the label from 6.84:1 to 4.41:1 on the warning
+          tile and 6.81:1 to 4.34:1 on the success one — both under AA. Uppercase
+          at 12px with letter-spacing already reads as secondary; dimming it was
+          buying nothing and costing legibility. */}
+      <p className="text-xs font-medium uppercase tracking-wide">{label}</p>
       <p className="mt-1 text-2xl font-semibold">
         {value === undefined ? "—" : formatNumber(value)}
       </p>

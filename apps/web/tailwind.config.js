@@ -73,6 +73,7 @@ export default {
           soft: token("accent-soft"),
         },
         "on-accent": token("on-accent"),
+        "on-warning": token("on-warning"),
 
         /*
          * The locked palette, named for the material. The semantic names

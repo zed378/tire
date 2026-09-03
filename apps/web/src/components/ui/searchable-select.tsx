@@ -216,7 +216,10 @@ const SearchableSelectInner = forwardRef(
             }
           }}
           className={cn(
-            "flex w-full min-h-11 items-center justify-between gap-2 rounded-md border px-3 py-2 text-left text-sm transition-colors",
+            "flex w-full min-h-11 items-center justify-between gap-2 rounded-md border py-2 pl-3 text-left text-sm transition-colors",
+            // Room for the chevron, plus room for the clear control when it is
+            // there — it sits over the trigger rather than inside it.
+            clearable && selectedOption !== null && !disabled ? "pr-9" : "pr-3",
             "focus:outline-none focus:ring-2 focus:ring-accent/30",
             controlTone(wiring.invalid),
             disabled ? "bg-surface-sunken text-subtle cursor-not-allowed opacity-75" : "hover:border-line-strong cursor-pointer",
@@ -227,37 +230,49 @@ const SearchableSelectInner = forwardRef(
             {selectedOption ? selectedOption.label : placeholder}
           </span>
 
-          <div className="flex items-center gap-1.5 flex-shrink-0 text-muted">
-            {clearable && selectedOption && !disabled ? (
-              <span
-                role="button"
-                tabIndex={0}
-                aria-label="Hapus pilihan"
-                onClick={handleClear}
-                className="p-0.5 rounded hover:bg-surface-sunken hover:text-body transition-colors cursor-pointer"
-              >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <line x1="18" y1="6" x2="6" y2="18" />
-                  <line x1="6" y1="6" x2="18" y2="18" />
-                </svg>
-              </span>
-            ) : null}
-
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className={cn("transition-transform duration-200", isOpen ? "rotate-180 text-accent-text" : "")}
-            >
-              <polyline points="6 9 12 15 18 9" />
-            </svg>
-          </div>
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+            className={cn(
+              "flex-shrink-0 text-muted transition-transform duration-200",
+              isOpen ? "rotate-180 text-accent-text" : "",
+            )}
+          >
+            <polyline points="6 9 12 15 18 9" />
+          </svg>
         </button>
+
+        {/*
+          The clear control is a SIBLING of the trigger, not a child of it.
+          It used to be a `role="button"` span inside the trigger button — a
+          control nested in a control, which axe reports as `nested-interactive`
+          and which browsers and screen readers do not agree on how to expose.
+          In practice the inner one was announced as part of the outer button's
+          name and could not be operated on its own.
+
+          Absolutely positioned so the layout is unchanged, and the trigger
+          reserves room for it with `pr-9`.
+        */}
+        {clearable && selectedOption !== null && !disabled ? (
+          <button
+            type="button"
+            aria-label={`Hapus pilihan ${selectedOption.label}`}
+            onClick={handleClear}
+            className="absolute right-8 top-1/2 -translate-y-1/2 rounded p-1 text-muted transition-colors hover:bg-surface-sunken hover:text-body"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
+        ) : null}
 
         {/* Popover Dropdown Panel */}
         {isOpen ? (

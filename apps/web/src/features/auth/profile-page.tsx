@@ -79,31 +79,43 @@ export function ProfilePage(): ReactNode {
       ) : null}
 
       <Card title="Keamanan Akun">
-        <dl className="grid gap-4 sm:grid-cols-2">
-          <div className="flex items-start justify-between gap-3">
+        {/*
+          A list, not a `<dl>`.
+ 
+          It was a description list whose `<dt>` and `<dd>` sat two divs deep,
+          which is invalid: a `<dl>` may wrap a term-and-description group in one
+          `<div>`, not two. axe reported both halves of that — the list holding
+          something other than groups, and the terms holding no list.
+
+          Flattening it would not have made it right either. Each row carries an
+          action, and a row that can be operated is not a term and its
+          definition. A list of settings is what this is.
+        */}
+        <ul className="grid gap-4 sm:grid-cols-2">
+          <li className="flex items-start justify-between gap-3">
             <div>
-              <dt className="text-sm font-medium text-body">Kata sandi</dt>
-              <dd className="mt-0.5 text-xs text-muted">
+              <p className="text-sm font-medium text-body">Kata sandi</p>
+              <p className="mt-0.5 text-xs text-muted">
                 {user.mustChangePassword
                   ? "Wajib diganti sebelum melanjutkan."
                   : "Ganti berkala, dan segera bila Anda curiga bocor."}
-              </dd>
+              </p>
             </div>
             <Link to="/profile/password">
               <Button variant="secondary" size="sm">
                 Ganti
               </Button>
             </Link>
-          </div>
+          </li>
 
-          <div className="flex items-start justify-between gap-3">
+          <li className="flex items-start justify-between gap-3">
             <div>
-              <dt className="text-sm font-medium text-body">Autentikasi dua faktor</dt>
-              <dd className="mt-0.5 text-xs text-muted">
+              <p className="text-sm font-medium text-body">Autentikasi dua faktor</p>
+              <p className="mt-0.5 text-xs text-muted">
                 {user.mfaEnrolled
                   ? "Aktif. Kode diminta saat login dari perangkat baru."
                   : "Belum aktif."}
-              </dd>
+              </p>
             </div>
             {user.mfaEnrolled ? (
               <Badge tone="success">Aktif</Badge>
@@ -114,8 +126,8 @@ export function ProfilePage(): ReactNode {
                 </Button>
               </Link>
             )}
-          </div>
-        </dl>
+          </li>
+        </ul>
       </Card>
 
       <Card

@@ -1,14 +1,15 @@
 import AxeBuilder from "@axe-core/playwright";
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test } from "@playwright/test";
+import { stubSignedInApi, stubSignedOutSession } from "./api-stubs.ts";
 
 /**
  * The accessibility and responsive sweep for the redesign (brief PART VIII/IX).
  *
- * Unlike `qc-flow.spec.ts` this needs no database and no seed. Every route it
- * visits is public, and the one API call the shell makes on load — `/api/auth/me`
- * — is answered here with the same envelope a signed-out visitor gets. That
- * keeps the sweep runnable in CI, on a laptop, and on a branch where the API is
- * mid-migration; an audit nobody can run is an audit nobody runs.
+ * Unlike `qc-flow.spec.ts` this needs no database and no seed. The public routes
+ * get the envelope a signed-out visitor gets; the twenty routes behind a session
+ * get the fixtures in `api-stubs.ts`. That keeps the sweep runnable in CI, on a
+ * laptop, and on a branch where the API is mid-migration; an audit nobody can
+ * run is an audit nobody runs.
  *
  * Two things are checked that a screenshot cannot tell you:
  *
@@ -42,6 +43,37 @@ const PUBLIC_ROUTES = [
   { path: "/__styleguide", name: "styleguide" },
 ] as const;
 
+/**
+ * Every screen behind a session.
+ *
+ * These are answered by `api-stubs.ts` rather than by a database. The reason is
+ * in that file; the short version is that the worst defect this sweep has found
+ * so far lives on exactly these screens and was caught by accident, through the
+ * one tile on the landing page that shared its colour pairing.
+ */
+const PRIVATE_ROUTES = [
+  { path: "/welcome", name: "welcome" },
+  { path: "/inspections", name: "inspection-list" },
+  { path: "/inspections/new", name: "inspection-new" },
+  { path: "/inspections/SN2026-00002", name: "inspection-detail" },
+  { path: "/inspections/SN2026-00002/tire-specs", name: "tire-specs" },
+  { path: "/upload-queue", name: "upload-queue" },
+  { path: "/qc", name: "qc-queue" },
+  { path: "/qc/SN2026-00002", name: "qc-review" },
+  { path: "/reports", name: "reports" },
+  { path: "/users", name: "users" },
+  { path: "/master-data", name: "master-data" },
+  { path: "/master-data/vehicle-brands", name: "vehicle-brands" },
+  { path: "/master-data/tire-brand-patterns", name: "tire-brand-patterns" },
+  { path: "/master-data/tire-sizes", name: "tire-sizes" },
+  { path: "/audit", name: "audit" },
+  { path: "/ops", name: "ops" },
+  { path: "/notifications", name: "notifications" },
+  { path: "/profile", name: "profile" },
+  { path: "/profile/password", name: "change-password" },
+  { path: "/profile/mfa", name: "mfa-enroll" },
+] as const;
+
 const THEMES = ["light", "dark"] as const;
 
 /**
@@ -54,29 +86,6 @@ test.beforeEach(() => {
     "This file drives its own viewport, so the device projects would repeat it",
   );
 });
-
-/**
- * Answers the session bootstrap without a server.
- *
- * `SESSION_EXPIRED` is the envelope a visitor with no cookie receives, and the
- * session provider treats it as a real answer — "there is no session" — rather
- * than as a failure to ask. Anything else here would put a SERVICE_UNAVAILABLE
- * banner on top of every page in the sweep.
- */
-async function stubSignedOutSession(page: Page): Promise<void> {
-  await page.route("**/api/auth/me", async (route) => {
-    await route.fulfill({
-      status: 401,
-      contentType: "application/json",
-      body: JSON.stringify({
-        ok: false,
-        code: "SESSION_EXPIRED",
-        message: "Sesi Anda telah berakhir. Silakan masuk kembali.",
-        requestId: "req_e2e_a11y",
-      }),
-    });
-  });
-}
 
 for (const theme of THEMES) {
   test.describe(`Aksesibilitas — tema ${theme}`, () => {
@@ -96,6 +105,32 @@ for (const theme of THEMES) {
 
         // The message names the rule and the element, so a failure here is
         // actionable without reopening the browser.
+        expect(
+          results.violations.map((violation) => ({
+            rule: violation.id,
+            impact: violation.impact,
+            help: violation.help,
+            nodes: violation.nodes.map((node) => node.target.join(" ")),
+          })),
+        ).toEqual([]);
+      });
+    }
+
+    for (const route of PRIVATE_ROUTES) {
+      test(`${route.name} tidak melanggar WCAG 2.1 AA`, async ({ page }) => {
+        await stubSignedInApi(page);
+        await page.goto(route.path);
+        await page.waitForLoadState("networkidle");
+
+        // The shell is what proves the stub took: without a session the router
+        // sends every one of these to /login, and axe would then audit the login
+        // page twenty times over and report a clean sweep.
+        await expect(page.getByRole("navigation", { name: "Navigasi utama" })).toBeVisible();
+
+        const results = await new AxeBuilder({ page })
+          .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
+          .analyze();
+
         expect(
           results.violations.map((violation) => ({
             rule: violation.id,

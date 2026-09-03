@@ -22,7 +22,7 @@ import {
 } from "../../components/ui/feedback.tsx";
 import { Button, Card, EmptyState, Field, Input, SkeletonRows } from "../../components/ui/primitives.tsx";
 import { Pagination } from "../../components/ui/pagination.tsx";
-import { Tabs } from "../../components/ui/tabs.tsx";
+import { Tabs, TabPanel } from "../../components/ui/tabs.tsx";
 
 type Tab = "TB" | "LT";
 
@@ -114,6 +114,10 @@ export function TireBrandPatternsPage(): ReactNode {
         ]}
       />
 
+      {/* The tab bar tells assistive technology it controls a region. Without
+          this wrapper that region did not exist — `aria-controls` pointed at an
+          id nothing rendered, which axe reports as critical. */}
+      <TabPanel value={tab}>
        <Card>
         {patterns.isLoading ? (
           <div role="status" aria-live="polite">
@@ -171,7 +175,8 @@ export function TireBrandPatternsPage(): ReactNode {
           onPageChange={setPage}
           disabled={patterns.isFetching}
         />
-      </Card>
+       </Card>
+      </TabPanel>
 
       {creating ? (
         <CreatePatternDialog

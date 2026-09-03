@@ -119,6 +119,16 @@
     --color-accent-text: var(--blue); /* 7.0:1 on concrete */
     --color-accent-soft: 239 246 255; /* brand-50 — selected nav, subtle fills */
     --color-on-accent: 255 255 255;
+    /*
+     * Ink for the warning FILL, the partner `on-accent` already had.
+     *
+     * White on amber-600 is 3.19:1 — under AA — and it was on the one control
+     * the welcome screen uses to say something needs attention. Amber is a
+     * light signal colour in this palette ("chalk on a sidewall"); it takes
+     * dark ink, at 5.58:1. The value is the same in both themes because the
+     * fill is.
+     */
+    --color-on-warning: var(--graphite);
 
     /* Feedback. Each is a trio: soft fill, line, and readable text. */
     --color-danger: 220 38 38; /* red-600 */
@@ -185,6 +195,16 @@
     --color-accent-text: 147 197 253; /* brand-300 — 9.9:1 on canvas, 5.7:1 on accent-soft */
     --color-accent-soft: 30 58 138; /* brand-900 */
     --color-on-accent: 255 255 255;
+    /*
+     * Ink for the warning FILL, the partner `on-accent` already had.
+     *
+     * White on amber-600 is 3.19:1 — under AA — and it was on the one control
+     * the welcome screen uses to say something needs attention. Amber is a
+     * light signal colour in this palette ("chalk on a sidewall"); it takes
+     * dark ink, at 5.58:1. The value is the same in both themes because the
+     * fill is.
+     */
+    --color-on-warning: var(--graphite);
 
     --color-danger: 220 38 38;
     --color-danger-soft: 69 10 10; /* red-950 */
@@ -243,6 +263,7 @@
       --color-accent-text: 147 197 253; /* brand-300 — see the .dark block above */
       --color-accent-soft: 30 58 138; /* brand-900 */
       --color-on-accent: 255 255 255;
+      --color-on-warning: var(--graphite);
 
       --color-danger: 220 38 38;
       --color-danger-soft: 69 10 10; /* red-950 */

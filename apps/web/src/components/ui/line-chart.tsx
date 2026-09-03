@@ -177,8 +177,18 @@ export function LineChart({
           );
         })}
 
-        {/* One invisible strip per point, so a tap anywhere in the column
-            selects it. Fingers are wider than a 3px dot. */}
+        {/*
+          One invisible strip per point, so a tap anywhere in the column selects
+          it. Fingers are wider than a 3px dot.
+
+          These are pointer affordances and nothing more. They used to carry
+          `tabIndex={0}` and `role="button"`, which axe reports as
+          `nested-interactive`: this `<svg>` is `role="img"`, so it is one leaf
+          in the accessibility tree and its children are not exposed at all. The
+          keyboard access those attributes appeared to give never existed. What
+          replaces it is the table below, which gives a screen reader the actual
+          numbers rather than a row of unlabelled buttons.
+        */}
         {data.map((_, index) => (
           <rect
             key={`hit-${String(index)}`}
@@ -189,14 +199,38 @@ export function LineChart({
             fill="transparent"
             onMouseEnter={() => setHoverIndex(index)}
             onMouseLeave={() => setHoverIndex(null)}
-            onFocus={() => setHoverIndex(index)}
-            onBlur={() => setHoverIndex(null)}
-            tabIndex={0}
-            role="button"
-            aria-label={String(data[index]?.[categoryKey] ?? "")}
           />
         ))}
       </svg>
+
+      {/*
+        The same data as text, for anyone who cannot read the picture.
+        `role="img"` plus a `<title>` announces "a chart of X and Y per period"
+        and then stops — the numbers themselves were unreachable.
+      */}
+      <table className="sr-only">
+        <caption>Data grafik {series.map((line) => line.label).join(" dan ")} per periode</caption>
+        <thead>
+          <tr>
+            <th scope="col">Periode</th>
+            {series.map((line) => (
+              <th key={line.key} scope="col">
+                {line.label}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {data.map((row, index) => (
+            <tr key={`row-${String(index)}`}>
+              <th scope="row">{String(row[categoryKey] ?? "")}</th>
+              {series.map((line) => (
+                <td key={line.key}>{String(row[line.key] ?? 0)}</td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
 
       <figcaption className="mt-2 flex flex-wrap items-center gap-4 text-xs text-muted">
         {series.map((line) => (

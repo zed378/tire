@@ -17,27 +17,46 @@ pnpm test:a11y
 ```
 
 Berkasnya `apps/web/e2e/accessibility.spec.ts`. Sapuan ini **tidak** butuh basis
-data dan tidak butuh API: satu-satunya panggilan yang dibuat cangkang aplikasi
-saat memuat, `/api/auth/me`, dijawab di dalam tes dengan amplop yang sama seperti
-yang diterima pengunjung tanpa sesi. Audit yang tidak bisa dijalankan siapa pun
-adalah audit yang tidak dijalankan siapa pun.
+data dan tidak butuh API. Halaman publik dijawab dengan amplop yang diterima
+pengunjung tanpa sesi; **dua puluh layar di balik sesi** dijawab dengan fixture
+di `apps/web/e2e/api-stubs.ts`. Audit yang tidak bisa dijalankan siapa pun
+adalah audit yang tidak dijalankan siapa pun — dan audit yang butuh Postgres
+hidup adalah audit yang dilewati.
+
+Fixture-nya diketik terhadap `@c26/contracts`, jadi bentuk respons yang berubah
+mematahkan typecheck, bukan diam-diam merender layar kosong yang lulus.
 
 ### Yang diperiksa
 
 | Pemeriksaan | Cakupan |
 | --- | --- |
-| axe-core, tag `wcag2a` `wcag2aa` `wcag21a` `wcag21aa` | 4 halaman × 2 tema |
-| Tidak ada geser horizontal | 4 halaman × 5 lebar (360 / 768 / 1024 / 1440 / 1920) |
+| axe-core, tag `wcag2a` `wcag2aa` `wcag21a` `wcag21aa` | **24 halaman × 2 tema** |
+| Tidak ada geser horizontal | 4 halaman publik × 5 lebar (360 / 768 / 1024 / 1440 / 1920) |
 | Login selesai tanpa tetikus | Enter mengirim dari dalam field |
 | Setiap perhentian Tab berubah tampilannya saat difokuskan | 20 perhentian pertama |
 
-Halaman: `/`, `/login`, `/register`, `/__styleguide`.
+Publik: `/`, `/login`, `/register`, `/__styleguide`.
 
-**Hasil akhir: 30 dari 30 lulus.** Sebelum perbaikan: 23 lulus, 7 gagal.
+Di balik sesi: `/welcome`, daftar dan detail pemeriksaan, form pemeriksaan baru,
+spesifikasi ban, antrean unggah, antrean dan tinjauan QC, laporan, pengguna,
+empat layar master data, audit, panel operasional, notifikasi, dan tiga layar
+profil.
+
+**Hasil akhir: 70 dari 70 lulus.**
+
+| Putaran | Lulus | Gagal |
+| --- | --- | --- |
+| Pertama, halaman publik saja | 23 | 7 |
+| Sesudah C-01 … C-04 | 30 | 0 |
+| Pertama, dengan layar di balik sesi | 57 | **13** |
+| Sesudah C-05 … C-09 | **70** | 0 |
 
 ### Cacat yang ditemukan
 
-Semua kegagalan berkategori `color-contrast`, tingkat `serious`.
+Sembilan, dalam dua putaran: C-01 sampai C-04 dari halaman publik, C-05 sampai
+C-09 dari layar di balik sesi. Yang pertama semuanya soal kontras. Yang kedua
+sebagian besar bukan — dan yang paling parah di antaranya, satu-satunya bertaraf
+**critical** dalam sapuan ini, adalah janji ARIA yang tidak ditepati markup.
 
 #### C-01 — `--color-subtle` tidak pernah memenuhi AA di tema terang
 
@@ -109,6 +128,66 @@ Dua kelas, keduanya di `features/styleguide/styleguide-page.tsx`:
    yang mendokumentasikan tokennya. Panel komponen sekarang memakai
    `bg-surface`.
 
+#### C-05 — `Tabs` menjanjikan panel yang tidak pernah ada (kritis)
+
+`components/ui/tabs.tsx` memasang `aria-controls="panel-<nilai>"` di setiap tab.
+`tire-brand-patterns-page` dan `tire-sizes-page` memakai `Tabs` **tanpa satu pun
+`TabPanel`**, jadi atribut itu menunjuk id yang tidak dirender apa-apa.
+
+Bagi pembaca layar itu berarti: "tab, mengendalikan sebuah region" — lalu
+region-nya tidak ada. axe menilainya **critical**, satu-satunya di seluruh
+sapuan. Kedua halaman kini membungkus isinya dengan `TabPanel`.
+
+#### C-06 — tombol di dalam tombol pada `SearchableSelect`
+
+Tanda silang "hapus pilihan" adalah `<span role="button" tabIndex={0}>` **di
+dalam** tombol pemicu. Kontrol di dalam kontrol: peramban dan pembaca layar
+tidak sepakat cara memaparkannya, dan pada praktiknya yang di dalam ikut
+terbaca sebagai bagian dari nama tombol luar dan tidak bisa dioperasikan
+sendiri.
+
+Sekarang ia saudara dari pemicu, diposisikan absolut di atasnya, dan sebuah
+`<button>` sungguhan dengan nama yang menyebut pilihan yang akan dihapus.
+
+Terlihat di layar spesifikasi ban, tapi komponennya dipakai juga di form
+pemeriksaan baru — merk kendaraan, provinsi, kota.
+
+#### C-07 — grafik menjanjikan akses papan ketik yang tidak pernah ada
+
+`components/ui/line-chart.tsx` menaruh satu `<rect role="button" tabIndex={0}>`
+per titik data di dalam `<svg role="img">`. Sebuah `role="img"` adalah **satu
+daun** di pohon aksesibilitas: anak-anaknya tidak dipaparkan sama sekali. Jadi
+strip itu tidak pernah bisa difokus, dan angkanya tidak pernah terbaca — yang
+didapat pembaca layar hanya "Grafik TB dan LT per periode", tanpa satu pun
+angka.
+
+Atribut interaktifnya dilepas (strip itu memang afordans penunjuk, bukan
+kontrol), dan sebagai gantinya data yang sama disajikan sebagai **tabel
+`sr-only`** — periode, TB, LT, baris per baris. Bukan menambal aturan axe:
+sebelumnya angkanya benar-benar tidak tersedia.
+
+#### C-08 — `<dl>` yang bukan daftar definisi, di halaman profil
+
+`<dt>` dan `<dd>` bersarang dua `<div>` dalam. Spesifikasi hanya mengizinkan
+satu `<div>` pembungkus per kelompok, jadi axe melaporkan dua sisi sekaligus:
+daftar yang isinya bukan kelompok, dan istilah yang tidak berada di dalam
+daftar.
+
+Meratakannya pun tidak akan benar. Tiap baris membawa aksi, dan baris yang bisa
+dioperasikan bukan "istilah dan definisinya". Sekarang `<ul>` — daftar
+pengaturan, yang memang itulah wujudnya.
+
+#### C-09 — dua kontras terakhir
+
+| Tempat | Sebelum | Perbaikan |
+| --- | --- | --- |
+| Tombol peringatan di layar sambutan, `bg-warning text-white` | **3,19:1** | Token baru `--color-on-warning` (graphite) — 5,58:1. Amber di palet ini warna sinyal yang terang ("kapur di dinding ban"); ia menuntut tinta gelap, bukan putih. Pasangan `on-accent` sudah ada; `on-warning` yang belum |
+| Label kartu statistik antrean QC, `opacity-80` | 6,84 → **4,41:1** (peringatan), 6,81 → **4,34:1** (sukses) | Peredupannya dilepas. Huruf kapital 12px berspasi sudah terbaca sekunder; meredupkannya tidak membeli apa pun |
+
+Yang kedua kelas cacat yang sama dengan langkah `01–06` di landing yang dulu
+diredupkan `opacity: .55`. Peredupan adalah cara paling mudah menjatuhkan
+kontras tanpa ada yang menyadarinya.
+
 ### Positif palsu yang dibuang dari tes
 
 Versi pertama tes cincin fokus mencari `outline` atau `box-shadow` pada elemen
@@ -125,9 +204,17 @@ tidak tahu di mana mereka berada — apa pun alasannya.
 
 ### Yang belum diaudit
 
-Sapuan ini hanya menjangkau empat halaman publik. **Dua puluh layar di balik
-sesi belum pernah diperiksa axe**, dan C-02 menunjukkan kelas cacat yang justru
-hidup di sana. Menjangkaunya butuh basis data ter-seed — sama seperti G-11.
+- **Kondisi, bukan halaman.** Sapuan ini merender tiap layar sekali, pada satu
+  himpunan data. Dialog yang belum terbuka, keadaan galat, dan daftar kosong
+  tidak ikut terperiksa.
+- **Pembaca layar sungguhan.** axe menangkap kelas cacat yang tidak terlihat
+  mata; ia tidak menggantikan menjalankan halaman ini dengan NVDA atau
+  TalkBack.
+- Satu hal yang saya lihat tapi **tidak** saya ubah: halaman profil memasang
+  `<Button>` di dalam `<Link>` — sebuah `<button>` di dalam `<a>`. Itu HTML
+  tidak sah dan dua kontrol bertumpuk, tapi axe tidak melaporkannya, dan
+  memperbaikinya berarti memilih antara menduplikasi kelas tombol di sisi
+  tautan atau menambah komponen baru. Keputusan Anda.
 
 ---
 
