@@ -12,7 +12,12 @@ import {
 import { api } from "../../lib/api-client.ts";
 import { formatDateTime } from "../../lib/format.ts";
 import { useSession } from "../../lib/session.tsx";
-import { enqueuePhoto, subscribeToQueue } from "../../lib/photo/upload-queue.ts";
+import {
+  enqueuePhoto,
+  removeQueueItems,
+  retryFailedIn,
+  subscribeToQueue,
+} from "../../lib/photo/upload-queue.ts";
 import type { QueueItem } from "../../lib/photo/queue-store.ts";
 import { Banner, ErrorBanner, StatusBadge, useToast } from "../../components/ui/feedback.tsx";
 import { Button, Card, PageHeader, Spinner } from "../../components/ui/primitives.tsx";
@@ -75,6 +80,11 @@ export function InspectionDetailPage(): ReactNode {
   const queueForThis = queue.filter((item) => item.serialNumber === sn);
   const editable = inspection.status === "draft" || inspection.status === "needs_revision";
   const photosBySlot = photos.data ?? [];
+
+  // The 30-per-inspection cap in `PLAN/06` §6 binds across every slot, so a slot
+  // cannot decide it alone: on a six-position vehicle the ceiling is reached
+  // long before any one slot sees its tenth photograph.
+  const uploadedInInspection = photosBySlot.length;
 
    return (
      <div className="space-y-4">
@@ -139,6 +149,7 @@ export function InspectionDetailPage(): ReactNode {
               editable={editable}
               photos={photosBySlot.filter((photo) => photo.slot === general.slot)}
               queued={queueForThis.filter((item) => item.slot === general.slot)}
+              uploadedInInspection={uploadedInInspection}
               onError={setError}
             />
           ))}
@@ -161,6 +172,7 @@ export function InspectionDetailPage(): ReactNode {
               editable={editable}
               photos={photosBySlot.filter((photo) => photo.tirePositionId === position.id)}
               queued={queueForThis.filter((item) => item.tirePositionId === position.id)}
+              uploadedInInspection={uploadedInInspection}
               onError={setError}
             />
           ))}
@@ -265,6 +277,8 @@ interface PhotoSlotProps {
   editable: boolean;
   photos: PhotoRecord[];
   queued: QueueItem[];
+  /** Photographs the server holds across the whole inspection, for the 30 cap. */
+  uploadedInInspection: number;
   onError: (error: unknown) => void;
 }
 
@@ -277,10 +291,16 @@ function PhotoSlot({
   editable,
   photos,
   queued,
+  uploadedInInspection,
   onError,
 }: PhotoSlotProps): ReactNode {
   const [busy, setBusy] = useState(false);
   const total = photos.length + queued.length;
+
+  const failed = queued.filter((item) => item.status === "failed");
+  // One message, not one per photograph: ten copies of "Maksimal 10 foto per
+  // slot" tells the reader nothing the first copy did not.
+  const failureReason = failed.find((item) => item.lastError !== null)?.lastError ?? null;
 
   const onFilesSelected = async (event: ChangeEvent<HTMLInputElement>): Promise<void> => {
     const files = Array.from(event.target.files ?? []);
@@ -293,7 +313,20 @@ function PhotoSlot({
         // Compression, checksum, and queueing all happen on the device. The
         // photo is safe in IndexedDB before any network call is attempted —
         // which is the point of the whole offline design (PLAN/06 §4).
-        await enqueuePhoto({ serialNumber, tirePositionId, positionLabel: label, slot, file });
+        //
+        // The counts go with it so `enqueuePhoto` can refuse one that would
+        // break V-13 before it is compressed and stored. Selecting twelve files
+        // at once used to queue all twelve; the server then rejected two of them
+        // permanently, and they stayed on the screen as failures.
+        await enqueuePhoto({
+          serialNumber,
+          tirePositionId,
+          positionLabel: label,
+          slot,
+          file,
+          uploadedInSlot: photos.length,
+          uploadedInInspection,
+        });
       }
     } catch (error) {
       onError(error);
@@ -311,11 +344,11 @@ function PhotoSlot({
              <p className="font-mono text-xs text-subtle">{sublabel}</p>
            ) : null}
          </div>
-         <span
-           className={
-             total === 0 ? "text-xs font-medium text-danger-text" : "text-xs text-muted"
-           }
-         >
+         {/* Not red at zero any more. A position with no photograph no longer
+             blocks submission — no document ever asked it to — so colouring it
+             as an error was telling the supplier about a problem that does not
+             exist. */}
+         <span className="text-xs text-muted">
            {total}/{MAX_PHOTOS_PER_SLOT}
          </span>
        </div>
@@ -335,19 +368,70 @@ function PhotoSlot({
            {queued.map((item) => (
              <li
                key={item.id}
-               className="flex h-16 w-16 flex-col items-center justify-center rounded border border-dashed border-warning-line bg-warning-soft text-center"
+               className={
+                 item.status === "failed"
+                   ? "flex h-16 w-16 flex-col items-center justify-center rounded border border-dashed border-danger-line bg-danger-soft text-center"
+                   : "flex h-16 w-16 flex-col items-center justify-center rounded border border-dashed border-warning-line bg-warning-soft text-center"
+               }
                title={item.lastError ?? "Menunggu sinyal"}
              >
-               <span className="text-[10px] font-medium text-warning-text">
+               <span
+                 className={
+                   item.status === "failed"
+                     ? "text-[10px] font-medium text-danger-text"
+                     : "text-[10px] font-medium text-warning-text"
+                 }
+               >
                  {item.status === "failed" ? "Gagal" : "Menunggu"}
                </span>
-               <span className="text-[10px] text-warning-text">unggah</span>
+               <span
+                 className={
+                   item.status === "failed" ? "text-[10px] text-danger-text" : "text-[10px] text-warning-text"
+                 }
+               >
+                 unggah
+               </span>
              </li>
            ))}
          </ul>
        ) : (
          <p className="mt-2 text-xs text-subtle">Belum ada foto.</p>
        )}
+
+      {/*
+        A way out of a failed upload, on the screen where the failure appears.
+        Before this the tiles were dead: no retry, no removal, and once the
+        failures pushed the count past the cap the file input disappeared too,
+        so the slot could not be corrected at all.
+
+        Per-item control stays on the queue screen. Here the useful unit is the
+        slot — when one photograph in a slot fails, usually all of them have,
+        for the same reason.
+      */}
+      {failed.length > 0 ? (
+        <div className="mt-2 rounded border border-danger-line bg-danger-soft p-2">
+          <p className="text-xs text-danger-text">
+            {failed.length} foto gagal diunggah
+            {failureReason === null ? "." : `: ${failureReason}`}
+          </p>
+          <div className="mt-2 flex flex-wrap gap-2">
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={() => void retryFailedIn(failed.map((item) => item.id))}
+            >
+              Coba Lagi
+            </Button>
+            <Button
+              size="sm"
+              variant="danger"
+              onClick={() => void removeQueueItems(failed.map((item) => item.id))}
+            >
+              Buang yang Gagal
+            </Button>
+          </div>
+        </div>
+      ) : null}
 
       {editable && total < MAX_PHOTOS_PER_SLOT ? (
         <label className="mt-3 block">
@@ -364,6 +448,14 @@ function PhotoSlot({
             className="block w-full text-xs file:mr-2 file:min-h-9 file:rounded file:border-0 file:bg-accent file:px-3 file:text-on-accent"
           />
         </label>
+      ) : editable ? (
+        // The input is gone because the slot is full. Saying so is the
+        // difference between a limit and a broken screen — especially when the
+        // count is full of failures the supplier can now clear above.
+        <p className="mt-3 text-xs text-muted">
+          Slot ini sudah penuh ({MAX_PHOTOS_PER_SLOT} foto). Buang foto yang gagal atau hapus
+          dari antrean unggah untuk menambah lagi.
+        </p>
       ) : null}
 
        {busy ? <p className="mt-2 text-xs text-muted">Mengompresi foto…</p> : null}

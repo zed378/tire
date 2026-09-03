@@ -4,6 +4,8 @@ import { formatBytes, formatRelative } from "../../lib/format.ts";
 import {
   processQueue,
   removeQueueItem,
+  removeQueueItems,
+  retryFailedIn,
   retryQueueItem,
   subscribeToQueue,
   summarise,
@@ -14,7 +16,7 @@ import {
   type QueueItem,
 } from "../../lib/photo/queue-store.ts";
 import { Badge, Button, Card, EmptyState, PageHeader, StatTile } from "../../components/ui/primitives.tsx";
-import { Banner } from "../../components/ui/feedback.tsx";
+import { Banner, ConfirmDialog } from "../../components/ui/feedback.tsx";
 
 /**
  * The upload queue (PLAN/06 §4).
@@ -33,6 +35,9 @@ export function UploadQueuePage(): ReactNode {
   const [items, setItems] = useState<QueueItem[]>([]);
   const [storage, setStorage] = useState<{ usageBytes: number; quotaBytes: number } | null>(null);
   const [persistent, setPersistent] = useState<boolean | null>(null);
+  const [discarding, setDiscarding] = useState(false);
+
+  const failedIds = items.filter((item) => item.status === "failed").map((item) => item.id);
 
   useEffect(() => subscribeToQueue(setItems), []);
   useEffect(() => {
@@ -74,9 +79,29 @@ export function UploadQueuePage(): ReactNode {
       <Card
         title="Ringkasan"
         actions={
-          <Button onClick={() => void processQueue()} disabled={items.length === 0}>
-            Unggah sekarang
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button onClick={() => void processQueue()} disabled={items.length === 0}>
+              Unggah sekarang
+            </Button>
+            {/*
+              One action for the whole backlog. A queue can reach three figures
+              — a slot that keeps being refused fails once per photograph — and
+              clearing that one "Buang" at a time is not a recovery path.
+
+              Retry first, discard second, and the discard asks. These are
+              photographs taken in the field that exist nowhere else.
+            */}
+            {failedIds.length > 0 ? (
+              <>
+                <Button variant="secondary" onClick={() => void retryFailedIn(failedIds)}>
+                  Coba lagi semua ({failedIds.length})
+                </Button>
+                <Button variant="danger" onClick={() => setDiscarding(true)}>
+                  Buang semua yang gagal
+                </Button>
+              </>
+            ) : null}
+          </div>
         }
       >
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -164,6 +189,20 @@ export function UploadQueuePage(): ReactNode {
            </ul>
          )}
        </Card>
+
+      <ConfirmDialog
+        open={discarding}
+        title="Buang semua foto yang gagal?"
+        description={`${String(failedIds.length)} foto akan dihapus dari perangkat ini dan tidak dapat dikembalikan. Foto yang sudah terunggah tidak terpengaruh.`}
+        confirmLabel="Buang"
+        onConfirm={() => {
+          void removeQueueItems(failedIds);
+          setDiscarding(false);
+        }}
+        onClose={() => {
+          setDiscarding(false);
+        }}
+      />
     </div>
   );
 }

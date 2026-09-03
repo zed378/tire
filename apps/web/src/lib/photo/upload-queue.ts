@@ -1,9 +1,10 @@
-import type { PresignResult } from "@c26/contracts";
+import { checkPhotoQuota, type PresignResult } from "@c26/contracts";
 import { api, isApiError } from "../api-client.ts";
 import {
   deleteQueueItem,
   findByChecksum,
   listQueue,
+  listQueueFor,
   putQueueItem,
   type QueueItem,
 } from "./queue-store.ts";
@@ -61,9 +62,47 @@ export interface EnqueueInput {
   positionLabel: string;
   slot: QueueItem["slot"];
   file: File;
+  /** Photographs the SERVER already holds for this slot and this inspection. */
+  uploadedInSlot: number;
+  uploadedInInspection: number;
+}
+
+/**
+ * Refused before it costs anything.
+ *
+ * V-13 was enforced on the server at presign and nowhere on the device, so the
+ * queue accepted as many photographs as were selected. Each one then failed
+ * permanently with "Maksimal 10 foto per slot" and stayed in the queue — which
+ * is how a slot came to read `52/10` on a screen whose own caption says the
+ * maximum is ten, with the file input hidden because the count was over the cap
+ * and no way to clear the fifty-two.
+ *
+ * The rule itself is not restated here. `checkPhotoQuota` in `@c26/contracts` is
+ * the same function the server calls, so the device and the server cannot
+ * disagree about what the cap is.
+ */
+export function quotaViolationFor(
+  input: Pick<EnqueueInput, "slot" | "tirePositionId" | "uploadedInSlot" | "uploadedInInspection">,
+  queued: readonly QueueItem[],
+): { message: string } | null {
+  // A `done` item is a photograph the server already counted; counting it here
+  // as well would refuse the eleventh photograph when only ten exist.
+  const inFlight = queued.filter((item) => item.status !== "done");
+
+  const sameSlot = inFlight.filter(
+    (item) => item.slot === input.slot && item.tirePositionId === input.tirePositionId,
+  );
+
+  return checkPhotoQuota({
+    slotCount: input.uploadedInSlot + sameSlot.length,
+    inspectionCount: input.uploadedInInspection + inFlight.length,
+  });
 }
 
 export async function enqueuePhoto(input: EnqueueInput): Promise<QueueItem> {
+  const violation = quotaViolationFor(input, await listQueueFor(input.serialNumber));
+  if (violation !== null) throw new Error(violation.message);
+
   const compressed = await compressPhoto(input.file);
 
   // A photo already waiting with the same bytes is not queued twice.
@@ -202,6 +241,29 @@ export async function retryQueueItem(id: string): Promise<void> {
 
 export async function removeQueueItem(id: string): Promise<void> {
   await deleteQueueItem(id);
+  await notifyListeners();
+}
+
+/**
+ * Retry, or discard, every failed photograph in one slot.
+ *
+ * The per-item controls live on the queue screen. These exist because the
+ * supplier is on the inspection screen when the failures appear, and a slot
+ * whose every photograph failed left them with no way forward at all: no retry,
+ * no removal, and — once the failures pushed the count past the cap — no file
+ * input either.
+ */
+export async function retryFailedIn(ids: string[]): Promise<void> {
+  const items = await listQueue();
+  for (const item of items.filter((candidate) => ids.includes(candidate.id))) {
+    await putQueueItem({ ...item, status: "pending", attempts: 0, nextAttemptAt: Date.now() });
+  }
+  await notifyListeners();
+  void processQueue();
+}
+
+export async function removeQueueItems(ids: string[]): Promise<void> {
+  for (const id of ids) await deleteQueueItem(id);
   await notifyListeners();
 }
 
