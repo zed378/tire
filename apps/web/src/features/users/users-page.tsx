@@ -1,16 +1,20 @@
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Controller, useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import {
   createUserSchema,
+  deleteUserSchema,
   USER_ROLE_LABELS,
   USER_ROLES,
   type CreateUserInput,
+  type DeleteUserInput,
   type MasterDataBundle,
   type Paginated,
   type UserRecord,
-  type UserRole,
 } from "@c26/contracts";
 import { api } from "../../lib/api-client.ts";
+import { applyFieldErrors } from "../../lib/form-errors.ts";
 import { formatRelative } from "../../lib/format.ts";
 import { useSession } from "../../lib/session.tsx";
 import {
@@ -43,7 +47,6 @@ export function UsersPage(): ReactNode {
 
   const [creating, setCreating] = useState(false);
   const [deleting, setDeleting] = useState<UserRecord | null>(null);
-  const [confirmUsername, setConfirmUsername] = useState("");
   const [temporaryPassword, setTemporaryPassword] = useState<string | null>(null);
   const [error, setError] = useState<unknown>(null);
 
@@ -72,7 +75,6 @@ export function UsersPage(): ReactNode {
       setCreating(false);
       await invalidate();
     },
-    onError: setError,
   });
 
   const update = useMutation({
@@ -102,66 +104,64 @@ export function UsersPage(): ReactNode {
   });
 
   const remove = useMutation({
-    mutationFn: ({ id, username }: { id: number; username: string }) =>
-      api.delete(`/api/users/${String(id)}`, { confirmUsername: username }),
+    mutationFn: ({ id, body }: { id: number; body: DeleteUserInput }) =>
+      api.delete(`/api/users/${String(id)}`, body),
     onSuccess: async () => {
       toast.push({ tone: "success", message: "Pengguna dihapus." });
       setDeleting(null);
-      setConfirmUsername("");
       await invalidate();
     },
-    onError: setError,
   });
 
   return (
     <div className="space-y-4">
-       <div className="flex flex-wrap items-center justify-between gap-2">
-         <h1 className="text-lg font-semibold text-body">Manajemen Pengguna</h1>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h1 className="text-lg font-semibold text-body">Manajemen Pengguna</h1>
         <Button onClick={() => setCreating(true)}>Tambah Pengguna</Button>
       </div>
 
       {error !== null ? <ErrorBanner error={error} onDismiss={() => setError(null)} /> : null}
 
-       {temporaryPassword !== null ? (
-         <Banner
-           tone="warning"
-           title="Password sementara — hanya ditampilkan sekali"
-           onDismiss={() => setTemporaryPassword(null)}
-         >
-           <p>
-             Sampaikan kepada pengguna melalui kanal yang sudah ada. Pengguna akan diminta
-             menggantinya saat login pertama.
-           </p>
-           <code className="mt-2 inline-block select-all rounded bg-surface px-2 py-1 font-mono text-sm text-body">
-             {temporaryPassword}
-           </code>
-         </Banner>
-       ) : null}
+      {temporaryPassword !== null ? (
+        <Banner
+          tone="warning"
+          title="Password sementara — hanya ditampilkan sekali"
+          onDismiss={() => setTemporaryPassword(null)}
+        >
+          <p>
+            Sampaikan kepada pengguna melalui kanal yang sudah ada. Pengguna akan diminta
+            menggantinya saat login pertama.
+          </p>
+          <code className="mt-2 inline-block select-all rounded bg-surface px-2 py-1 font-mono text-sm text-body">
+            {temporaryPassword}
+          </code>
+        </Banner>
+      ) : null}
 
-       <Card>
-         {users.isLoading ? (
-           <div className="flex justify-center py-10 text-muted">
-             <Spinner className="h-5 w-5" />
-           </div>
-         ) : (
-           <ul className="divide-y divide-line">
-             {(users.data?.items ?? []).map((row) => {
-               const isSelf = currentUser?.id === row.id;
+      <Card>
+        {users.isLoading ? (
+          <div className="flex justify-center py-10 text-muted">
+            <Spinner className="h-5 w-5" />
+          </div>
+        ) : (
+          <ul className="divide-y divide-line">
+            {(users.data?.items ?? []).map((row) => {
+              const isSelf = currentUser?.id === row.id;
 
-               return (
-                 <li key={row.id} className="flex flex-wrap items-center justify-between gap-3 py-3">
-                   <div className="min-w-0">
-                     <p className="font-medium text-body">
-                       {row.displayName}{" "}
-                       <span className="font-normal text-muted">({row.username})</span>
-                     </p>
-                     <p className="mt-0.5 text-sm text-muted">
-                       {USER_ROLE_LABELS[row.role]}
-                       {row.regions.length > 0
-                         ? ` · ${row.regions.map((region) => region.name).join(", ")}`
-                         : " · seluruh wilayah"}
-                     </p>
-                     <p className="mt-0.5 text-xs text-muted">
+              return (
+                <li key={row.id} className="flex flex-wrap items-center justify-between gap-3 py-3">
+                  <div className="min-w-0">
+                    <p className="font-medium text-body">
+                      {row.displayName}{" "}
+                      <span className="font-normal text-muted">({row.username})</span>
+                    </p>
+                    <p className="mt-0.5 text-sm text-muted">
+                      {USER_ROLE_LABELS[row.role]}
+                      {row.regions.length > 0
+                        ? ` · ${row.regions.map((region) => region.name).join(", ")}`
+                        : " · seluruh wilayah"}
+                    </p>
+                    <p className="mt-0.5 text-xs text-muted">
                       {row.isActive ? "Aktif" : "Nonaktif"}
                       {row.mfaEnrolled ? " · 2FA aktif" : ""}
                       {row.mustChangePassword ? " · wajib ganti password" : ""}
@@ -225,158 +225,186 @@ export function UsersPage(): ReactNode {
         />
       </Card>
 
-      <CreateUserDialog
-        open={creating}
-        provinces={master.data?.provinces ?? []}
-        submitting={create.isPending}
-        onClose={() => setCreating(false)}
-        onSubmit={(input) => create.mutate(input)}
-      />
+      {creating ? (
+        <CreateUserDialog
+          provinces={master.data?.provinces ?? []}
+          submitting={create.isPending}
+          onClose={() => setCreating(false)}
+          onSubmit={(input) => create.mutateAsync(input)}
+        />
+      ) : null}
 
-      {/* Guard 4 (PLAN/04 §5): retyping the username, in an application dialog.
-          A browser confirm() could not do this and is forbidden regardless. */}
-      <Dialog
-        open={deleting !== null}
-        title="Hapus pengguna"
-        description="Pengajuan yang pernah dibuat pengguna ini tetap tersimpan dan tetap merujuk kepadanya."
-        onClose={() => {
-          setDeleting(null);
-          setConfirmUsername("");
-        }}
-      >
-        <Field
-          label={`Ketik ulang User ID "${deleting?.username ?? ""}" untuk mengonfirmasi`}
-          htmlFor="confirm-username"
-          required
-        >
-          <Input
-            id="confirm-username"
-            value={confirmUsername}
-            autoComplete="off"
-            onChange={(event) => setConfirmUsername(event.target.value)}
-          />
-        </Field>
-
-        <DialogFooter>
-          <CancelButton
-            onClick={() => {
-              setDeleting(null);
-              setConfirmUsername("");
-            }}
-          />
-          <Button
-            variant="danger"
-            loading={remove.isPending}
-            disabled={confirmUsername !== deleting?.username}
-            onClick={() => {
-              if (deleting !== null) {
-                remove.mutate({ id: deleting.id, username: confirmUsername });
-              }
-            }}
-          >
-            Hapus Pengguna
-          </Button>
-        </DialogFooter>
-      </Dialog>
+      {deleting !== null ? (
+        <DeleteUserDialog
+          user={deleting}
+          submitting={remove.isPending}
+          onClose={() => setDeleting(null)}
+          onSubmit={(body) => remove.mutateAsync({ id: deleting.id, body })}
+        />
+      ) : null}
     </div>
   );
 }
 
+/**
+ * Guard 4 (PLAN/04 §5): deletion requires retyping the username, in an
+ * application dialog. A browser `confirm()` could not ask for it and is
+ * forbidden regardless.
+ *
+ * The mismatch is a field error rather than a disabled button. A button that is
+ * dead with nothing to explain why is the same dead end the step-up 403 used to
+ * be — the user can see the field they filled in and not the reason it is not
+ * enough.
+ */
+function DeleteUserDialog({
+  user,
+  submitting,
+  onClose,
+  onSubmit,
+}: {
+  user: UserRecord;
+  submitting: boolean;
+  onClose: () => void;
+  onSubmit: (body: DeleteUserInput) => Promise<unknown>;
+}): ReactNode {
+  const {
+    register,
+    handleSubmit,
+    setError,
+    formState: { errors },
+  } = useForm<DeleteUserInput>({
+    resolver: zodResolver(deleteUserSchema),
+    defaultValues: { confirmUsername: "" },
+  });
+
+  const submit = handleSubmit(async (values) => {
+    if (values.confirmUsername !== user.username) {
+      setError("confirmUsername", { message: "User ID yang diketik tidak sama." });
+      return;
+    }
+
+    try {
+      await onSubmit(values);
+    } catch (caught) {
+      if (!applyFieldErrors(caught, setError)) {
+        setError("confirmUsername", {
+          message: "Gagal menghapus pengguna. Silakan coba lagi.",
+        });
+      }
+    }
+  });
+
+  return (
+    <Dialog
+      open
+      title="Hapus pengguna"
+      description="Pengajuan yang pernah dibuat pengguna ini tetap tersimpan dan tetap merujuk kepadanya."
+      onClose={onClose}
+    >
+      <form noValidate onSubmit={(event) => void submit(event)} className="space-y-3">
+        <Field
+          label={`Ketik ulang User ID "${user.username}" untuk mengonfirmasi`}
+          htmlFor="confirm-username"
+          error={errors.confirmUsername?.message}
+          required
+        >
+          <Input
+            id="confirm-username"
+            autoComplete="off"
+            autoCapitalize="none"
+            invalid={errors.confirmUsername !== undefined}
+            {...register("confirmUsername")}
+          />
+        </Field>
+
+        <DialogFooter>
+          <CancelButton onClick={onClose} />
+          <Button type="submit" variant="danger" loading={submitting} loadingText="Menghapus…">
+            Hapus Pengguna
+          </Button>
+        </DialogFooter>
+      </form>
+    </Dialog>
+  );
+}
+
 function CreateUserDialog({
-  open,
   provinces,
   submitting,
   onClose,
   onSubmit,
 }: {
-  open: boolean;
   provinces: { id: number; name: string }[];
   submitting: boolean;
   onClose: () => void;
-  onSubmit: (input: CreateUserInput) => void;
+  onSubmit: (input: CreateUserInput) => Promise<unknown>;
 }): ReactNode {
-  const [username, setUsername] = useState("");
-  const [displayName, setDisplayName] = useState("");
-  const [role, setRole] = useState<UserRole>("supplier");
-  const [email, setEmail] = useState("");
-  const [regionProvinceIds, setRegionProvinceIds] = useState<number[]>([]);
-  const [errors, setErrors] = useState<Record<string, string>>({});
+  const {
+    register,
+    handleSubmit,
+    control,
+    watch,
+    setError,
+    setFocus,
+    formState: { errors },
+  } = useForm<CreateUserInput>({
+    resolver: zodResolver(createUserSchema),
+    defaultValues: {
+      username: "",
+      displayName: "",
+      role: "supplier",
+      email: null,
+      regions: [],
+    },
+  });
 
-  const resetForm = (): void => {
-    setUsername("");
-    setDisplayName("");
-    setRole("supplier");
-    setEmail("");
-    setRegionProvinceIds([]);
-    setErrors({});
-  };
+  // The dialog takes focus itself when it opens, so `autoFocus` on a child that
+  // mounts in the same commit loses the race.
+  useEffect(() => {
+    setFocus("username");
+  }, [setFocus]);
 
-  const handleClose = (): void => {
-    resetForm();
-    onClose();
-  };
+  const role = watch("role");
 
-  const submit = (): void => {
-    const candidate = {
-      username,
-      displayName,
-      role,
-      email: email === "" ? null : email,
-      regions: regionProvinceIds.map((provinceId) => ({ provinceId })),
-    };
-
-    const parsed = createUserSchema.safeParse(candidate);
-    if (!parsed.success) {
-      const next: Record<string, string> = {};
-      for (const issue of parsed.error.issues) next[issue.path.join(".")] ??= issue.message;
-      setErrors(next);
-      return;
+  const submit = handleSubmit(async (values) => {
+    try {
+      // Region rows only mean something for a supplier; a role change that left
+      // stale selections behind would otherwise send them anyway.
+      await onSubmit(values.role === "supplier" ? values : { ...values, regions: [] });
+    } catch (caught) {
+      if (!applyFieldErrors(caught, setError)) {
+        setError("username", { message: "Gagal menyimpan pengguna. Silakan coba lagi." });
+      }
     }
-
-    resetForm();
-    onSubmit(parsed.data);
-  };
+  });
 
   return (
     <Dialog
-      open={open}
+      open
       title="Tambah Pengguna"
       description="Password awal dibuat sistem dan hanya ditampilkan sekali."
-      onClose={handleClose}
+      onClose={onClose}
     >
-      <form
-        noValidate
-        onSubmit={(event) => {
-          event.preventDefault();
-          submit();
-        }}
-        className="space-y-3"
-      >
-        <Field label="User ID" htmlFor="new-username" error={errors.username} required>
+      <form noValidate onSubmit={(event) => void submit(event)} className="space-y-3">
+        <Field label="User ID" htmlFor="new-username" error={errors.username?.message} required>
           <Input
             id="new-username"
-            value={username}
             autoCapitalize="none"
             invalid={errors.username !== undefined}
-            onChange={(event) => setUsername(event.target.value)}
+            {...register("username")}
           />
         </Field>
 
-        <Field label="Nama" htmlFor="new-displayName" error={errors.displayName} required>
+        <Field label="Nama" htmlFor="new-displayName" error={errors.displayName?.message} required>
           <Input
             id="new-displayName"
-            value={displayName}
             invalid={errors.displayName !== undefined}
-            onChange={(event) => setDisplayName(event.target.value)}
+            {...register("displayName")}
           />
         </Field>
 
-        <Field label="Peran" htmlFor="new-role" error={errors.role} required>
-          <Select
-            id="new-role"
-            value={role}
-            onChange={(event) => setRole(event.target.value as UserRole)}
-          >
+        <Field label="Peran" htmlFor="new-role" error={errors.role?.message} required>
+          <Select id="new-role" invalid={errors.role !== undefined} {...register("role")}>
             {USER_ROLES.map((value) => (
               <option key={value} value={value}>
                 {USER_ROLE_LABELS[value]}
@@ -388,15 +416,16 @@ function CreateUserDialog({
         <Field
           label="Email"
           htmlFor="new-email"
-          error={errors.email}
+          error={errors.email?.message}
           hint="Opsional. Diperlukan untuk notifikasi lewat surel."
         >
+          {/* An empty field means "no email", not an invalid one. Without
+              `setValueAs` the optional field fails its own format check on "". */}
           <Input
             id="new-email"
             type="email"
-            value={email}
             invalid={errors.email !== undefined}
-            onChange={(event) => setEmail(event.target.value)}
+            {...register("email", { setValueAs: (value: string) => (value === "" ? null : value) })}
           />
         </Field>
 
@@ -404,26 +433,37 @@ function CreateUserDialog({
           <Field
             label="Wilayah penugasan"
             htmlFor="new-regions"
+            error={errors.regions?.message}
             hint="Kosongkan bila supplier ini tidak dibatasi wilayah."
           >
-            <select
-              id="new-regions"
-              multiple
-              size={4}
-              className="w-full rounded-md border border-line-strong bg-surface px-3 py-2"
-              value={regionProvinceIds.map(String)}
-              onChange={(event) =>
-                setRegionProvinceIds(
-                  Array.from(event.target.selectedOptions).map((option) => Number(option.value)),
-                )
-              }
-            >
-              {provinces.map((province) => (
-                <option key={province.id} value={province.id}>
-                  {province.name}
-                </option>
-              ))}
-            </select>
+            <Controller
+              control={control}
+              name="regions"
+              render={({ field }) => (
+                <select
+                  id="new-regions"
+                  multiple
+                  size={4}
+                  className="w-full rounded-md border border-line-strong bg-surface px-3 py-2"
+                  ref={field.ref}
+                  onBlur={field.onBlur}
+                  value={(field.value ?? []).map((region) => String(region.provinceId))}
+                  onChange={(event) =>
+                    field.onChange(
+                      Array.from(event.target.selectedOptions).map((option) => ({
+                        provinceId: Number(option.value),
+                      })),
+                    )
+                  }
+                >
+                  {provinces.map((province) => (
+                    <option key={province.id} value={province.id}>
+                      {province.name}
+                    </option>
+                  ))}
+                </select>
+              )}
+            />
           </Field>
         ) : null}
 

@@ -1,4 +1,7 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { totpCodeSchema, type TotpCodeInput } from "@c26/contracts";
 import { api, isApiError, setStepUpHandler } from "../../lib/api-client.ts";
 import { CancelButton, Dialog, DialogFooter } from "../../components/ui/feedback.tsx";
 import { Button, Field, Input } from "../../components/ui/primitives.tsx";
@@ -22,16 +25,23 @@ import { Button, Field, Input } from "../../components/ui/primitives.tsx";
  */
 export function StepUpDialog(): ReactNode {
   const [open, setOpen] = useState(false);
-  const [code, setCode] = useState("");
-  const [error, setError] = useState<string | undefined>(undefined);
-  const [submitting, setSubmitting] = useState(false);
+
+  const {
+    register,
+    handleSubmit,
+    reset,
+    setError,
+    formState: { errors, isSubmitting },
+  } = useForm<TotpCodeInput>({
+    resolver: zodResolver(totpCodeSchema),
+    defaultValues: { code: "" },
+  });
 
   // Resolves the promise the API client is awaiting while the dialog is open.
   const resolver = useRef<((elevated: boolean) => void) | null>(null);
 
   const finish = useCallback((elevated: boolean) => {
     setOpen(false);
-    setSubmitting(false);
     resolver.current?.(elevated);
     resolver.current = null;
   }, []);
@@ -42,36 +52,31 @@ export function StepUpDialog(): ReactNode {
     const handler = () =>
       new Promise<boolean>((resolve) => {
         resolver.current = resolve;
-        setCode("");
-        setError(undefined);
+        reset({ code: "" });
         setOpen(true);
       });
-    
+
     setStepUpHandler(handler);
-    
-    // Return cleanup to ensure handler is always set when needed
-    return () => {
-      // Don't clear the handler on unmount - keep it registered
-      // in case the component remounts or errors occur
-    };
-  }, []);
 
-  const submit = useCallback(async () => {
-    setSubmitting(true);
-    setError(undefined);
+    // Deliberately no cleanup: the handler must stay registered across a
+    // remount, otherwise a STEP_UP_REQUIRED that arrives in between becomes the
+    // dead end this dialog exists to remove.
+  }, [reset]);
 
+  const onSubmit = handleSubmit(async (values) => {
     try {
-      await api.post("/api/auth/step-up", { code });
+      await api.post("/api/auth/step-up", values);
       finish(true);
     } catch (caught) {
-      setSubmitting(false);
-      setError(
-        isApiError(caught)
+      // The code is the only field, so every error from this endpoint belongs
+      // under it — there is no page banner inside a dialog this small.
+      setError("code", {
+        message: isApiError(caught)
           ? caught.envelope.message
           : "Verifikasi gagal. Silakan coba lagi.",
-      );
+      });
     }
-  }, [code, finish]);
+  });
 
   return (
     /*
@@ -92,18 +97,11 @@ export function StepUpDialog(): ReactNode {
         finish(false);
       }}
     >
-      <form
-        noValidate
-        onSubmit={(event) => {
-          event.preventDefault();
-          void submit();
-        }}
-        className="space-y-3"
-      >
+      <form noValidate onSubmit={(event) => void onSubmit(event)} className="space-y-3">
         <Field
           label="Kode autentikasi"
           htmlFor="step-up-code"
-          error={error}
+          error={errors.code?.message}
           hint="Enam angka dari aplikasi authenticator Anda."
           required
         >
@@ -113,12 +111,8 @@ export function StepUpDialog(): ReactNode {
             autoComplete="one-time-code"
             maxLength={6}
             autoFocus
-            value={code}
-            invalid={error !== undefined}
-            onChange={(event) => {
-              setCode(event.target.value.replace(/\D/g, ""));
-              setError(undefined);
-            }}
+            invalid={errors.code !== undefined}
+            {...register("code")}
           />
         </Field>
 
@@ -126,7 +120,7 @@ export function StepUpDialog(): ReactNode {
           {/* Cancelling resolves the promise as "not elevated", so the original
               request fails with its own error rather than hanging forever. */}
           <CancelButton onClick={() => finish(false)} />
-          <Button type="submit" loading={submitting} loadingText="Memverifikasi…" disabled={code.length !== 6}>
+          <Button type="submit" loading={isSubmitting} loadingText="Memverifikasi…">
             Verifikasi
           </Button>
         </DialogFooter>

@@ -30,7 +30,13 @@ export const createProvinceSchema = z.object({
 });
 
 export const createCitySchema = z.object({
-  provinceId: z.number({ required_error: "Provinsi wajib dipilih." }).int().positive(),
+  provinceId: z
+    .number({ required_error: "Provinsi wajib dipilih." })
+    .int("Provinsi wajib dipilih.")
+    // An unpicked dropdown reaches here as 0. Saying "Number must be greater
+    // than 0" to someone who simply has not chosen yet is Zod's English
+    // default, and K-10 does not allow it in front of a user.
+    .positive("Provinsi wajib dipilih."),
   code: z
     .string({ required_error: "Kode kota wajib diisi." })
     .trim()

@@ -1,8 +1,21 @@
 import { useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { MasterDataBundle, PendingBrandReview } from "@c26/contracts";
+import { useForm, type DefaultValues, type FieldValues, type Path } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import {
+  createBrandSchema,
+  createCitySchema,
+  createProvinceSchema,
+  type CreateBrandInput,
+  type CreateCityInput,
+  type CreateProvinceInput,
+  type MasterDataBundle,
+  type PendingBrandReview,
+} from "@c26/contracts";
 import { api } from "../../lib/api-client.ts";
+import { applyFieldErrors, hasFieldErrors } from "../../lib/form-errors.ts";
 import { formatDate } from "../../lib/format.ts";
 import { Banner, ErrorBanner, useToast } from "../../components/ui/feedback.tsx";
 import { Button, Card, EmptyState, Field, Input, Select } from "../../components/ui/primitives.tsx";
@@ -79,7 +92,12 @@ export function MasterDataPage(): ReactNode {
       toast.push({ tone: "success", message: "Data master ditambahkan." });
       await invalidate();
     },
-    onError: setError,
+    // This mutation is shared by the add form and the "Jadikan Master Data"
+    // button on the reviews tab. The form puts field errors under its fields,
+    // so only what it cannot place becomes the banner.
+    onError: (caught) => {
+      if (!hasFieldErrors(caught)) setError(caught);
+    },
   });
 
   const toggleActive = useMutation({
@@ -142,13 +160,15 @@ export function MasterDataPage(): ReactNode {
       {tab === "provinces" ? (
         <TabPanel value={tab}>
           <Card title="Provinsi" description="Kode mengikuti kode BPS, dua angka.">
-            <CreateForm
+            <CreateForm<CreateProvinceInput>
+              schema={createProvinceSchema}
+              defaultValues={{ code: "", name: "" }}
               fields={[
                 { name: "code", label: "Kode BPS", placeholder: "31" },
                 { name: "name", label: "Nama Provinsi", placeholder: "DKI Jakarta" },
               ]}
               submitting={create.isPending}
-              onSubmit={(values) => create.mutate({ table: "provinces", body: values })}
+              onSubmit={(values) => create.mutateAsync({ table: "provinces", body: values })}
             />
 
             <ul className="mt-4 divide-y divide-line">
@@ -187,12 +207,15 @@ export function MasterDataPage(): ReactNode {
       {tab === "cities" ? (
         <TabPanel value={tab}>
           <Card title="Kota" description="Kode mengikuti kode BPS, empat angka.">
-            <CreateForm
+            <CreateForm<CreateCityInput>
+              schema={createCitySchema}
+              defaultValues={{ provinceId: 0, code: "", name: "" }}
               fields={[
                 {
                   name: "provinceId",
                   label: "Provinsi",
                   type: "select",
+                  numeric: true,
                   options: (master.data?.provinces ?? []).map((province) => ({
                     value: String(province.id),
                     label: province.name,
@@ -202,12 +225,7 @@ export function MasterDataPage(): ReactNode {
                 { name: "name", label: "Nama Kota", placeholder: "Jakarta Timur" },
               ]}
               submitting={create.isPending}
-              onSubmit={(values) =>
-                create.mutate({
-                  table: "cities",
-                  body: { ...values, provinceId: Number(values.provinceId) },
-                })
-              }
+              onSubmit={(values) => create.mutateAsync({ table: "cities", body: values })}
             />
 
             <ul className="mt-4 divide-y divide-line">
@@ -242,10 +260,15 @@ export function MasterDataPage(): ReactNode {
       {tab === "vehicle-brands" || tab === "tire-brands" ? (
         <TabPanel value={tab}>
           <Card title={TAB_LABELS[tab]}>
-            <CreateForm
+            <CreateForm<CreateBrandInput>
+              // Keyed by tab: the two brand tabs share this form, and without a
+              // key the field keeps whatever was typed under the other tab.
+              key={tab}
+              schema={createBrandSchema}
+              defaultValues={{ name: "" }}
               fields={[{ name: "name", label: "Nama Merk", placeholder: "Bridgestone" }]}
               submitting={create.isPending}
-              onSubmit={(values) => create.mutate({ table: tab, body: values })}
+              onSubmit={(values) => create.mutateAsync({ table: tab, body: values })}
             />
 
             <ul className="mt-4 divide-y divide-line">
@@ -338,64 +361,95 @@ export function MasterDataPage(): ReactNode {
   );
 }
 
-interface CreateField {
-  name: string;
+interface CreateField<T extends FieldValues> {
+  name: Path<T>;
   label: string;
   placeholder?: string;
   type?: "text" | "select";
+  /** Selects post strings; a schema expecting a number needs the conversion. */
+  numeric?: boolean;
   options?: { value: string; label: string }[];
 }
 
-function CreateForm({
+/**
+ * The add-a-row form at the top of each tab.
+ *
+ * It takes the `@c26/contracts` schema rather than validating by hand, so the
+ * two-digit province code and the four-digit city code are checked here by the
+ * same rule the server checks them by. Before this the form sent whatever was
+ * typed and the 422 came back as a page banner with no field to point at.
+ */
+function CreateForm<T extends FieldValues>({
+  schema,
   fields,
+  defaultValues,
   submitting,
   onSubmit,
 }: {
-  fields: CreateField[];
+  schema: z.ZodType<T, z.ZodTypeDef, unknown>;
+  /** Non-empty: the first field is where an unplaceable server error lands. */
+  fields: [CreateField<T>, ...CreateField<T>[]];
+  defaultValues: DefaultValues<T>;
   submitting: boolean;
-  onSubmit: (values: Record<string, string>) => void;
+  onSubmit: (values: T) => Promise<unknown>;
 }): ReactNode {
-  const [values, setValues] = useState<Record<string, string>>({});
+  const {
+    register,
+    handleSubmit,
+    reset,
+    setError,
+    formState: { errors },
+  } = useForm<T>({ resolver: zodResolver(schema), defaultValues });
+
+  const submit = handleSubmit(async (values) => {
+    try {
+      await onSubmit(values);
+      reset(defaultValues);
+    } catch (caught) {
+      if (!applyFieldErrors(caught, setError)) {
+        setError(fields[0].name, { message: "Gagal menyimpan. Silakan coba lagi." });
+      }
+    }
+  });
 
   return (
-    <form
-      noValidate
-      onSubmit={(event) => {
-        event.preventDefault();
-        onSubmit(values);
-        setValues({});
-      }}
-      className="flex flex-wrap items-end gap-2"
-    >
-      {fields.map((field) => (
-        <Field key={field.name} label={field.label} htmlFor={`new-${field.name}`}>
-          {field.type === "select" ? (
-            <Select
-              id={`new-${field.name}`}
-              value={values[field.name] ?? ""}
-              onChange={(event) =>
-                setValues((current) => ({ ...current, [field.name]: event.target.value }))
-              }
-            >
-              <option value="">— Pilih —</option>
-              {(field.options ?? []).map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </Select>
-          ) : (
-            <Input
-              id={`new-${field.name}`}
-              value={values[field.name] ?? ""}
-              placeholder={field.placeholder}
-              onChange={(event) =>
-                setValues((current) => ({ ...current, [field.name]: event.target.value }))
-              }
-            />
-          )}
-        </Field>
-      ))}
+    <form noValidate onSubmit={(event) => void submit(event)} className="flex flex-wrap items-end gap-2">
+      {fields.map((field) => {
+        const message = errors[field.name]?.message;
+        const error = typeof message === "string" ? message : undefined;
+        const registration = register(
+          field.name,
+          field.numeric === true ? { setValueAs: (value: string) => Number(value) } : {},
+        );
+
+        return (
+          <Field
+            key={field.name}
+            label={field.label}
+            htmlFor={`new-${field.name}`}
+            error={error}
+            required
+          >
+            {field.type === "select" ? (
+              <Select id={`new-${field.name}`} invalid={error !== undefined} {...registration}>
+                <option value="">— Pilih —</option>
+                {(field.options ?? []).map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </Select>
+            ) : (
+              <Input
+                id={`new-${field.name}`}
+                placeholder={field.placeholder}
+                invalid={error !== undefined}
+                {...registration}
+              />
+            )}
+          </Field>
+        );
+      })}
 
       <Button type="submit" loading={submitting} loadingText="Menyimpan…">
         Tambah

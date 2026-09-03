@@ -1,6 +1,15 @@
 import { useState, type ReactNode } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { HealthReport, JobRecord, LogEntry, OrphanUpload } from "@c26/contracts";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  logSearchSchema,
+  type HealthReport,
+  type JobRecord,
+  type LogEntry,
+  type LogSearchInput,
+  type OrphanUpload,
+} from "@c26/contracts";
 import { api } from "../../lib/api-client.ts";
 import { formatBytes, formatDateTime, formatNumber } from "../../lib/format.ts";
 import {
@@ -34,7 +43,6 @@ export function OpsPage(): ReactNode {
   const [orphanPage, setOrphanPage] = useState(1);
   const queryClient = useQueryClient();
   const toast = useToast();
-  const [requestId, setRequestId] = useState("");
   const [searchedRequestId, setSearchedRequestId] = useState("");
   const [confirming, setConfirming] = useState<null | { action: "retry" | "cleanup"; ids: string[] }>(
     null,
@@ -98,6 +106,11 @@ export function OpsPage(): ReactNode {
   });
 
   const report = health.data;
+
+  const logSearch = useForm<LogSearchInput>({
+    resolver: zodResolver(logSearchSchema),
+    defaultValues: { requestId: "" },
+  });
 
   return (
      <div className="space-y-4">
@@ -174,24 +187,30 @@ export function OpsPage(): ReactNode {
         title="Pencarian Log"
         description="Tempel kode permintaan yang dilaporkan pengguna, misalnya req_20260901_143022_a91f."
       >
+        {/* A short code is a field error now, not a dead Cari button. An
+            operator typing a code read out over the phone needs to be told the
+            code is too short, not left guessing why the button does nothing. */}
         <form
           noValidate
-          onSubmit={(event) => {
-            event.preventDefault();
-            setSearchedRequestId(requestId.trim());
-          }}
+          onSubmit={(event) =>
+            void logSearch.handleSubmit((values) => {
+              setSearchedRequestId(values.requestId);
+            })(event)
+          }
           className="flex flex-wrap items-end gap-2"
         >
-          <Field label="Kode permintaan" htmlFor="ops-request">
+          <Field
+            label="Kode permintaan"
+            htmlFor="ops-request"
+            error={logSearch.formState.errors.requestId?.message}
+          >
             <Input
               id="ops-request"
-              value={requestId}
-              onChange={(event) => setRequestId(event.target.value)}
+              invalid={logSearch.formState.errors.requestId !== undefined}
+              {...logSearch.register("requestId")}
             />
           </Field>
-          <Button type="submit" disabled={requestId.trim().length < 6}>
-            Cari
-          </Button>
+          <Button type="submit">Cari</Button>
         </form>
 
          {searchedRequestId !== "" ? (

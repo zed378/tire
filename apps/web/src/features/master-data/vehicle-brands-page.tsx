@@ -1,11 +1,17 @@
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type {
-  CreateVehicleBrandInput,
-  VehicleBrand,
-  VehicleBrandListResponse,
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  createVehicleBrandSchema,
+  updateVehicleBrandSchema,
+  type CreateVehicleBrandInput,
+  type UpdateVehicleBrandInput,
+  type VehicleBrand,
+  type VehicleBrandListResponse,
 } from "@c26/contracts";
 import { api } from "../../lib/api-client.ts";
+import { applyFieldErrors } from "../../lib/form-errors.ts";
 import {
   CancelButton,
   ConfirmDialog,
@@ -30,8 +36,7 @@ export function VehicleBrandsPage(): ReactNode {
   const [page, setPage] = useState(1);
   const [error, setError] = useState<unknown>(null);
   const [creating, setCreating] = useState(false);
-  const [editingId, setEditingId] = useState<number | null>(null);
-  const [editName, setEditName] = useState("");
+  const [editing, setEditing] = useState<VehicleBrand | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
 
   const brands = useQuery({
@@ -50,19 +55,16 @@ export function VehicleBrandsPage(): ReactNode {
       setCreating(false);
       await queryClient.invalidateQueries({ queryKey: ["vehicle-brands"] });
     },
-    onError: setError,
   });
 
   const update = useMutation({
-    mutationFn: ({ id, name }: { id: number; name: string }) =>
-      api.patch(`/api/vehicle-brands/${String(id)}`, { name }),
+    mutationFn: ({ id, body }: { id: number; body: UpdateVehicleBrandInput }) =>
+      api.patch(`/api/vehicle-brands/${String(id)}`, body),
     onSuccess: async () => {
       toast.push({ tone: "success", message: "Merk kendaraan diperbarui." });
-      setEditingId(null);
-      setEditName("");
+      setEditing(null);
       await queryClient.invalidateQueries({ queryKey: ["vehicle-brands"] });
     },
-    onError: setError,
   });
 
   const remove = useMutation({
@@ -75,26 +77,16 @@ export function VehicleBrandsPage(): ReactNode {
     onError: setError,
   });
 
-  const startEdit = (brand: VehicleBrand): void => {
-    setEditingId(brand.id);
-    setEditName(brand.name);
-  };
-
-  const submitEdit = (): void => {
-    if (editingId === null || editName.trim() === "") return;
-    update.mutate({ id: editingId, name: editName.trim() });
-  };
-
-   return (
-     <div className="space-y-4">
-       <div className="flex flex-wrap items-center justify-between gap-2">
-         <h1 className="text-lg font-semibold text-body">Manajemen Merk Kendaraan</h1>
-         <Button onClick={() => setCreating(true)}>Tambah Merk</Button>
-       </div>
+  return (
+    <div className="space-y-4">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h1 className="text-lg font-semibold text-body">Manajemen Merk Kendaraan</h1>
+        <Button onClick={() => setCreating(true)}>Tambah Merk</Button>
+      </div>
 
       {error !== null ? <ErrorBanner error={error} onDismiss={() => setError(null)} /> : null}
 
-       <Card>
+      <Card>
         {brands.isLoading ? (
           <div role="status" aria-live="polite">
             <span className="sr-only">Memuat merk kendaraan…</span>
@@ -106,42 +98,26 @@ export function VehicleBrandsPage(): ReactNode {
             description="Tambahkan merk pertama lewat tombol di atas."
           />
         ) : (
-           <ul className="divide-y divide-line">
+          <ul className="divide-y divide-line">
             {(brands.data?.items ?? []).map((brand) => (
               <li key={brand.id} className="flex flex-wrap items-center justify-between gap-3 py-3">
-                {editingId === brand.id ? (
-                  <div className="flex flex-1 items-center gap-2">
-                    <Field label="Nama Merk" htmlFor={`edit-${brand.id}`}>
-                      <Input
-                        id={`edit-${brand.id}`}
-                        value={editName}
-                        onChange={(event) => setEditName(event.target.value)}
-                        autoFocus
-                      />
-                    </Field>
-                    <Button onClick={submitEdit} loading={update.isPending}>
-                      Simpan
-                    </Button>
-                    <Button
-                      variant="secondary"
-                      onClick={() => {
-                        setEditingId(null);
-                        setEditName("");
-                      }}
-                    >
-                      Batal
-                    </Button>
-                  </div>
-                 ) : (
-                   <>
-                     <div className="min-w-0">
-                       <p className="font-medium text-body">{brand.name}</p>
-                       <p className="mt-0.5 text-xs text-muted">
-                         {brand.isActive ? "Aktif" : "Nonaktif"}
-                       </p>
-                     </div>
+                {editing?.id === brand.id ? (
+                  <EditBrandForm
+                    brand={brand}
+                    submitting={update.isPending}
+                    onSubmit={(body) => update.mutateAsync({ id: brand.id, body })}
+                    onCancel={() => setEditing(null)}
+                  />
+                ) : (
+                  <>
+                    <div className="min-w-0">
+                      <p className="font-medium text-body">{brand.name}</p>
+                      <p className="mt-0.5 text-xs text-muted">
+                        {brand.isActive ? "Aktif" : "Nonaktif"}
+                      </p>
+                    </div>
                     <div className="flex flex-wrap items-center gap-2">
-                      <Button variant="secondary" onClick={() => startEdit(brand)}>
+                      <Button variant="secondary" onClick={() => setEditing(brand)}>
                         Edit
                       </Button>
                       <Button variant="danger" onClick={() => setDeletingId(brand.id)}>
@@ -166,26 +142,85 @@ export function VehicleBrandsPage(): ReactNode {
 
       {creating ? (
         <CreateBrandDialog
-          onSubmit={(name) => create.mutate({ name })}
+          onSubmit={(body) => create.mutateAsync(body)}
           onClose={() => setCreating(false)}
           submitting={create.isPending}
         />
       ) : null}
 
       <ConfirmDialog
-          open={deletingId !== null}
-          title="Hapus merk kendaraan"
-          description="Merk yang dihapus tidak bisa dikembalikan."
-          confirmLabel="Hapus"
-          loading={remove.isPending}
-          onConfirm={() => {
-            if (deletingId !== null) remove.mutate(deletingId);
-          }}
-          onClose={() => {
-            setDeletingId(null);
-          }}
-        />
+        open={deletingId !== null}
+        title="Hapus merk kendaraan"
+        description="Merk yang dihapus tidak bisa dikembalikan."
+        confirmLabel="Hapus"
+        loading={remove.isPending}
+        onConfirm={() => {
+          if (deletingId !== null) remove.mutate(deletingId);
+        }}
+        onClose={() => {
+          setDeletingId(null);
+        }}
+      />
     </div>
+  );
+}
+
+/**
+ * The inline rename on a row.
+ *
+ * A real form with the shared schema behind it, not a bare input. The server
+ * rejects a one-character name; before this the client let the user send it and
+ * then had nowhere to put the answer.
+ */
+function EditBrandForm({
+  brand,
+  submitting,
+  onSubmit,
+  onCancel,
+}: {
+  brand: VehicleBrand;
+  submitting: boolean;
+  onSubmit: (body: UpdateVehicleBrandInput) => Promise<unknown>;
+  onCancel: () => void;
+}): ReactNode {
+  const {
+    register,
+    handleSubmit,
+    setError,
+    formState: { errors },
+  } = useForm<UpdateVehicleBrandInput>({
+    resolver: zodResolver(updateVehicleBrandSchema),
+    defaultValues: { name: brand.name },
+  });
+
+  const submit = handleSubmit(async (values) => {
+    try {
+      await onSubmit({ name: values.name });
+    } catch (caught) {
+      if (!applyFieldErrors(caught, setError)) {
+        setError("name", { message: "Gagal menyimpan. Silakan coba lagi." });
+      }
+    }
+  });
+
+  const fieldId = `edit-brand-${String(brand.id)}`;
+
+  return (
+    <form
+      noValidate
+      onSubmit={(event) => void submit(event)}
+      className="flex flex-1 flex-wrap items-start gap-2"
+    >
+      <Field label="Nama Merk" htmlFor={fieldId} error={errors.name?.message}>
+        <Input id={fieldId} autoFocus invalid={errors.name !== undefined} {...register("name")} />
+      </Field>
+      <Button type="submit" loading={submitting} loadingText="Menyimpan…">
+        Simpan
+      </Button>
+      <Button type="button" variant="secondary" onClick={onCancel}>
+        Batal
+      </Button>
+    </form>
   );
 }
 
@@ -194,46 +229,51 @@ function CreateBrandDialog({
   onClose,
   submitting,
 }: {
-  onSubmit: (name: string) => void;
+  onSubmit: (body: CreateVehicleBrandInput) => Promise<unknown>;
   onClose: () => void;
   submitting: boolean;
 }): ReactNode {
-  const [name, setName] = useState("");
+  const {
+    register,
+    handleSubmit,
+    setError,
+    setFocus,
+    formState: { errors },
+  } = useForm<CreateVehicleBrandInput>({
+    resolver: zodResolver(createVehicleBrandSchema),
+    defaultValues: { name: "" },
+  });
 
-  const handleClose = (): void => {
-    setName("");
-    onClose();
-  };
+  // The dialog takes focus itself when it opens, so `autoFocus` on a child that
+  // mounts in the same commit loses the race. Focus the field once it is up.
+  useEffect(() => {
+    setFocus("name");
+  }, [setFocus]);
 
-  const submit = (): void => {
-    if (name.trim() === "") return;
-    const value = name.trim();
-    setName("");
-    onSubmit(value);
-  };
+  const submit = handleSubmit(async (values) => {
+    try {
+      await onSubmit(values);
+    } catch (caught) {
+      if (!applyFieldErrors(caught, setError)) {
+        setError("name", { message: "Gagal menyimpan. Silakan coba lagi." });
+      }
+    }
+  });
 
   return (
-    <Dialog open title="Tambah Merk Kendaraan" onClose={handleClose}>
-      <form
-        noValidate
-        onSubmit={(event) => {
-          event.preventDefault();
-          submit();
-        }}
-        className="space-y-3"
-      >
-        <Field label="Nama Merk" htmlFor="new-brand-name" required>
+    <Dialog open title="Tambah Merk Kendaraan" onClose={onClose}>
+      <form noValidate onSubmit={(event) => void submit(event)} className="space-y-3">
+        <Field label="Nama Merk" htmlFor="new-brand-name" error={errors.name?.message} required>
           <Input
             id="new-brand-name"
-            value={name}
-            onChange={(event) => setName(event.target.value)}
             placeholder="Contoh: Toyota"
-            autoFocus
+            invalid={errors.name !== undefined}
+            {...register("name")}
           />
         </Field>
 
         <DialogFooter>
-          <CancelButton onClick={handleClose} />
+          <CancelButton onClick={onClose} />
           <Button type="submit" loading={submitting} loadingText="Menyimpan…">
             Tambah
           </Button>
@@ -242,4 +282,3 @@ function CreateBrandDialog({
     </Dialog>
   );
 }
-

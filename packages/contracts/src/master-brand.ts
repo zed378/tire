@@ -6,6 +6,37 @@ import { z } from "zod";
  * Used for CRUD operations on vehicle brands (Hino, Mitsubishi, etc.)
  */
 
+/**
+ * Field schemas shared by every write on this file.
+ *
+ * Written once with Indonesian messages because these schemas now back the
+ * master data forms through `zodResolver`, and Zod's own defaults are English
+ * ("String must contain at least 2 character(s)") — which K-10 does not allow
+ * in front of a user.
+ */
+const brandNameSchema = z
+  .string({ required_error: "Nama merk wajib diisi." })
+  .trim()
+  .min(2, "Nama merk minimal 2 karakter.")
+  .max(120, "Nama merk maksimal 120 karakter.");
+
+const patternNameSchema = z
+  .string({ required_error: "Nama pattern wajib diisi." })
+  .trim()
+  .min(1, "Nama pattern wajib diisi.")
+  .max(120, "Nama pattern maksimal 120 karakter.");
+
+const tireSizeValueSchema = z
+  .string({ required_error: "Ukuran ban wajib diisi." })
+  .trim()
+  .min(1, "Ukuran ban wajib diisi.")
+  .max(50, "Ukuran ban maksimal 50 karakter.");
+
+const tireTypeSchema = z.enum(VEHICLE_CATEGORIES, {
+  required_error: "Tipe ban wajib dipilih.",
+  invalid_type_error: "Tipe ban harus TB atau LT.",
+});
+
 export const vehicleBrandSchema = z.object({
   id: z.number().int().positive(),
   name: z.string().trim().min(2).max(120),
@@ -17,13 +48,13 @@ export const vehicleBrandSchema = z.object({
 export type VehicleBrand = z.infer<typeof vehicleBrandSchema>;
 
 export const createVehicleBrandSchema = z.object({
-  name: z.string().trim().min(2).max(120),
+  name: brandNameSchema,
 });
 
 export type CreateVehicleBrandInput = z.infer<typeof createVehicleBrandSchema>;
 
 export const updateVehicleBrandSchema = z.object({
-  name: z.string().trim().min(2).max(120).optional(),
+  name: brandNameSchema.optional(),
   isActive: z.boolean().optional(),
 });
 
@@ -47,16 +78,16 @@ export const tireBrandPatternSchema = z.object({
 export type TireBrandPattern = z.infer<typeof tireBrandPatternSchema>;
 
 export const createTireBrandPatternSchema = z.object({
-  brand: z.string().trim().min(2).max(120),
-  pattern: z.string().trim().min(1).max(120),
-  type: z.enum(["TB", "LT"]),
+  brand: brandNameSchema,
+  pattern: patternNameSchema,
+  type: tireTypeSchema,
 });
 
 export type CreateTireBrandPatternInput = z.infer<typeof createTireBrandPatternSchema>;
 
 export const updateTireBrandPatternSchema = z.object({
-  brand: z.string().trim().min(2).max(120).optional(),
-  pattern: z.string().trim().min(1).max(120).optional(),
+  brand: brandNameSchema.optional(),
+  pattern: patternNameSchema.optional(),
   isActive: z.boolean().optional(),
 });
 
@@ -126,14 +157,14 @@ export const tireSizeSchema = z.object({
 export type TireSize = z.infer<typeof tireSizeSchema>;
 
 export const createTireSizeSchema = z.object({
-  size: z.string().trim().min(1).max(50),
-  type: z.enum(["TB", "LT"]),
+  size: tireSizeValueSchema,
+  type: tireTypeSchema,
 });
 
 export type CreateTireSizeInput = z.infer<typeof createTireSizeSchema>;
 
 export const updateTireSizeSchema = z.object({
-  size: z.string().trim().min(1).max(50).optional(),
+  size: tireSizeValueSchema.optional(),
   isActive: z.boolean().optional(),
 });
 

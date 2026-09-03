@@ -1,12 +1,16 @@
-import { useState, type ReactNode } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
+import { Controller, useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import {
   createVehicleSchema,
   normalizePlateDisplay,
   SEGMENTS_BY_CATEGORY,
   SUB_SEGMENTS_BY_SEGMENT,
   validateCityInProvince,
+  vehicleSearchSchema,
   VEHICLE_CATEGORY_LABELS,
   VEHICLE_CATEGORIES,
   VEHICLE_SEGMENT_LABELS,
@@ -14,10 +18,12 @@ import {
   type CreateVehicleInput,
   type MasterDataBundle,
   type VehicleCategory,
+  type VehicleSearchInput,
   type VehicleSegment,
   type VehicleSummary,
 } from "@c26/contracts";
 import { api } from "../../lib/api-client.ts";
+import { applyFieldErrors, hasFieldErrors } from "../../lib/form-errors.ts";
 import { formatDate } from "../../lib/format.ts";
 import { Banner, ErrorBanner, useToast } from "../../components/ui/feedback.tsx";
 import { Button, Card, Field, Input, SearchableSelect, Select } from "../../components/ui/primitives.tsx";
@@ -50,7 +56,7 @@ export function NewInspectionPage(): ReactNode {
   const toast = useToast();
 
   const [step, setStep] = useState<Step>("search");
-  const [plateInput, setPlateInput] = useState("");
+  const [searchedPlate, setSearchedPlate] = useState("");
   const [matches, setMatches] = useState<VehicleSummary[]>([]);
   const [selectedVehicle, setSelectedVehicle] = useState<VehicleSummary | null>(null);
   const [error, setError] = useState<unknown>(null);
@@ -59,6 +65,11 @@ export function NewInspectionPage(): ReactNode {
     queryKey: ["masterdata"],
     queryFn: () => api.get<MasterDataBundle>("/api/masterdata"),
     staleTime: 24 * 60 * 60 * 1000,
+  });
+
+  const plateSearch = useForm<VehicleSearchInput>({
+    resolver: zodResolver(vehicleSearchSchema),
+    defaultValues: { plate: "" },
   });
 
   const search = useMutation({
@@ -86,16 +97,28 @@ export function NewInspectionPage(): ReactNode {
       });
       void navigate(`/inspections/${result.serialNumber}`);
     },
-    onError: setError,
+    // The vehicle form places field errors under its own fields; only what it
+    // cannot place belongs in the page banner (PLAN/05 §5.1).
+    onError: (caught) => {
+      if (!hasFieldErrors(caught)) setError(caught);
+    },
   });
 
   const resetSearch = (): void => {
     setStep("search");
-    setPlateInput("");
+    setSearchedPlate("");
+    plateSearch.reset({ plate: "" });
     setMatches([]);
     setSelectedVehicle(null);
     setError(null);
   };
+
+  const submitSearch = plateSearch.handleSubmit((values) => {
+    setError(null);
+    const plate = normalizePlateDisplay(values.plate ?? "");
+    setSearchedPlate(plate);
+    search.mutate(plate);
+  });
 
   return (
     <div className="mx-auto max-w-2xl space-y-4">
@@ -115,32 +138,26 @@ export function NewInspectionPage(): ReactNode {
           title="Cari kendaraan"
           description="Ketik plat nomor. Spasi dan huruf besar-kecil tidak berpengaruh."
         >
-          <form
-            noValidate
-            onSubmit={(event) => {
-              event.preventDefault();
-              setError(null);
-              search.mutate(normalizePlateDisplay(plateInput));
-            }}
-            className="space-y-3"
-          >
-            <Field label="Plat Nomor" htmlFor="plate" required>
+          {/* Too short a plate is a message under the field, not a Cari button
+              that quietly refuses to work. */}
+          <form noValidate onSubmit={(event) => void submitSearch(event)} className="space-y-3">
+            <Field
+              label="Plat Nomor"
+              htmlFor="plate"
+              error={plateSearch.formState.errors.plate?.message}
+              required
+            >
               <Input
                 id="plate"
-                value={plateInput}
                 autoFocus
                 autoCapitalize="characters"
                 placeholder="B 1234 ABC"
-                onChange={(event) => setPlateInput(event.target.value)}
+                invalid={plateSearch.formState.errors.plate !== undefined}
+                {...plateSearch.register("plate")}
               />
             </Field>
 
-            <Button
-              type="submit"
-              loading={search.isPending}
-              loadingText="Mencari…"
-              disabled={plateInput.trim().length < 2}
-            >
+            <Button type="submit" loading={search.isPending} loadingText="Mencari…">
               Cari
             </Button>
           </form>
@@ -199,12 +216,12 @@ export function NewInspectionPage(): ReactNode {
       {step === "form" && master.data !== undefined ? (
         <NewVehicleForm
           master={master.data}
-          initialPlate={normalizePlateDisplay(plateInput)}
+          initialPlate={searchedPlate}
           submitting={create.isPending}
           onCancel={resetSearch}
           onSubmit={(vehicle) => {
             setError(null);
-            create.mutate({ newVehicle: vehicle });
+            return create.mutateAsync({ newVehicle: vehicle });
           }}
         />
       ) : null}
@@ -212,12 +229,24 @@ export function NewInspectionPage(): ReactNode {
   );
 }
 
+/**
+ * `provinceId` is on the form but not on the wire.
+ *
+ * The payload carries only `cityId` — the province is derivable from it. The
+ * form still asks for a province because it filters the city list, and V-11
+ * exists precisely because a stale province selection can otherwise submit a
+ * city from somewhere else. The schema below is the contract schema with that
+ * one cross-field rule attached, using the same helper the server calls; no
+ * rule is written twice.
+ */
+type NewVehicleFormValues = CreateVehicleInput & { provinceId: number | null };
+
 interface NewVehicleFormProps {
   master: MasterDataBundle;
   initialPlate: string;
   submitting: boolean;
   onCancel?: () => void;
-  onSubmit: (vehicle: CreateVehicleInput) => void;
+  onSubmit: (vehicle: CreateVehicleInput) => Promise<unknown>;
 }
 
 function NewVehicleForm({
@@ -227,19 +256,56 @@ function NewVehicleForm({
   onCancel,
   onSubmit,
 }: NewVehicleFormProps): ReactNode {
-  const [plateDisplay, setPlateDisplay] = useState(initialPlate);
-  const [chassisNumber, setChassisNumber] = useState("");
-  const [category, setCategory] = useState<VehicleCategory>("TB");
-  const [segment, setSegment] = useState<VehicleSegment>("truck");
-  const [subSegment, setSubSegment] = useState<string>(SUB_SEGMENTS_BY_SEGMENT.truck[0]);
-  const [vehicleBrandId, setVehicleBrandId] = useState<number | null>(null);
-  const [vehicleBrandOther, setVehicleBrandOther] = useState("");
-  const [cargoType, setCargoType] = useState("");
-  const [provinceId, setProvinceId] = useState<number | null>(null);
-  const [cityId, setCityId] = useState<number | null>(null);
-  const [axleCount, setAxleCount] = useState(2);
-  const [configs, setConfigs] = useState<AxleConfig[]>(EMPTY_CONFIGS);
-  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const formSchema = useMemo(
+    () =>
+      createVehicleSchema.superRefine((value: CreateVehicleInput, ctx: z.RefinementCtx) => {
+        // `provinceId` is stripped by the object schema, so it is read from the
+        // raw input rather than from the parsed value.
+        const provinceId = (value as NewVehicleFormValues).provinceId;
+
+        // V-11, from the same helper the server uses.
+        for (const cityError of validateCityInProvince(master.cities, value.cityId, provinceId)) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: [cityError.field],
+            message: cityError.message,
+          });
+        }
+      }),
+    [master.cities],
+  );
+
+  const {
+    register,
+    control,
+    handleSubmit,
+    watch,
+    setValue,
+    setError,
+    formState: { errors },
+  } = useForm<NewVehicleFormValues>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      plateDisplay: initialPlate,
+      chassisNumber: null,
+      category: "TB",
+      segment: "truck",
+      subSegment: SUB_SEGMENTS_BY_SEGMENT.truck[0],
+      vehicleBrandId: null,
+      vehicleBrandOther: null,
+      cargoType: "",
+      provinceId: null,
+      cityId: 0,
+      axleCount: 2,
+      axleConfigs: EMPTY_CONFIGS,
+    },
+  });
+
+  const category = watch("category");
+  const segment = watch("segment");
+  const provinceId = watch("provinceId");
+  const axleCount = watch("axleCount");
+  const axleConfigs = watch("axleConfigs");
 
   // V-09: the segment options follow the category. In the legacy system they did
   // not, so an LT vehicle could be recorded as a bus and nothing downstream
@@ -249,59 +315,24 @@ function NewVehicleForm({
     (city) => provinceId === null || city.provinceId === provinceId,
   );
 
-  const submit = (): void => {
-    const errors: Record<string, string> = {};
-
-    // V-11, from the same helper the server uses.
-    for (const cityError of validateCityInProvince(master.cities, cityId, provinceId)) {
-      errors[cityError.field] = cityError.message;
-    }
-
-    const candidate = {
-      plateDisplay,
-      chassisNumber: chassisNumber === "" ? null : chassisNumber,
-      category,
-      segment,
-      subSegment,
-      vehicleBrandId,
-      vehicleBrandOther: vehicleBrandOther === "" ? null : vehicleBrandOther,
-      cargoType,
-      cityId: cityId ?? 0,
-      axleCount,
-      axleConfigs: configs,
-    };
-
-    const parsed = createVehicleSchema.safeParse(candidate);
-    if (!parsed.success) {
-      for (const issue of parsed.error.issues) {
-        const field = issue.path.join(".");
-        errors[field] ??= issue.message;
+  const submit = handleSubmit(async (values) => {
+    try {
+      await onSubmit(values);
+    } catch (caught) {
+      if (!applyFieldErrors(caught, setError)) {
+        setError("plateDisplay", { message: "Gagal membuat pemeriksaan. Silakan coba lagi." });
       }
     }
+  });
 
-    setFieldErrors(errors);
-    if (Object.keys(errors).length > 0) {
-      // Scroll and focus to the first field in error (PLAN/05 §5.2 rule 4).
-      const first = Object.keys(errors)[0];
-      document.getElementById(first ?? "")?.scrollIntoView({ behavior: "smooth", block: "center" });
-      document.getElementById(first ?? "")?.focus();
-      return;
-    }
-
-    onSubmit(candidate);
-  };
+  const plateRegistration = register("plateDisplay");
+  const categoryRegistration = register("category");
+  const segmentRegistration = register("segment");
 
   return (
     <Card title="Data kendaraan baru">
-      <form
-        noValidate
-        onSubmit={(event) => {
-          event.preventDefault();
-          submit();
-        }}
-        className="space-y-4"
-      >
-        {Object.keys(fieldErrors).length > 0 ? (
+      <form noValidate onSubmit={(event) => void submit(event)} className="space-y-4">
+        {Object.keys(errors).length > 0 ? (
           <Banner tone="error" title="Beberapa isian belum lengkap atau tidak valid">
             Periksa kembali bagian yang ditandai merah.
           </Banner>
@@ -310,24 +341,26 @@ function NewVehicleForm({
         <Field
           label="Plat Nomor"
           htmlFor="plateDisplay"
-          error={fieldErrors.plateDisplay}
+          error={errors.plateDisplay?.message}
           hint="Contoh: B 1234 ABC"
           required
         >
           <Input
             id="plateDisplay"
-            value={plateDisplay}
             autoCapitalize="characters"
-            invalid={fieldErrors.plateDisplay !== undefined}
-            onChange={(event) => setPlateDisplay(event.target.value)}
-            onBlur={(event) => setPlateDisplay(normalizePlateDisplay(event.target.value))}
+            invalid={errors.plateDisplay !== undefined}
+            {...plateRegistration}
+            onBlur={(event) => {
+              setValue("plateDisplay", normalizePlateDisplay(event.target.value));
+              void plateRegistration.onBlur(event);
+            }}
           />
         </Field>
 
         <Field
           label="Nomor Rangka"
           htmlFor="chassisNumber"
-          error={fieldErrors.chassisNumber}
+          error={errors.chassisNumber?.message}
           // PLAN/11 §3: the plate is the wrong identity — it changes on a
           // regional transfer and can be reassigned to another vehicle. The
           // chassis number is stable, so it is collected where possible even
@@ -336,28 +369,29 @@ function NewVehicleForm({
         >
           <Input
             id="chassisNumber"
-            value={chassisNumber}
             autoCapitalize="characters"
-            invalid={fieldErrors.chassisNumber !== undefined}
-            onChange={(event) => setChassisNumber(event.target.value)}
+            invalid={errors.chassisNumber !== undefined}
+            {...register("chassisNumber", {
+              setValueAs: (value: string) => (value === "" ? null : value),
+            })}
           />
         </Field>
 
         <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Kategori TB / LT" htmlFor="category" error={fieldErrors.category} required>
+          <Field label="Kategori TB / LT" htmlFor="category" error={errors.category?.message} required>
             <Select
               id="category"
-              value={category}
+              invalid={errors.category !== undefined}
+              {...categoryRegistration}
               onChange={(event) => {
-                const next = event.target.value as VehicleCategory;
-                setCategory(next);
-                const segments = SEGMENTS_BY_CATEGORY[next];
+                void categoryRegistration.onChange(event);
+                const segments = SEGMENTS_BY_CATEGORY[event.target.value as VehicleCategory];
                 if (!segments.includes(segment)) {
                   // Every category has at least one segment, but the index
                   // signature cannot know that.
                   const fallback = segments[0] ?? "truck";
-                  setSegment(fallback);
-                  setSubSegment(SUB_SEGMENTS_BY_SEGMENT[fallback][0]);
+                  setValue("segment", fallback);
+                  setValue("subSegment", SUB_SEGMENTS_BY_SEGMENT[fallback][0]);
                 }
               }}
             >
@@ -369,15 +403,15 @@ function NewVehicleForm({
             </Select>
           </Field>
 
-          <Field label="Segmen Utama" htmlFor="segment" error={fieldErrors.segment} required>
+          <Field label="Segmen Utama" htmlFor="segment" error={errors.segment?.message} required>
             <Select
               id="segment"
-              value={segment}
-              invalid={fieldErrors.segment !== undefined}
+              invalid={errors.segment !== undefined}
+              {...segmentRegistration}
               onChange={(event) => {
+                void segmentRegistration.onChange(event);
                 const next = event.target.value as VehicleSegment;
-                setSegment(next);
-                setSubSegment(SUB_SEGMENTS_BY_SEGMENT[next][0]);
+                setValue("subSegment", SUB_SEGMENTS_BY_SEGMENT[next][0]);
               }}
             >
               {allowedSegments.map((value) => (
@@ -392,14 +426,13 @@ function NewVehicleForm({
         <Field
           label={segment === "bus" ? "Kategori Bus" : "Kategori Truck"}
           htmlFor="subSegment"
-          error={fieldErrors.subSegment}
+          error={errors.subSegment?.message}
           required
         >
           <Select
             id="subSegment"
-            value={subSegment}
-            invalid={fieldErrors.subSegment !== undefined}
-            onChange={(event) => setSubSegment(event.target.value)}
+            invalid={errors.subSegment !== undefined}
+            {...register("subSegment")}
           >
             {SUB_SEGMENTS_BY_SEGMENT[segment].map((value) => (
               <option key={value} value={value}>
@@ -410,91 +443,117 @@ function NewVehicleForm({
         </Field>
 
         <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Merk Kendaraan" htmlFor="vehicleBrandId" error={fieldErrors.vehicleBrandId}>
-            <SearchableSelect
-              id="vehicleBrandId"
-              value={vehicleBrandId}
-              invalid={fieldErrors.vehicleBrandId !== undefined}
-              placeholder="— Pilih merk kendaraan —"
-              searchPlaceholder="Cari merk (Hino, Mitsubishi, Scania, dll)…"
-              emptyMessage="Merk tidak ditemukan"
-              clearable
-              options={master.vehicleBrands.map((brand) => ({
-                value: brand.id,
-                label: brand.name,
-              }))}
-              onChange={(val) => setVehicleBrandId(val ?? null)}
+          <Field
+            label="Merk Kendaraan"
+            htmlFor="vehicleBrandId"
+            error={errors.vehicleBrandId?.message}
+          >
+            <Controller
+              control={control}
+              name="vehicleBrandId"
+              render={({ field }) => (
+                <SearchableSelect
+                  id="vehicleBrandId"
+                  value={field.value ?? null}
+                  invalid={errors.vehicleBrandId !== undefined}
+                  placeholder="— Pilih merk kendaraan —"
+                  searchPlaceholder="Cari merk (Hino, Mitsubishi, Scania, dll)…"
+                  emptyMessage="Merk tidak ditemukan"
+                  clearable
+                  options={master.vehicleBrands.map((brand) => ({
+                    value: brand.id,
+                    label: brand.name,
+                  }))}
+                  onChange={(value) => field.onChange(value ?? null)}
+                />
+              )}
             />
           </Field>
 
           <Field
             label="Merk lain"
             htmlFor="vehicleBrandOther"
+            error={errors.vehicleBrandOther?.message}
             hint="Isi hanya bila merk tidak ada di daftar."
           >
             <Input
               id="vehicleBrandOther"
-              value={vehicleBrandOther}
-              onChange={(event) => setVehicleBrandOther(event.target.value)}
+              invalid={errors.vehicleBrandOther !== undefined}
+              {...register("vehicleBrandOther", {
+                setValueAs: (value: string) => (value === "" ? null : value),
+              })}
             />
           </Field>
         </div>
 
-        <Field label="Jenis Muatan" htmlFor="cargoType" error={fieldErrors.cargoType} required>
+        <Field label="Jenis Muatan" htmlFor="cargoType" error={errors.cargoType?.message} required>
           <Input
             id="cargoType"
-            value={cargoType}
-            invalid={fieldErrors.cargoType !== undefined}
-            onChange={(event) => setCargoType(event.target.value)}
+            invalid={errors.cargoType !== undefined}
+            {...register("cargoType")}
           />
         </Field>
 
         <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Provinsi" htmlFor="provinceId" error={fieldErrors.provinceId} required>
-            <SearchableSelect
-              id="provinceId"
-              value={provinceId}
-              invalid={fieldErrors.provinceId !== undefined}
-              placeholder="— Pilih provinsi —"
-              searchPlaceholder="Ketik nama provinsi (Jawa Barat, DKI Jakarta, dll)…"
-              emptyMessage="Provinsi tidak ditemukan"
-              clearable
-              options={master.provinces.map((province) => ({
-                value: province.id,
-                label: province.name,
-              }))}
-              onChange={(val) => {
-                setProvinceId(val ?? null);
-                setCityId(null);
-              }}
+          <Field label="Provinsi" htmlFor="provinceId" error={errors.provinceId?.message} required>
+            <Controller
+              control={control}
+              name="provinceId"
+              render={({ field }) => (
+                <SearchableSelect
+                  id="provinceId"
+                  value={field.value}
+                  invalid={errors.provinceId !== undefined}
+                  placeholder="— Pilih provinsi —"
+                  searchPlaceholder="Ketik nama provinsi (Jawa Barat, DKI Jakarta, dll)…"
+                  emptyMessage="Provinsi tidak ditemukan"
+                  clearable
+                  options={master.provinces.map((province) => ({
+                    value: province.id,
+                    label: province.name,
+                  }))}
+                  onChange={(value) => {
+                    field.onChange(value ?? null);
+                    // A city from the previous province would pass the foreign
+                    // key and fail V-11, so it is cleared with the province.
+                    setValue("cityId", 0);
+                  }}
+                />
+              )}
             />
           </Field>
 
-          <Field label="Kota" htmlFor="cityId" error={fieldErrors.cityId} required>
-            <SearchableSelect
-              id="cityId"
-              value={cityId}
-              disabled={provinceId === null}
-              invalid={fieldErrors.cityId !== undefined}
-              placeholder={provinceId === null ? "— Pilih provinsi terlebih dahulu —" : "— Pilih kota / kabupaten —"}
-              searchPlaceholder="Ketik nama kota atau kabupaten…"
-              emptyMessage="Kota tidak ditemukan"
-              clearable
-              options={cities.map((city) => ({
-                value: city.id,
-                label: city.name,
-              }))}
-              onChange={(val) => setCityId(val ?? null)}
+          <Field label="Kota" htmlFor="cityId" error={errors.cityId?.message} required>
+            <Controller
+              control={control}
+              name="cityId"
+              render={({ field }) => (
+                <SearchableSelect
+                  id="cityId"
+                  value={field.value === 0 ? null : field.value}
+                  disabled={provinceId === null}
+                  invalid={errors.cityId !== undefined}
+                  placeholder={provinceId === null ? "— Pilih provinsi terlebih dahulu —" : "— Pilih kota / kabupaten —"}
+                  searchPlaceholder="Ketik nama kota atau kabupaten…"
+                  emptyMessage="Kota tidak ditemukan"
+                  clearable
+                  options={cities.map((city) => ({
+                    value: city.id,
+                    label: city.name,
+                  }))}
+                  onChange={(value) => field.onChange(value ?? 0)}
+                />
+              )}
             />
           </Field>
         </div>
 
         <AxleConfigurator
           axleCount={axleCount}
-          configs={configs}
+          configs={axleConfigs}
           onChange={(next) => {
-            setAxleCount(next.axleCount);
-            setConfigs(next.configs);
+            setValue("axleCount", next.axleCount);
+            setValue("axleConfigs", next.configs);
           }}
         />
 
