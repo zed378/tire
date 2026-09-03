@@ -48,10 +48,12 @@ const THEMES = ["light", "dark"] as const;
  * The width sweep drives its own viewport, so running it under both device
  * projects would double the work and prove nothing twice.
  */
-test.skip(
-  (_fixtures, testInfo) => testInfo.project.name !== "desktop",
-  "The width sweep sets its own viewport",
-);
+test.beforeEach(() => {
+  test.skip(
+    test.info().project.name !== "desktop",
+    "This file drives its own viewport, so the device projects would repeat it",
+  );
+});
 
 /**
  * Answers the session bootstrap without a server.
