@@ -211,6 +211,43 @@ sudah menguncinya. Yang perlu Anda ketahui: `MAX_PHOTOS_PER_INSPECTION` = **30**
 (`PLAN/06` §6) mengikat lebih dulu — pada kendaraan 6 posisi, 10 foto di setiap
 posisi tidak akan tercapai karena plafon 30 per pengajuan tercapai duluan.
 
+### Antrean unggah: gagal tanpa jalan keluar
+
+Dilaporkan dari lapangan, dengan tangkapan layar: satu slot bertuliskan **52/10**
+dan **13/10** di bawah keterangan yang menyatakan maksimumnya sepuluh, isinya
+ubin "Gagal unggah" yang tidak bisa diapa-apakan, dan header menghitung **125
+foto antrean**.
+
+Tiga cacat yang saling mengunci:
+
+| Cacat | Akibat |
+| --- | --- |
+| `V-13` ditegakkan **hanya di server** (saat presign), tidak di perangkat | Memilih dua belas berkas sekaligus mengantrekan dua belas. Server menolak permanen yang kelebihan, dan penolakannya menetap di antrean sebagai kegagalan. Begitulah `52/10` terjadi |
+| Ubin gagal tidak punya kontrol apa pun di layar detail | `retryQueueItem` dan `removeQueueItem` sudah ada — tapi hanya dipakai halaman `/upload-queue`. Petugas ada di layar detail |
+| Input berkas disembunyikan saat hitungan ≥ 10 | Begitu kegagalan mendorong hitungan lewat plafon, slot itu **tidak bisa diperbaiki sama sekali**: tidak bisa menambah, tidak bisa mengulang, tidak bisa membuang |
+
+Perbaikannya:
+
+- `enqueuePhoto` menolak foto yang akan melanggar `V-13` **sebelum** dikompresi
+  dan disimpan, memakai `checkPhotoQuota` dari `@c26/contracts` — fungsi yang
+  sama yang dipanggil server, jadi perangkat dan server tidak mungkin berbeda
+  pendapat soal batasnya.
+- Layar detail kini punya "Coba Lagi" dan "Buang yang Gagal" per slot, dengan
+  pesan galat aslinya ditampilkan.
+- Halaman antrean punya "Coba lagi semua" dan "Buang semua yang gagal", yang
+  kedua lewat `ConfirmDialog` — itu foto lapangan yang tidak ada salinannya di
+  mana pun.
+- Slot penuh sekarang mengatakan dirinya penuh, bukan sekadar kehilangan
+  inputnya.
+- Penghitung `0/10` tidak lagi merah. Dengan gerbang per posisi hilang, posisi
+  tanpa foto bukan lagi masalah — mewarnainya merah memberi tahu petugas tentang
+  masalah yang tidak ada.
+
+Delapan tes baru menguji **penghitungannya** — bagian yang tidak bisa diketahui
+`checkPhotoQuota`. Sesuai `.claude/rules/tests.md` ("tes yang hijau di percobaan
+pertama itu mencurigakan"), keduanya diperiksa dengan mutasi: berhenti menghitung
+item gagal menjatuhkan 1 tes, mengabaikan dimensi slot menjatuhkan 3.
+
 ### Resep LCP di catatan sebelumnya salah sasaran
 
 Catatan ini pernah menulis: "Kalau meleset dari 2,5 detik, IBM Plex Mono yang
