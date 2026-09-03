@@ -1,7 +1,17 @@
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { CreateTireSizeInput, TireSize, TireSizeListResponse } from "@c26/contracts";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  createTireSizeSchema,
+  updateTireSizeSchema,
+  type CreateTireSizeInput,
+  type TireSize,
+  type TireSizeListResponse,
+  type UpdateTireSizeInput,
+} from "@c26/contracts";
 import { api } from "../../lib/api-client.ts";
+import { applyFieldErrors } from "../../lib/form-errors.ts";
 import {
   CancelButton,
   ConfirmDialog,
@@ -29,8 +39,7 @@ export function TireSizesPage(): ReactNode {
   const [page, setPage] = useState(1);
   const [error, setError] = useState<unknown>(null);
   const [creating, setCreating] = useState(false);
-  const [editingId, setEditingId] = useState<number | null>(null);
-  const [editSize, setEditSize] = useState("");
+  const [editing, setEditing] = useState<TireSize | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
 
   const sizes = useQuery({
@@ -40,26 +49,22 @@ export function TireSizesPage(): ReactNode {
   });
 
   const create = useMutation({
-    mutationFn: (body: CreateTireSizeInput) =>
-      api.post("/api/tire-sizes", body),
+    mutationFn: (body: CreateTireSizeInput) => api.post("/api/tire-sizes", body),
     onSuccess: async () => {
       toast.push({ tone: "success", message: "Ukuran ban ditambahkan." });
       setCreating(false);
       await queryClient.invalidateQueries({ queryKey: ["tire-sizes"] });
     },
-    onError: setError,
   });
 
   const update = useMutation({
-    mutationFn: ({ id, size }: { id: number; size: string }) =>
-      api.patch(`/api/tire-sizes/${String(id)}`, { size }),
+    mutationFn: ({ id, body }: { id: number; body: UpdateTireSizeInput }) =>
+      api.patch(`/api/tire-sizes/${String(id)}`, body),
     onSuccess: async () => {
       toast.push({ tone: "success", message: "Ukuran ban diperbarui." });
-      setEditingId(null);
-      setEditSize("");
+      setEditing(null);
       await queryClient.invalidateQueries({ queryKey: ["tire-sizes"] });
     },
-    onError: setError,
   });
 
   const remove = useMutation({
@@ -71,16 +76,6 @@ export function TireSizesPage(): ReactNode {
     },
     onError: setError,
   });
-
-  const startEdit = (item: TireSize): void => {
-    setEditingId(item.id);
-    setEditSize(item.size);
-  };
-
-  const submitEdit = (): void => {
-    if (editingId === null || editSize.trim() === "") return;
-    update.mutate({ id: editingId, size: editSize.trim() });
-  };
 
   return (
     <div className="space-y-4">
@@ -132,42 +127,26 @@ export function TireSizesPage(): ReactNode {
                     </td>
                   </tr>
                 ) : (
-                  sizes.data.items.map((item) => (
-                    <tr key={item.id} className="hover:bg-surface-sunken">
-                      <td className="py-2.5 px-3 font-medium text-body">
-                        {editingId === item.id ? (
-                          <Input
-                            value={editSize}
-                            onChange={(e) => setEditSize(e.target.value)}
-                            className="max-w-xs"
-                          />
-                        ) : (
-                          item.size
-                        )}
-                      </td>
-                      <td className="py-2.5 px-3 text-muted">
-                        {item.type}
-                      </td>
-                      <td className="py-2.5 px-3 text-right">
-                        {editingId === item.id ? (
+                  sizes.data.items.map((item) =>
+                    editing?.id === item.id ? (
+                      <EditSizeRow
+                        key={item.id}
+                        size={item}
+                        submitting={update.isPending}
+                        onSubmit={(body) => update.mutateAsync({ id: item.id, body })}
+                        onCancel={() => setEditing(null)}
+                      />
+                    ) : (
+                      <tr key={item.id} className="hover:bg-surface-sunken">
+                        <td className="py-2.5 px-3 font-medium text-body">{item.size}</td>
+                        <td className="py-2.5 px-3 text-muted">{item.type}</td>
+                        <td className="py-2.5 px-3 text-right">
                           <div className="flex justify-end gap-1.5">
-                            <Button onClick={submitEdit} loading={update.isPending} className="min-h-9 px-3 text-xs">
-                              Simpan
-                            </Button>
                             <Button
                               variant="secondary"
-                              onClick={() => {
-                                setEditingId(null);
-                                setEditSize("");
-                              }}
+                              onClick={() => setEditing(item)}
                               className="min-h-9 px-3 text-xs"
                             >
-                              Batal
-                            </Button>
-                          </div>
-                        ) : (
-                          <div className="flex justify-end gap-1.5">
-                            <Button variant="secondary" onClick={() => startEdit(item)} className="min-h-9 px-3 text-xs">
                               Edit
                             </Button>
                             <Button
@@ -178,10 +157,10 @@ export function TireSizesPage(): ReactNode {
                               Hapus
                             </Button>
                           </div>
-                        )}
-                      </td>
-                    </tr>
-                  ))
+                        </td>
+                      </tr>
+                    ),
+                  )
                 )}
               </tbody>
             </table>
@@ -200,7 +179,7 @@ export function TireSizesPage(): ReactNode {
       {creating ? (
         <CreateSizeDialog
           type={tab}
-          onSubmit={(body) => create.mutate(body)}
+          onSubmit={(body) => create.mutateAsync(body)}
           onClose={() => setCreating(false)}
           submitting={create.isPending}
         />
@@ -223,6 +202,84 @@ export function TireSizesPage(): ReactNode {
   );
 }
 
+/**
+ * The inline rename, as one row of the table.
+ *
+ * The form element lives in the first cell and the Save button in the third, so
+ * they are joined by `form=` rather than by nesting — a `<form>` cannot wrap two
+ * `<td>`s. Enter still submits, and the shared schema still decides what is
+ * valid.
+ */
+function EditSizeRow({
+  size,
+  submitting,
+  onSubmit,
+  onCancel,
+}: {
+  size: TireSize;
+  submitting: boolean;
+  onSubmit: (body: UpdateTireSizeInput) => Promise<unknown>;
+  onCancel: () => void;
+}): ReactNode {
+  const {
+    register,
+    handleSubmit,
+    setError,
+    formState: { errors },
+  } = useForm<UpdateTireSizeInput>({
+    resolver: zodResolver(updateTireSizeSchema),
+    defaultValues: { size: size.size },
+  });
+
+  const submit = handleSubmit(async (values) => {
+    try {
+      await onSubmit({ size: values.size });
+    } catch (caught) {
+      if (!applyFieldErrors(caught, setError)) {
+        setError("size", { message: "Gagal menyimpan. Silakan coba lagi." });
+      }
+    }
+  });
+
+  const formId = `edit-size-form-${String(size.id)}`;
+  const fieldId = `edit-size-${String(size.id)}`;
+
+  return (
+    <tr className="hover:bg-surface-sunken">
+      <td className="py-2.5 px-3 font-medium text-body">
+        <form id={formId} noValidate onSubmit={(event) => void submit(event)} />
+        <Field label="Ukuran Ban" htmlFor={fieldId} error={errors.size?.message}>
+          <Input
+            id={fieldId}
+            form={formId}
+            autoFocus
+            className="max-w-xs"
+            invalid={errors.size !== undefined}
+            {...register("size")}
+          />
+        </Field>
+      </td>
+      <td className="py-2.5 px-3 text-muted">{size.type}</td>
+      <td className="py-2.5 px-3 text-right">
+        <div className="flex justify-end gap-1.5">
+          <Button
+            type="submit"
+            form={formId}
+            loading={submitting}
+            loadingText="Menyimpan…"
+            className="min-h-9 px-3 text-xs"
+          >
+            Simpan
+          </Button>
+          <Button variant="secondary" onClick={onCancel} className="min-h-9 px-3 text-xs">
+            Batal
+          </Button>
+        </div>
+      </td>
+    </tr>
+  );
+}
+
 function CreateSizeDialog({
   type,
   onSubmit,
@@ -230,51 +287,59 @@ function CreateSizeDialog({
   submitting,
 }: {
   type: Tab;
-  onSubmit: (body: CreateTireSizeInput) => void;
+  onSubmit: (body: CreateTireSizeInput) => Promise<unknown>;
   onClose: () => void;
   submitting: boolean;
 }): ReactNode {
-  const [size, setSize] = useState("");
+  const {
+    register,
+    handleSubmit,
+    setError,
+    setFocus,
+    formState: { errors },
+  } = useForm<CreateTireSizeInput>({
+    resolver: zodResolver(createTireSizeSchema),
+    // The tab decides the category; it is a value the form carries, not one the
+    // user is asked for a second time.
+    defaultValues: { size: "", type },
+  });
 
-  const handleClose = (): void => {
-    setSize("");
-    onClose();
-  };
+  // The dialog takes focus itself when it opens, so `autoFocus` on a child that
+  // mounts in the same commit loses the race.
+  useEffect(() => {
+    setFocus("size");
+  }, [setFocus]);
 
-  const submit = (): void => {
-    if (size.trim() === "") return;
-    const val = size.trim();
-    setSize("");
-    onSubmit({ size: val, type });
-  };
+  const submit = handleSubmit(async (values) => {
+    try {
+      await onSubmit(values);
+    } catch (caught) {
+      if (!applyFieldErrors(caught, setError)) {
+        setError("size", { message: "Gagal menyimpan. Silakan coba lagi." });
+      }
+    }
+  });
 
   return (
-    <Dialog open title={`Tambah Ukuran Ban (${type})`} onClose={handleClose}>
-      <form
-        noValidate
-        onSubmit={(event) => {
-          event.preventDefault();
-          submit();
-        }}
-        className="space-y-3"
-      >
+    <Dialog open title={`Tambah Ukuran Ban (${type})`} onClose={onClose}>
+      <form noValidate onSubmit={(event) => void submit(event)} className="space-y-3">
         <Field
           label="Ukuran Ban"
           htmlFor="new-size-name"
+          error={errors.size?.message}
           hint="Contoh: 10.00R20 atau 7.50-16"
           required
         >
           <Input
             id="new-size-name"
-            value={size}
-            onChange={(event) => setSize(event.target.value)}
             placeholder="Contoh: 10.00R20"
-            autoFocus
+            invalid={errors.size !== undefined}
+            {...register("size")}
           />
         </Field>
 
         <DialogFooter>
-          <CancelButton onClick={handleClose} />
+          <CancelButton onClick={onClose} />
           <Button type="submit" loading={submitting} loadingText="Menyimpan…">
             Tambah
           </Button>
