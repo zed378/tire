@@ -20,6 +20,7 @@ import { useSession } from "../../lib/session.tsx";
 import {
   Banner,
   CancelButton,
+  ConfirmDialog,
   Dialog,
   DialogFooter,
   ErrorBanner,
@@ -48,6 +49,7 @@ export function UsersPage(): ReactNode {
   const [creating, setCreating] = useState(false);
   const [deleting, setDeleting] = useState<UserRecord | null>(null);
   const [temporaryPassword, setTemporaryPassword] = useState<string | null>(null);
+  const [resettingMfa, setResettingMfa] = useState<UserRecord | null>(null);
   const [error, setError] = useState<unknown>(null);
 
   const users = useQuery({
@@ -101,6 +103,37 @@ export function UsersPage(): ReactNode {
       await invalidate();
     },
     onError: setError,
+  });
+
+  /**
+   * Resetting somebody else's two-factor authentication.
+   *
+   * `PLAN/13` §3 states it plainly: "Reset MFA — hanya oleh admin lain, tercatat
+   * di audit, dan mencabut seluruh sesi." The endpoint has always done exactly
+   * that, and nothing on this screen called it.
+   *
+   * The consequence of that gap was not cosmetic. An admin's role requires MFA,
+   * so an admin who loses their phone and their ten recovery codes is locked out
+   * — and the only remaining route in was direct database access, which
+   * `PLAN/10` §5 forbids outright. There was no way back into the system.
+   *
+   * `resetMfa` refuses to act on the caller themselves, which is the point of
+   * the rule: a self-service reset turns MFA into security theatre.
+   */
+  const resetMfaFor = useMutation({
+    mutationFn: (id: number) => api.post(`/api/users/${String(id)}/reset-mfa`),
+    onSuccess: async () => {
+      setResettingMfa(null);
+      toast.push({
+        tone: "success",
+        message: "2FA direset. Pengguna mendaftar ulang saat login berikutnya, dan semua sesinya dicabut.",
+      });
+      await invalidate();
+    },
+    onError: (caught) => {
+      setResettingMfa(null);
+      setError(caught);
+    },
   });
 
   const remove = useMutation({
@@ -207,6 +240,20 @@ export function UsersPage(): ReactNode {
                       Reset Password
                     </Button>
 
+                    {/* Offered only where there is something to reset. A button
+                        that answers "this user has no 2FA" is a button that
+                        should not have been there. */}
+                    {row.mfaEnrolled ? (
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        disabled={isSelf}
+                        onClick={() => setResettingMfa(row)}
+                      >
+                        Reset 2FA
+                      </Button>
+                    ) : null}
+
                     <Button
                       variant="secondary"
                       size="sm"
@@ -248,6 +295,24 @@ export function UsersPage(): ReactNode {
           onSubmit={(input) => create.mutateAsync(input)}
         />
       ) : null}
+
+      <ConfirmDialog
+        open={resettingMfa !== null}
+        title="Reset autentikasi dua faktor"
+        description={
+          resettingMfa === null
+            ? ""
+            : `Perangkat authenticator ${resettingMfa.displayName} dan seluruh kode pemulihannya dihapus, dan semua sesinya dicabut. Ia mendaftarkan 2FA lagi saat login berikutnya. Tindakan ini tercatat di jejak audit.`
+        }
+        confirmLabel="Reset 2FA"
+        loading={resetMfaFor.isPending}
+        onConfirm={() => {
+          if (resettingMfa !== null) resetMfaFor.mutate(resettingMfa.id);
+        }}
+        onClose={() => {
+          setResettingMfa(null);
+        }}
+      />
 
       {deleting !== null ? (
         <DeleteUserDialog
