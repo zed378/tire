@@ -15,9 +15,9 @@ import { APP_VERSION_HEADER, CSRF_COOKIE, CSRF_HEADER } from "@c26/contracts";
  * one test would otherwise still be installed for the next.
  */
 
-type ApiClient = typeof import("./api-client.ts");
+import type * as ApiClientModule from "./api-client.ts";
 
-let client: ApiClient;
+let client: typeof ApiClientModule;
 let fetchMock: ReturnType<typeof vi.fn>;
 
 function envelope(body: unknown, init: ResponseInit = {}): Response {
