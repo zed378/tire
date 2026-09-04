@@ -143,7 +143,10 @@ const TIRE_POSITIONS: InspectionDetail["tirePositions"] = [
 ];
 
 const INSPECTION_DETAIL: InspectionDetail = {
-  ...(INSPECTIONS[1] ?? INSPECTIONS[0]!),
+  // The draft, deliberately. Only `draft` and `needs_revision` render the photo
+  // slots and the submit panel, so any other status audits a screen with most of
+  // its controls missing — and leaves the upload path untestable.
+  ...INSPECTIONS[0]!,
   vehicleId: 7,
   chassisNumber: "MHFXW42G1K1234567",
   segment: "truck",

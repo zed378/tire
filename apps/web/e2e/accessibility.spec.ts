@@ -470,7 +470,7 @@ test.describe("Unggahan selesai", () => {
       });
     });
 
-    await page.goto("/inspections/SN2026-00002");
+    await page.goto("/inspections/SN2026-00001");
     await expect(page.getByRole("navigation", { name: "Navigasi utama" })).toBeVisible();
 
     const slot = page.locator("div").filter({ hasText: /^Tampak Samping/ }).first();
