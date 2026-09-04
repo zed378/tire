@@ -188,6 +188,7 @@ export function MasterDataPage(): ReactNode {
                   </span>
                   <Button
                     variant="secondary"
+                    size="sm"
                     onClick={() =>
                       toggleActive.mutate({
                         table: "provinces",
@@ -245,6 +246,7 @@ export function MasterDataPage(): ReactNode {
                   </span>
                   <Button
                     variant="secondary"
+                    size="sm"
                     onClick={() =>
                       toggleActive.mutate({ table: "cities", id: city.id, isActive: !city.isActive })
                     }
@@ -290,6 +292,7 @@ export function MasterDataPage(): ReactNode {
                   <span className="text-sm text-body">{brand.name}</span>
                   <Button
                     variant="secondary"
+                    size="sm"
                     onClick={() =>
                       toggleActive.mutate({ table: tab, id: brand.id, isActive: !brand.isActive })
                     }
@@ -349,6 +352,7 @@ export function MasterDataPage(): ReactNode {
                     </div>
                     <Button
                       variant="secondary"
+                      size="sm"
                       onClick={() =>
                         create.mutate({
                           table: review.source === "tire" ? "tire-brands" : "vehicle-brands",

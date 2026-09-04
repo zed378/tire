@@ -123,9 +123,9 @@ export function TireSizesPage(): ReactNode {
             <table className="w-full text-left text-sm">
               <thead className="border-b border-line text-xs font-semibold uppercase text-muted">
                 <tr>
-                  <th className="py-2.5 px-3">Ukuran</th>
-                  <th className="py-2.5 px-3">Kategori</th>
-                  <th className="py-2.5 px-3 text-right">Aksi</th>
+                  <th className="py-1.5 px-3">Ukuran</th>
+                  <th className="py-1.5 px-3">Kategori</th>
+                  <th className="py-1.5 px-3 text-right">Aksi</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-line">
@@ -147,21 +147,21 @@ export function TireSizesPage(): ReactNode {
                       />
                     ) : (
                       <tr key={item.id} className="hover:bg-surface-sunken">
-                        <td className="py-2.5 px-3 font-medium text-body">{item.size}</td>
-                        <td className="py-2.5 px-3 text-muted">{item.type}</td>
-                        <td className="py-2.5 px-3 text-right">
+                        <td className="py-1.5 px-3 font-medium text-body">{item.size}</td>
+                        <td className="py-1.5 px-3 text-muted">{item.type}</td>
+                        <td className="py-1.5 px-3 text-right">
                           <div className="flex justify-end gap-1.5">
                             <Button
                               variant="secondary"
                               onClick={() => setEditing(item)}
-                              className="min-h-9 px-3 text-xs"
+                              size="sm"
                             >
                               Edit
                             </Button>
                             <Button
                               variant="danger"
                               onClick={() => setDeletingId(item.id)}
-                              className="min-h-9 px-3 text-xs"
+                              size="sm"
                             >
                               Hapus
                             </Button>
@@ -256,7 +256,7 @@ function EditSizeRow({
 
   return (
     <tr className="hover:bg-surface-sunken">
-      <td className="py-2.5 px-3 font-medium text-body">
+      <td className="py-1.5 px-3 font-medium text-body">
         <form id={formId} noValidate onSubmit={(event) => void submit(event)} />
         <Field label="Ukuran Ban" htmlFor={fieldId} error={errors.size?.message}>
           <Input
@@ -269,19 +269,19 @@ function EditSizeRow({
           />
         </Field>
       </td>
-      <td className="py-2.5 px-3 text-muted">{size.type}</td>
-      <td className="py-2.5 px-3 text-right">
+      <td className="py-1.5 px-3 text-muted">{size.type}</td>
+      <td className="py-1.5 px-3 text-right">
         <div className="flex justify-end gap-1.5">
           <Button
             type="submit"
             form={formId}
             loading={submitting}
             loadingText="Menyimpan…"
-            className="min-h-9 px-3 text-xs"
+            size="sm"
           >
             Simpan
           </Button>
-          <Button variant="secondary" onClick={onCancel} className="min-h-9 px-3 text-xs">
+          <Button variant="secondary" onClick={onCancel} size="sm">
             Batal
           </Button>
         </div>

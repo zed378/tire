@@ -157,7 +157,7 @@ export function UsersPage(): ReactNode {
               const isSelf = currentUser?.id === row.id;
 
               return (
-                <li key={row.id} className="flex flex-wrap items-center justify-between gap-3 py-3">
+                <li key={row.id} className="flex flex-wrap items-center justify-between gap-3 py-2">
                   <div className="min-w-0">
                     <p className="font-medium text-body">
                       {row.displayName}{" "}
@@ -189,7 +189,7 @@ export function UsersPage(): ReactNode {
                           patch: { role: event.target.value },
                         })
                       }
-                      className="w-40"
+                      className="w-40 min-h-9"
                     >
                       {USER_ROLES.map((role) => (
                         <option key={role} value={role}>
@@ -200,6 +200,7 @@ export function UsersPage(): ReactNode {
 
                     <Button
                       variant="secondary"
+                      size="sm"
                       onClick={() => resetPassword.mutate(row.id)}
                       loading={resetPassword.isPending}
                     >
@@ -208,13 +209,19 @@ export function UsersPage(): ReactNode {
 
                     <Button
                       variant="secondary"
+                      size="sm"
                       disabled={isSelf}
                       onClick={() => update.mutate({ id: row.id, patch: { isActive: !row.isActive } })}
                     >
                       {row.isActive ? "Nonaktifkan" : "Aktifkan"}
                     </Button>
 
-                    <Button variant="danger" disabled={isSelf} onClick={() => setDeleting(row)}>
+                    <Button
+                      variant="danger"
+                      size="sm"
+                      disabled={isSelf}
+                      onClick={() => setDeleting(row)}
+                    >
                       Hapus
                     </Button>
                   </div>

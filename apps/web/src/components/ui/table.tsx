@@ -14,6 +14,13 @@ import { cn } from "../../lib/cn.ts";
  * with nothing on screen to suggest it. Supplier and QC staff both use phones
  * (PLAN/00 §4), so the small-screen form has to be readable rather than merely
  * present.
+ *
+ * DENSITY IS SPLIT BETWEEN THE TWO SHAPES, deliberately. The desktop table is
+ * read by scanning a column, so tight rows put more of the data in one glance
+ * and the separators do the work padding was doing. The cards are read one at a
+ * time and touched with a thumb, so they keep their spacing: `PLAN/00` §4 is
+ * about phones in garages, and a dense card is a card whose rows are hard to
+ * hit.
  */
 
 export interface Column<Row> {
@@ -65,7 +72,7 @@ export function Table<Row>({
                   key={column.key}
                   scope="col"
                   className={cn(
-                    "px-3 py-2 text-xs font-semibold uppercase tracking-wide text-subtle",
+                    "px-2.5 py-1.5 text-xs font-semibold uppercase tracking-wide text-subtle",
                     column.align === "right" ? "text-right" : "text-left",
                   )}
                 >
@@ -76,12 +83,17 @@ export function Table<Row>({
           </thead>
           <tbody>
             {rows.map((row) => (
-              <tr key={rowKey(row)} className="border-b border-line last:border-0">
+              <tr
+                key={rowKey(row)}
+                // Tight rows are easy to lose your place in on a wide table. A
+                // hover tint tracks the eye across without costing any height.
+                className="border-b border-line last:border-0 hover:bg-surface-sunken"
+              >
                 {columns.map((column) => (
                   <td
                     key={column.key}
                     className={cn(
-                      "px-3 py-2.5 text-body",
+                      "px-2.5 py-1.5 text-body",
                       column.align === "right" ? "text-right" : "text-left",
                     )}
                   >

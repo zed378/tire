@@ -105,7 +105,7 @@ export function VehicleBrandsPage(): ReactNode {
         ) : (
           <ul className="divide-y divide-line">
             {(brands.data?.items ?? []).map((brand) => (
-              <li key={brand.id} className="flex flex-wrap items-center justify-between gap-3 py-3">
+              <li key={brand.id} className="flex flex-wrap items-center justify-between gap-3 py-2">
                 {editing?.id === brand.id ? (
                   <EditBrandForm
                     brand={brand}
@@ -122,10 +122,10 @@ export function VehicleBrandsPage(): ReactNode {
                       </p>
                     </div>
                     <div className="flex flex-wrap items-center gap-2">
-                      <Button variant="secondary" onClick={() => setEditing(brand)}>
+                      <Button variant="secondary" size="sm" onClick={() => setEditing(brand)}>
                         Edit
                       </Button>
-                      <Button variant="danger" onClick={() => setDeletingId(brand.id)}>
+                      <Button variant="danger" size="sm" onClick={() => setDeletingId(brand.id)}>
                         Hapus
                       </Button>
                     </div>

@@ -137,7 +137,7 @@ export function TireBrandPatternsPage(): ReactNode {
         ) : (
           <ul className="divide-y divide-line">
             {(patterns.data?.items ?? []).map((pattern) => (
-              <li key={pattern.id} className="flex flex-wrap items-center justify-between gap-3 py-3">
+              <li key={pattern.id} className="flex flex-wrap items-center justify-between gap-3 py-2">
                 {editing?.id === pattern.id ? (
                   <EditPatternForm
                     pattern={pattern}
@@ -159,10 +159,10 @@ export function TireBrandPatternsPage(): ReactNode {
                        </p>
                      </div>
                     <div className="flex flex-wrap items-center gap-2">
-                      <Button variant="secondary" onClick={() => setEditing(pattern)}>
+                      <Button variant="secondary" size="sm" onClick={() => setEditing(pattern)}>
                         Edit
                       </Button>
-                      <Button variant="danger" onClick={() => setDeletingId(pattern.id)}>
+                      <Button variant="danger" size="sm" onClick={() => setDeletingId(pattern.id)}>
                         Hapus
                       </Button>
                     </div>
