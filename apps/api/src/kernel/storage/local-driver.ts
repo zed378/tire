@@ -61,7 +61,51 @@ function sign(payload: string): string {
   return createHmac("sha256", signingKey()).update(payload).digest("base64url");
 }
 
+/**
+ * The prefix every photograph's storage key begins with (`PLAN/06` §5).
+ *
+ * `buildStorageKey` composes `inspections/{year}/{serialNumber}/…`; exports live
+ * under `exports/`. The two are told apart here because a token that never
+ * expires is allowed to name only the first.
+ */
+const PHOTO_KEY_PREFIX = "inspections/";
+
+/**
+ * What a token with no expiry is allowed to be, or `null` if it is allowed.
+ *
+ * A permanent token is a permanent grant, so it is narrowed to the one thing it
+ * was asked for: reading one photograph. Enforced on both sides — refused when
+ * issued, and refused again when presented — so a token that should not exist
+ * cannot be minted by a mistake here and cannot be honoured if one ever is.
+ *
+ *   It may only READ. An upload token that never expired would be a permanent
+ *   write into the bucket.
+ *
+ *   It may only name a PHOTOGRAPH. Without this, the same shape of token could
+ *   name an export — a spreadsheet of every inspection in a region — and grant
+ *   permanent unauthenticated access to it. An export's own link stays
+ *   time-limited (`EXPORT_RETENTION_SECONDS`).
+ *
+ * It is already bound to ONE object by `key` and cannot be altered, because the
+ * whole payload is under the HMAC. This adds the two limits the signature alone
+ * does not express.
+ */
+function neverExpiringTokenProblem(payload: TokenPayload): string | null {
+  if (payload.expiresAt !== null) return null;
+
+  if (payload.operation !== "get") {
+    return "a token without an expiry may only read, never upload";
+  }
+  if (!payload.key.startsWith(PHOTO_KEY_PREFIX)) {
+    return `a token without an expiry may only name a photograph (${PHOTO_KEY_PREFIX}…), not ${payload.key}`;
+  }
+  return null;
+}
+
 export function createStorageToken(payload: TokenPayload): string {
+  const problem = neverExpiringTokenProblem(payload);
+  if (problem !== null) throw new Error(`refusing to sign a storage token: ${problem}`);
+
   const body = Buffer.from(JSON.stringify(payload)).toString("base64url");
   return `${body}.${sign(body)}`;
 }
@@ -81,6 +125,12 @@ export function verifyStorageToken(token: string): TokenPayload | null {
     // `null` means the token was issued without an expiry. It cannot be forged
     // into one: the whole payload is under the HMAC.
     if (payload.expiresAt !== null && payload.expiresAt < Date.now()) return null;
+
+    // Checked again on presentation, not only at signing. A token minted before
+    // this rule existed, or by a future code path that forgets it, is refused
+    // here rather than honoured because it happens to verify.
+    if (neverExpiringTokenProblem(payload) !== null) return null;
+
     return payload;
   } catch {
     return null;
