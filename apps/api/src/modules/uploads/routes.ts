@@ -84,16 +84,48 @@ export function registerUploadRoutes(app: FastifyInstance): void {
       const body = await getObject(payload.key);
       if (body === null) return reply.status(404).send();
 
-      const extension = payload.key.split(".").pop()?.toLowerCase();
-      const mimeType = extension === "webp" ? "image/webp" : "image/jpeg";
+      /*
+       * The type comes from the token, which is where `presignDownload` put it.
+       *
+       * This used to guess from the extension, and the guess had two outcomes:
+       * `webp`, or `image/jpeg` for everything else. An Excel export therefore
+       * arrived as a JPEG — and with `nosniff` set, correctly, the browser
+       * refused to look past the header and simply would not save it. The
+       * comment in `storage/driver.ts` describes precisely this ("a spreadsheet
+       * served as an image renders as a broken image icon and cannot be saved at
+       * all"), and the token was changed to carry the real type. This half of it
+       * was never changed to read it.
+       */
+      const disposition = contentDispositionFor(payload.filename);
 
       return reply
-        .header("content-type", mimeType)
+        .header("content-type", payload.mime)
         // Private and short-lived: this is customer fleet data, and the token in
         // the URL is what authorises it (PLAN/06 §5).
         .header("cache-control", "private, max-age=300")
         .header("x-content-type-options", "nosniff")
+        .headers(disposition === null ? {} : { "content-disposition": disposition })
         .send(body);
     },
   );
+}
+
+/**
+ * `Content-Disposition` for a download that has a name.
+ *
+ * Photos are viewed inline and carry no filename, so they get no header at all.
+ * An export does: without it the browser saves the storage key, and a user ends
+ * up with `aae0f09f-ee98-46a6-8b9a-bdb261147f8e.xlsx` in their downloads folder.
+ *
+ * Both forms are emitted, per RFC 6266. The plain `filename` is an ASCII
+ * fallback for anything that cannot read `filename*`; the starred form carries
+ * the real name, so an Indonesian label survives. Quotes and backslashes are
+ * stripped from the fallback rather than escaped — a filename is not worth a
+ * header-injection surface.
+ */
+function contentDispositionFor(filename: string | undefined): string | null {
+  if (filename === undefined || filename === "") return null;
+
+  const ascii = filename.replace(/[^\x20-\x7E]/g, "_").replace(/["\\]/g, "");
+  return `attachment; filename="${ascii}"; filename*=UTF-8''${encodeURIComponent(filename)}`;
 }

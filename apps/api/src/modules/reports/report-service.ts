@@ -1,8 +1,10 @@
-import type {
-  CreateExportInput,
-  ExportJobStatus,
-  RegionProgressQuery,
-  RegionProgressResult,
+import {
+  exportFileName,
+  type CreateExportInput,
+  type ExportJobStatus,
+  type ExportKind,
+  type RegionProgressQuery,
+  type RegionProgressResult,
 } from "@c26/contracts";
 import type { Actor } from "../../kernel/authorization.ts";
 import { getPrisma, withTransaction } from "../../kernel/db.ts";
@@ -167,7 +169,12 @@ export async function getExportStatus(actor: Actor, jobId: string): Promise<Expo
     progress: job.progress,
     rowCount: job.rowCount,
     downloadUrl:
-      job.storageKey === null ? null : await presignDownload(job.storageKey, { ttlSeconds: 3600 }),
+      job.storageKey === null
+        ? null
+        : await presignDownload(job.storageKey, {
+            ttlSeconds: 3600,
+            filename: exportFileName(job.kind as ExportKind, job.createdAt),
+          }),
     error: job.errorMessage,
     requestedAt: job.createdAt.toISOString(),
     finishedAt: job.finishedAt?.toISOString() ?? null,
@@ -188,7 +195,13 @@ export async function listExports(actor: Actor): Promise<ExportJobStatus[]> {
       status: job.status,
       progress: job.progress,
       rowCount: job.rowCount,
-      downloadUrl: job.storageKey === null ? null : await presignDownload(job.storageKey, { ttlSeconds: 3600 }),
+      downloadUrl:
+        job.storageKey === null
+          ? null
+          : await presignDownload(job.storageKey, {
+              ttlSeconds: 3600,
+              filename: exportFileName(job.kind as ExportKind, job.createdAt),
+            }),
       error: job.errorMessage,
       requestedAt: job.createdAt.toISOString(),
       finishedAt: job.finishedAt?.toISOString() ?? null,

@@ -54,6 +54,29 @@ export const EXPORT_KIND_LABELS: Record<ExportKind, string> = {
   region_progress: "Progres Wilayah",
 };
 
+/**
+ * The name an export is saved under.
+ *
+ * Written here rather than in the API because it is a user-facing string, and
+ * `K-10` puts those in one place alongside the labels they are built from.
+ *
+ * Without it the browser saves the storage key, and an operator ends up with
+ * `aae0f09f-ee98-46a6-8b9a-bdb261147f8e.xlsx` in their downloads folder — a file
+ * they cannot tell apart from the next one.
+ *
+ * The date is the day the export was requested, in WIB, because that is the day
+ * the person asking for it will remember. It is written `dd-mm-yyyy` to match
+ * every other date this application shows.
+ */
+export function exportFileName(kind: ExportKind, requestedAt: Date): string {
+  const wib = new Date(requestedAt.getTime() + 7 * 60 * 60 * 1000);
+  const day = String(wib.getUTCDate()).padStart(2, "0");
+  const month = String(wib.getUTCMonth() + 1).padStart(2, "0");
+  const date = `${day}-${month}-${String(wib.getUTCFullYear())}`;
+
+  return `${EXPORT_KIND_LABELS[kind]} ${date}.xlsx`;
+}
+
 export const createExportSchema = z.object({
   kind: z.enum(EXPORT_KINDS),
   from: z.string().datetime({ offset: true }).optional(),
