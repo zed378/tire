@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { groupPhotosByPosition, type ExportablePhoto } from "./export-build.ts";
+import {
+  formatPhotoLinkCell,
+  groupPhotosByPosition,
+  type ExportablePhoto,
+} from "./export-build.ts";
 
 /**
  * The photo sheet's ordering and numbering.
@@ -131,5 +135,59 @@ describe("groupPhotosByPosition", () => {
     groupPhotosByPosition(input);
 
     expect(input.map((row) => row.storageKey)).toEqual(["c", "a"]);
+  });
+});
+
+describe("formatPhotoLinkCell", () => {
+  const NEWLINE = String.fromCharCode(10);
+
+  it("writes each tire as a heading with its links beneath", () => {
+    // The shape the request asked for, literally.
+    const cell = formatPhotoLinkCell([
+      { label: "Steer 1 Kiri", urls: ["https://a", "https://b"] },
+      { label: "Steer 1 Kanan", urls: ["https://c"] },
+    ]);
+
+    expect(cell.split(NEWLINE)).toEqual([
+      "Steer 1 Kiri:",
+      "https://a",
+      "https://b",
+      "",
+      "Steer 1 Kanan:",
+      "https://c",
+    ]);
+  });
+
+  it("is empty for an inspection with no photographs", () => {
+    // Not the word "kosong", and not a stray colon. An empty cell reads as
+    // nothing to see, which is what it means.
+    expect(formatPhotoLinkCell([])).toBe("");
+  });
+
+  it("keeps a single tire on its own without a trailing blank line", () => {
+    expect(formatPhotoLinkCell([{ label: "Steer 1 Kiri", urls: ["https://a"] }])).toBe(
+      `Steer 1 Kiri:${NEWLINE}https://a`,
+    );
+  });
+
+  it("stays inside the cell limit Excel enforces", () => {
+    // A six-axle truck reaches 22 positions at ten photographs each. Past 32,767
+    // characters Excel does not truncate — it refuses the workbook.
+    const groups = Array.from({ length: 22 }, (_, index) => ({
+      label: `Posisi ${String(index)}`,
+      urls: Array.from({ length: 10 }, () => `https://tire-store.example/${"x".repeat(400)}`),
+    }));
+
+    const cell = formatPhotoLinkCell(groups);
+    expect(cell.length).toBeLessThanOrEqual(32_767);
+  });
+
+  it("says where the rest went rather than cutting off mid-link", () => {
+    const groups = Array.from({ length: 30 }, (_, index) => ({
+      label: `Posisi ${String(index)}`,
+      urls: Array.from({ length: 10 }, () => `https://tire-store.example/${"x".repeat(400)}`),
+    }));
+
+    expect(formatPhotoLinkCell(groups)).toContain('selebihnya ada di lembar "Foto"');
   });
 });

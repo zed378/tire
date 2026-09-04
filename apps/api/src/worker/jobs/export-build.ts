@@ -113,6 +113,9 @@ async function buildQcSheet(
     { header: "Supplier", key: "supplier", width: 20 },
     { header: "Tanggal Kirim", key: "submittedAt", width: 18 },
     { header: "Alasan Terakhir", key: "notes", width: 40 },
+    // Last, and wide, because it is the tallest cell on the row. Every other
+    // column stays readable without scrolling past it.
+    { header: "Foto per Posisi Ban", key: "photoLinks", width: 70 },
   ];
   styleHeader(sheet);
 
@@ -137,6 +140,17 @@ async function buildQcSheet(
         submittedBy: { select: { displayName: true } },
         _count: { select: { photos: true } },
         qcReviews: { orderBy: { reviewedAt: "desc" }, take: 1, select: { notes: true } },
+        photos: {
+          where: { deletedAt: null },
+          select: {
+            storageKey: true,
+            slot: true,
+            capturedAt: true,
+            tirePosition: {
+              select: { positionLabel: true, positionCode: true, sortOrder: true },
+            },
+          },
+        },
       },
       orderBy: { createdAt: "asc" },
       skip,
@@ -144,7 +158,9 @@ async function buildQcSheet(
     });
 
     for (const row of rows) {
-      sheet.addRow({
+      const photoLinks = await renderPhotoLinks(row.photos);
+
+      const added = sheet.addRow({
         sn: row.serialNumber,
         plate: row.vehicle.plateDisplay,
         province: row.vehicle.city.province.name,
@@ -163,7 +179,11 @@ async function buildQcSheet(
         // — an American format in an Indonesian application (PLAN/02 §4).
         submittedAt: row.submittedAt === null ? "" : formatWib(row.submittedAt),
         notes: row.qcReviews[0]?.notes ?? "",
+        photoLinks,
       });
+
+      // Without this the cell shows one line and hides the rest behind it.
+      added.getCell("photoLinks").alignment = { wrapText: true, vertical: "top" };
     }
 
     written += rows.length;
@@ -253,6 +273,68 @@ export function groupPhotosByPosition(photos: readonly ExportablePhoto[]): Group
  * usable from a spreadsheet and is also what makes forwarding one a decision
  * rather than a convenience.
  */
+/**
+ * Excel refuses a cell longer than this, and truncates nothing gracefully.
+ *
+ * A six-axle truck reaches 22 positions at ten photographs each; at roughly 340
+ * characters per signed link that is 75,000, well past the limit. The cell keeps
+ * what fits and says where the rest are, rather than producing a workbook that
+ * will not open.
+ */
+const MAX_CELL_LENGTH = 32_767;
+
+/** Excel reads a bare newline inside a cell as a line break. */
+const LINE = String.fromCharCode(10);
+
+/**
+ * An inspection's photographs as one block of text, grouped by tire.
+ *
+ * The shape the request asked for, literally:
+ *
+ *     Steer 1 Kiri:
+ *     https://…
+ *     https://…
+ *
+ *     Steer 1 Kanan:
+ *     https://…
+ *
+ * A cell rather than a column per photograph, because the number of photographs
+ * is not fixed and a column cannot be. The "Foto" sheet beside this one carries
+ * the same links one per row, which is where they stay filterable and where an
+ * inspection too large for a cell can still be read in full.
+ */
+export function formatPhotoLinkCell(
+  groups: readonly { label: string; urls: readonly string[] }[],
+): string {
+  if (groups.length === 0) return "";
+
+  const text = groups
+    .map((group) => [`${group.label}:`, ...group.urls].join(LINE))
+    // A blank line between tires, so the groups read apart at a glance.
+    .join(LINE + LINE);
+
+  if (text.length <= MAX_CELL_LENGTH) return text;
+
+  const notice = `\n\n… selebihnya ada di lembar "Foto".`;
+  return text.slice(0, MAX_CELL_LENGTH - notice.length) + notice;
+}
+
+async function renderPhotoLinks(photos: readonly ExportablePhoto[]): Promise<string> {
+  const groups: { label: string; urls: string[] }[] = [];
+
+  for (const photo of groupPhotosByPosition(photos)) {
+    const url = await presignDownload(photo.storageKey, {
+      ttlSeconds: EXPORT_PHOTO_LINK_TTL_SECONDS,
+    });
+
+    const last = groups[groups.length - 1];
+    if (last !== undefined && last.label === photo.label) last.urls.push(url);
+    else groups.push({ label: photo.label, urls: [url] });
+  }
+
+  return formatPhotoLinkCell(groups);
+}
+
 async function buildPhotoSheet(
   workbook: ExcelJS.Workbook,
   params: ExportParams,
