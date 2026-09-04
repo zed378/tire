@@ -519,6 +519,89 @@ function onePixelJpeg(): Buffer {
   );
 }
 
+/**
+ * Looking at a photograph, and removing one before the inspection is sent.
+ *
+ * Both were asked for and neither existed: the thumbnails were plain images with
+ * no way in, and `DELETE /api/photos/:id` had been on the server the whole time
+ * with nothing calling it.
+ */
+test.describe("Pratinjau foto", () => {
+  test("thumbnail membuka foto ukuran penuh", async ({ page }) => {
+    await stubSignedInApi(page);
+    await page.goto("/inspections/SN2026-00001");
+    await expect(page.getByRole("navigation", { name: "Navigasi utama" })).toBeVisible();
+
+    // The accessible name says which photograph and where it sits in the set —
+    // "image" eleven times down a list tells a screen-reader user nothing.
+    await page.getByRole("button", { name: /Lihat foto .*1 dari/ }).first().click();
+
+    const viewer = page.getByRole("dialog");
+    await expect(viewer).toBeVisible();
+    await expect(viewer.getByRole("img")).toBeVisible();
+  });
+
+  test("Escape menutupnya dan mengembalikan fokus ke thumbnailnya", async ({ page }) => {
+    // Inherited from the shared Dialog rather than reimplemented, which is the
+    // reason the viewer is built on it.
+    await stubSignedInApi(page);
+    await page.goto("/inspections/SN2026-00001");
+
+    const thumbnail = page.getByRole("button", { name: /Lihat foto/ }).first();
+    await thumbnail.click();
+    await expect(page.getByRole("dialog")).toBeVisible();
+
+    await page.keyboard.press("Escape");
+    await expect(page.getByRole("dialog")).toBeHidden();
+    await expect(thumbnail).toBeFocused();
+  });
+
+  test("menawarkan hapus pada draf", async ({ page }) => {
+    // The fixture inspection is a draft, which is the only state a supplier may
+    // delete from — the server refuses the rest.
+    await stubSignedInApi(page);
+    await page.goto("/inspections/SN2026-00001");
+
+    await page.getByRole("button", { name: /Lihat foto/ }).first().click();
+    await expect(page.getByRole("button", { name: "Hapus Foto" })).toBeVisible();
+  });
+
+  test("tidak menawarkan hapus di tinjauan QC", async ({ page }) => {
+    // QC judges the evidence; it does not remove it. A reviewer who could delete
+    // a photograph could change what a decision rested on.
+    await stubSignedInApi(page);
+    await page.goto("/qc/SN2026-00002");
+    await expect(page.getByRole("navigation", { name: "Navigasi utama" })).toBeVisible();
+
+    await page.getByRole("button", { name: /Lihat foto/ }).first().click();
+    await expect(page.getByRole("dialog")).toBeVisible();
+    await expect(page.getByRole("button", { name: "Hapus Foto" })).toHaveCount(0);
+  });
+
+  for (const theme of THEMES) {
+    test(`pratinjau memenuhi WCAG 2.1 AA di tema ${theme}`, async ({ page }) => {
+      await page.emulateMedia({ colorScheme: theme });
+      await stubSignedInApi(page);
+      await page.goto("/inspections/SN2026-00001");
+
+      await page.getByRole("button", { name: /Lihat foto/ }).first().click();
+      await expect(page.getByRole("dialog")).toBeVisible();
+
+      const results = await new AxeBuilder({ page })
+        .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
+        .analyze();
+
+      expect(
+        results.violations.map((violation) => ({
+          rule: violation.id,
+          impact: violation.impact,
+          nodes: violation.nodes.map((node) => node.target.join(" ")),
+        })),
+      ).toEqual([]);
+    });
+  }
+});
+
 test.describe("Lebar layar", () => {
   for (const route of PUBLIC_ROUTES) {
     for (const size of WIDTHS) {

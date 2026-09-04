@@ -283,6 +283,7 @@ export function Dialog({
   onClose,
   children,
   className,
+  size = "md",
 }: {
   open: boolean;
   title: string;
@@ -290,6 +291,12 @@ export function Dialog({
   onClose: () => void;
   children: ReactNode;
   className?: string;
+  /**
+   * `wide` is for content that is looked at rather than read — a photograph at
+   * a size where blur is visible. Everything else stays at the reading width,
+   * because a wide column of prose is a worse column of prose.
+   */
+  size?: "md" | "wide";
 }): ReactNode {
   const panel = useRef<HTMLDivElement>(null);
   const titleId = useId();
@@ -329,7 +336,10 @@ export function Dialog({
         onClick={(event) => {
           event.stopPropagation();
         }}
-        className="w-full max-w-lg rounded-lg bg-surface shadow-xl"
+        className={cn(
+          "w-full rounded-lg bg-surface shadow-xl",
+          size === "wide" ? "max-w-4xl" : "max-w-lg",
+        )}
       >
         <header className="border-b border-line px-4 py-3">
           <h2 id={titleId} className="text-base font-semibold text-body">

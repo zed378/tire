@@ -12,6 +12,7 @@ import {
 import { api, isApiError } from "../../lib/api-client.ts";
 import { formatDateTime } from "../../lib/format.ts";
 import { ErrorBanner, StatusBadge, useToast } from "../../components/ui/feedback.tsx";
+import { PhotoThumbnail, PhotoViewer } from "../../components/ui/photo-viewer.tsx";
 import {
   Button,
   Card,
@@ -43,6 +44,7 @@ export function QcReviewPage(): ReactNode {
   const [notesError, setNotesError] = useState<string | undefined>(undefined);
   const [comments, setComments] = useState<Record<number, string>>({});
   const [error, setError] = useState<unknown>(null);
+  const [viewingPhotoId, setViewingPhotoId] = useState<number | null>(null);
 
   const detail = useQuery({
     queryKey: ["inspection", sn],
@@ -160,13 +162,20 @@ export function QcReviewPage(): ReactNode {
            <p className="text-sm text-muted">Tidak ada foto pada pengajuan ini.</p>
          ) : (
            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-             {photoList.map((photo) => (
+             {photoList.map((photo, index) => (
                <figure key={photo.id} className="rounded-md border border-line p-2">
-                 <img
-                   src={photo.url}
-                   alt={photo.tirePositionLabel ?? photo.slot}
-                   loading="lazy"
-                   className="h-40 w-full rounded object-cover"
+                 {/*
+                   Clickable, because "foto buram" is the commonest rejection
+                   there is and a 160px thumbnail cannot show blur. Deciding from
+                   one is guessing.
+                 */}
+                 <PhotoThumbnail
+                   photo={photo}
+                   label={photo.tirePositionLabel ?? photo.slot}
+                   index={index}
+                   total={photoList.length}
+                   className="h-40 w-full"
+                   onOpen={() => setViewingPhotoId(photo.id)}
                  />
                  <figcaption className="mt-2 text-sm font-medium text-body">
                    {photo.tirePositionLabel ?? photo.slot}
@@ -195,6 +204,18 @@ export function QcReviewPage(): ReactNode {
           </div>
         )}
       </Card>
+
+      {/*
+        No delete here, deliberately. QC judges the evidence; it does not remove
+        it. A reviewer who could delete a photograph could quietly change what a
+        decision was made on, and the audit trail would show the decision without
+        what it rested on.
+      */}
+      <PhotoViewer
+        photos={photoList}
+        openId={viewingPhotoId}
+        onOpenChange={setViewingPhotoId}
+      />
 
        {inspection.status === "pending_qc" ? (
          <Card title="Keputusan QC">

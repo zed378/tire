@@ -12,6 +12,7 @@ import {
 import { api } from "../../lib/api-client.ts";
 import { formatDateTime } from "../../lib/format.ts";
 import { useSession } from "../../lib/session.tsx";
+import { PhotoThumbnail, PhotoViewer } from "../../components/ui/photo-viewer.tsx";
 import {
   enqueuePhoto,
   removeQueueItems,
@@ -39,6 +40,7 @@ export function InspectionDetailPage(): ReactNode {
   const { can } = useSession();
   const [queue, setQueue] = useState<QueueItem[]>([]);
   const [error, setError] = useState<unknown>(null);
+  const [viewingPhotoId, setViewingPhotoId] = useState<number | null>(null);
 
   useEffect(() => subscribeToQueue(setQueue), []);
 
@@ -89,6 +91,31 @@ export function InspectionDetailPage(): ReactNode {
   const reviews = useQuery({
     queryKey: ["inspection-reviews", sn],
     queryFn: () => api.get<QcReviewRecord[]>(`/api/qc/${sn}/reviews`),
+  });
+
+  /**
+   * Removing a photograph before the inspection is sent.
+   *
+   * The endpoint has always existed and nothing called it: `deletePhoto` refuses
+   * a supplier once the inspection has left `draft` or `needs_revision`, soft
+   * deletes rather than destroying, and writes an audit entry. So the only thing
+   * missing was a way to ask for it.
+   *
+   * The button lives in the viewer rather than on the thumbnail, so what is
+   * about to be removed is on screen at full size when the decision is made.
+   */
+  const removePhoto = useMutation({
+    mutationFn: (photoId: number) => api.delete(`/api/photos/${String(photoId)}`),
+    onSuccess: async () => {
+      setViewingPhotoId(null);
+      toast.push({ tone: "success", message: "Foto dihapus." });
+      await queryClient.invalidateQueries({ queryKey: ["inspection-photos", sn] });
+      await queryClient.invalidateQueries({ queryKey: ["inspection", sn] });
+    },
+    onError: (caught) => {
+      setViewingPhotoId(null);
+      setError(caught);
+    },
   });
 
   const submit = useMutation({
@@ -185,6 +212,7 @@ export function InspectionDetailPage(): ReactNode {
               photos={photosBySlot.filter((photo) => photo.slot === general.slot)}
               queued={queueForThis.filter((item) => item.slot === general.slot)}
               uploadedInInspection={uploadedInInspection}
+              onOpenPhoto={setViewingPhotoId}
               onError={setError}
             />
           ))}
@@ -208,6 +236,7 @@ export function InspectionDetailPage(): ReactNode {
               photos={photosBySlot.filter((photo) => photo.tirePositionId === position.id)}
               queued={queueForThis.filter((item) => item.tirePositionId === position.id)}
               uploadedInInspection={uploadedInInspection}
+              onOpenPhoto={setViewingPhotoId}
               onError={setError}
             />
           ))}
@@ -289,6 +318,19 @@ export function InspectionDetailPage(): ReactNode {
         )}
       </Card>
 
+      {/*
+        One viewer for the whole screen rather than one per slot: arrow keys
+        then walk the entire inspection, which is how a reviewer actually reads
+        it, and there is only ever one open.
+      */}
+      <PhotoViewer
+        photos={photosBySlot}
+        openId={viewingPhotoId}
+        onOpenChange={setViewingPhotoId}
+        onDelete={editable ? (photoId) => removePhoto.mutate(photoId) : undefined}
+        deleting={removePhoto.isPending}
+      />
+
       <ChangeHistory inspectionId={inspection.id} />
     </div>
   );
@@ -314,6 +356,7 @@ interface PhotoSlotProps {
   queued: QueueItem[];
   /** Photographs the server holds across the whole inspection, for the 30 cap. */
   uploadedInInspection: number;
+  onOpenPhoto: (photoId: number) => void;
   onError: (error: unknown) => void;
 }
 
@@ -327,6 +370,7 @@ function PhotoSlot({
   photos,
   queued,
   uploadedInInspection,
+  onOpenPhoto,
   onError,
 }: PhotoSlotProps): ReactNode {
   const [busy, setBusy] = useState(false);
@@ -390,13 +434,15 @@ function PhotoSlot({
 
        {photos.length > 0 || queued.length > 0 ? (
          <ul className="mt-2 flex flex-wrap gap-2">
-           {photos.map((photo) => (
+           {photos.map((photo, index) => (
              <li key={photo.id}>
-               <img
-                 src={photo.thumbnailUrl ?? photo.url}
-                 alt={photo.tirePositionLabel ?? label}
-                 loading="lazy"
-                 className="h-16 w-16 rounded border border-line object-cover"
+               <PhotoThumbnail
+                 photo={photo}
+                 label={label}
+                 index={index}
+                 total={photos.length}
+                 className="h-16 w-16"
+                 onOpen={() => onOpenPhoto(photo.id)}
                />
              </li>
            ))}
