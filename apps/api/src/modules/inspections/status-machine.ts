@@ -157,11 +157,38 @@ export async function transitionInspection(
     // In the same transaction. If this rolls back, the notification goes with
     // it — a notification about something that did not happen becomes
     // impossible rather than rare (PLAN/12 §2.1).
+    /*
+     * The payload has to carry everything the notification will need, because
+     * nothing downstream can go and look it up.
+     *
+     * It used to carry only the id and the two statuses. Every template in
+     * `NOTIFICATION_TEMPLATES` interpolates `serialNumber`, `plateDisplay` and —
+     * for a submission — `supplierName`, so `renderTemplate` substituted empty
+     * strings and an admin read "() dari  masuk antrean QC.". `linkFor` reads
+     * `serialNumber` too, so the notification also led nowhere: no link, nothing
+     * to click, no way to reach the inspection it was about.
+     *
+     * Read inside the transaction and inside the lock, so the values recorded
+     * are the ones that were true at the moment of the transition. A notification
+     * describes an event, not the present.
+     */
+    const context = await tx.inspection.findUnique({
+      where: { id: input.inspectionId },
+      select: {
+        serialNumber: true,
+        vehicle: { select: { plateDisplay: true } },
+        submittedBy: { select: { displayName: true } },
+      },
+    });
+
     await publishEvent(tx, { id: actor.id, requestId: auditActor.requestId }, {
       type: eventType as Parameters<typeof publishEvent>[2]["type"],
       aggregateId: input.inspectionId,
       payload: {
         inspectionId: input.inspectionId.toString(),
+        serialNumber: context?.serialNumber ?? "",
+        plateDisplay: context?.vehicle.plateDisplay ?? "",
+        supplierName: context?.submittedBy.displayName ?? "",
         statusBefore: from,
         statusAfter: input.to,
         notes: input.notes ?? null,
