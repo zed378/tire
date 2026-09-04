@@ -109,6 +109,50 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
       throw new Error(`STORAGE_DRIVER=s3 requires: ${missing.join(", ")}`);
     }
   }
+
+  /*
+   * If uploads are sent to a different hostname, that hostname must be declared.
+   *
+   * WHAT WENT WRONG WITHOUT THIS. Production ran with
+   * `PUBLIC_API_URL=https://tire-store.zedth.my.id` and no `STORAGE_HOST` at
+   * all. The process booted, every screen worked, and only the upload failed —
+   * because `STORAGE_HOST` is what puts that origin into the CSP's
+   * `connect-src` and `img-src`, so the browser refused the PUT before it left
+   * the device. Photographs could not be uploaded and thumbnails could not be
+   * displayed, with nothing in the server log to say why: the request never
+   * arrived.
+   *
+   * It was also a silent security downgrade. `isStorageHost` answers false for
+   * an empty setting, so the restriction that keeps the storage hostname to
+   * `/api/uploads/` was disabled — that hostname served the entire API and the
+   * SPA (`kernel/http/hosts.ts`).
+   *
+   * This is the same shape as the `s3` check above: a configuration that is
+   * wrong in a way the process cannot notice until a user is already failing.
+   * `STORAGE_DRIVER=s3` refuses to boot without its five keys; this refuses to
+   * boot when uploads have been pointed somewhere the browser has not been told
+   * to allow.
+   */
+  const uploadHost = new URL(value.PUBLIC_API_URL).hostname;
+  const appHosts = value.WEB_ORIGIN.split(",")
+    .map((origin) => origin.trim())
+    .filter(Boolean)
+    .map((origin) => {
+      try {
+        return new URL(origin).hostname;
+      } catch {
+        return "";
+      }
+    });
+
+  if (!appHosts.includes(uploadHost) && value.STORAGE_HOST.trim() === "") {
+    throw new Error(
+      `PUBLIC_API_URL points at ${uploadHost}, which is not in WEB_ORIGIN, so STORAGE_HOST must ` +
+        `name it. Without it the Content-Security-Policy omits that origin and every photo upload ` +
+        `is blocked by the browser. Set STORAGE_HOST=${uploadHost}.`,
+    );
+  }
+
   cached = {
     ...value,
     allowedOrigins: value.WEB_ORIGIN.split(",").map((o) => o.trim()).filter(Boolean),

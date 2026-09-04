@@ -66,10 +66,16 @@ export function securityHeadersFor(
     "default-src 'self'",
     "script-src 'self'",
     "style-src 'self'",
-    `img-src 'self' ${context.storageOrigin} data: blob:`.trim(),
+    // Joined from a list rather than interpolated into a string: `.trim()`
+    // tidies the ends and leaves the middle, so an empty storage origin used to
+    // emit `img-src 'self'  data: blob:` with a double space. Browsers split on
+    // whitespace and did not care, but a header should say exactly what it
+    // means — and the next directive that interpolates something optional will
+    // not be so lucky.
+    ["img-src", "'self'", context.storageOrigin, "data:", "blob:"].filter(Boolean).join(" "),
     // The API is same-origin now, so 'self' covers it. The storage origin is
     // listed for the photo PUT.
-    `connect-src 'self' ${context.storageOrigin}`.trim(),
+    ["connect-src", "'self'", context.storageOrigin].filter(Boolean).join(" "),
     "font-src 'self'",
     "object-src 'none'",
     "frame-ancestors 'none'",

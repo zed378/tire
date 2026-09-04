@@ -61,3 +61,85 @@ describe('loadConfig', () => {
     process.env = orig;
   });
 });
+
+/**
+ * The configuration that booted perfectly and then failed on the first upload.
+ *
+ * Production ran with PUBLIC_API_URL on tire-store.zedth.my.id and no
+ * STORAGE_HOST. Every screen worked; only uploads failed, and nothing reached
+ * the server log — STORAGE_HOST is what puts that origin into the CSP, so the
+ * browser refused the PUT before it left the device. It was also a silent
+ * security downgrade: the storage host stopped being restricted to
+ * /api/uploads/ and served the whole API.
+ */
+describe('loadConfig: STORAGE_HOST when uploads go elsewhere', () => {
+  const orig = { ...process.env };
+
+  function baseEnv(): void {
+    process.env = { ...orig };
+    process.env.DATABASE_URL = 'postgresql://test:test@localhost:5432/test';
+    process.env.STORAGE_SIGNING_KEY = 'test-key-at-least-16';
+    process.env.MFA_ENCRYPTION_KEY = Buffer.alloc(32, 5).toString('base64');
+  }
+
+  afterEach(() => {
+    process.env = orig;
+  });
+
+  it('refuses to boot when PUBLIC_API_URL names a host WEB_ORIGIN does not', () => {
+    baseEnv();
+    process.env.WEB_ORIGIN = 'https://tire.zedth.my.id';
+    process.env.PUBLIC_API_URL = 'https://tire-store.zedth.my.id';
+    delete process.env.STORAGE_HOST;
+
+    expect(() => loadConfig()).toThrow(/STORAGE_HOST/);
+  });
+
+  it('names the value to set, so the message is the fix', () => {
+    baseEnv();
+    process.env.WEB_ORIGIN = 'https://tire.zedth.my.id';
+    process.env.PUBLIC_API_URL = 'https://tire-store.zedth.my.id';
+    delete process.env.STORAGE_HOST;
+
+    expect(() => loadConfig()).toThrow(/STORAGE_HOST=tire-store\.zedth\.my\.id/);
+  });
+
+  it('boots once STORAGE_HOST names that host', () => {
+    baseEnv();
+    process.env.WEB_ORIGIN = 'https://tire.zedth.my.id';
+    process.env.PUBLIC_API_URL = 'https://tire-store.zedth.my.id';
+    process.env.STORAGE_HOST = 'tire-store.zedth.my.id';
+
+    expect(loadConfig().STORAGE_HOST).toBe('tire-store.zedth.my.id');
+  });
+
+  it('says nothing when uploads are served from the application host', () => {
+    // The single-hostname deployment is legitimate and must not be obstructed.
+    baseEnv();
+    process.env.WEB_ORIGIN = 'https://tire.zedth.my.id';
+    process.env.PUBLIC_API_URL = 'https://tire.zedth.my.id';
+    delete process.env.STORAGE_HOST;
+
+    expect(() => loadConfig()).not.toThrow();
+  });
+
+  it('says nothing about local development', () => {
+    // Vite on :5173, the API on :3000, both localhost. A different PORT is not
+    // a different host, and the browser treats the CSP host without the port.
+    baseEnv();
+    delete process.env.WEB_ORIGIN;
+    delete process.env.PUBLIC_API_URL;
+    delete process.env.STORAGE_HOST;
+
+    expect(() => loadConfig()).not.toThrow();
+  });
+
+  it('accepts a host listed among several in WEB_ORIGIN', () => {
+    baseEnv();
+    process.env.WEB_ORIGIN = 'https://tire.zedth.my.id,https://admin.zedth.my.id';
+    process.env.PUBLIC_API_URL = 'https://admin.zedth.my.id';
+    delete process.env.STORAGE_HOST;
+
+    expect(() => loadConfig()).not.toThrow();
+  });
+});
