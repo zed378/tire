@@ -46,11 +46,31 @@ Foto langsung dari kamera ponsel modern berukuran 3–8 MB. Mengunggah 15 foto s
 
 | Parameter | Nilai | Alasan |
 |---|---|---|
-| Sisi terpanjang | 1.600 px | Cukup membaca merk, pattern, dan kondisi tapak |
+| Sisi terpanjang | **1.920 px** | Cukup membaca merk, pattern, dan kondisi tapak — dan cukup untuk diperbesar saat meninjau. Lihat §3.2 |
 | Format | WebP, kualitas 0,78 | ~30% lebih kecil dari JPEG pada kualitas setara |
 | Fallback | JPEG kualitas 0,82 | Untuk peramban lawas |
-| Target ukuran | 300–500 KB | Dasar perhitungan penyimpanan dokumen `01` §1 |
+| Target ukuran | **400–700 KB** | Dasar perhitungan penyimpanan dokumen `01` §1 |
 | Batas keras | 5 MB | Ditolak `413 FILE_TOO_LARGE` |
+
+### 3.2 Kenapa 1.920 px, bukan 1.600 px
+
+Angka semula 1.600 px, dengan alasan cukup untuk membaca merk, pattern, dan
+kondisi tapak. Memang cukup — tapi pas-pasan. Pemilik menilai hasilnya terlalu
+kasar di lapangan, dan itulah pengujian yang menentukan. Naik ke 1.920 px.
+
+**Ini tidak gratis, dan angkanya perlu dicatat di sini supaya tidak jadi kejutan
+di tagihan penyimpanan.** 1.920 px adalah **1,44×** piksel 1.600 px, jadi
+rata-rata foto naik dari ~400 KB ke ~575 KB. Terhadap angka perencanaan dokumen
+`01` §1:
+
+| Skenario | 1.600 px | 1.920 px |
+|---|---|---|
+| Foto setelah 3 tahun (rata-rata) | 252 GB | **~363 GB** |
+| Foto setelah 3 tahun (maksimum 10/slot) | 1,7 TB | **~2,4 TB** |
+
+Kalau nanti perlu ditarik kembali, tuas yang benar adalah **kualitas WebP**,
+bukan dimensi. Dimensi yang memungkinkan seseorang memperbesar dinding ban;
+kualitas adalah hal yang memang tidak akan mereka sadari.
 
 Kompresi memakai `createImageBitmap` + `OffscreenCanvas` di Web Worker, sehingga UI tidak membeku saat memproses.
 

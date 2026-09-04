@@ -13,7 +13,7 @@ import {
  * field 4G connection is 60–120 MB per vehicle — unacceptable both for the
  * worker's data allowance and for the storage bill.
  *
- * Target: longest edge 1600 px, WebP at quality 0.78, landing at 300–500 KB.
+ * Target: longest edge 1,920 px, WebP at quality 0.78, landing at 400–700 KB.
  * That is enough to read the brand, the pattern, and the state of the tread,
  * which is what the photograph is for.
  */

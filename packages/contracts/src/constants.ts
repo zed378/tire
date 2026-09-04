@@ -149,8 +149,24 @@ export const MAX_PHOTO_BYTES = 5 * 1024 * 1024;
 export const ACCEPTED_PHOTO_MIME_TYPES = ["image/webp", "image/jpeg"] as const;
 export type PhotoMimeType = (typeof ACCEPTED_PHOTO_MIME_TYPES)[number];
 
-/** Client-side compression profile (PLAN/06 §3). */
-export const PHOTO_MAX_EDGE_PX = 1600;
+/**
+ * Client-side compression profile (PLAN/06 §3).
+ *
+ * The longest edge was 1,600 px, on the reasoning that it is enough to read a
+ * brand, a pattern and the tread. It is — but only just, and the owner judged
+ * the result too coarse in the field, which is the test that matters. 1,920.
+ *
+ * IT IS NOT FREE, and PLAN/06 §3 now records the number. 1,920 is 1.44× the
+ * pixels of 1,600, so the average photograph goes from about 400 KB to about
+ * 575 KB. Against the planning figures in PLAN/01 §1 that is 252 GB → ~363 GB
+ * of photographs after three years, and 1.7 TB → ~2.4 TB in the maximum
+ * scenario where every slot is filled.
+ *
+ * The other lever, if that ever needs winding back, is `PHOTO_WEBP_QUALITY`
+ * rather than the edge: dimensions are what let somebody zoom into a sidewall,
+ * and quality is what they were never going to notice.
+ */
+export const PHOTO_MAX_EDGE_PX = 1920;
 export const PHOTO_WEBP_QUALITY = 0.78;
 export const PHOTO_JPEG_QUALITY = 0.82;
 

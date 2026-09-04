@@ -594,6 +594,64 @@ test.describe("Pratinjau foto", () => {
     await expect(page.getByRole("button", { name: "Hapus Foto" })).toHaveCount(0);
   });
 
+  test("bisa diperbesar dan dikecilkan lagi", async ({ page }) => {
+    // 1,920px on the long edge exists so there is something to find when you
+    // magnify — a sidewall marking, a crack. Without a zoom, that resolution is
+    // storage nobody can reach.
+    await stubSignedInApi(page);
+    await page.goto("/inspections/SN2026-00001");
+    await page.getByRole("button", { name: /Lihat foto/ }).first().click();
+
+    const viewer = page.getByRole("dialog");
+    await expect(viewer.getByText("1×")).toBeVisible();
+
+    await viewer.getByRole("button", { name: "Perbesar" }).click();
+    await expect(viewer.getByText("1,5×")).toBeVisible();
+
+    await viewer.getByRole("button", { name: "Perkecil" }).click();
+    await expect(viewer.getByText("1×")).toBeVisible();
+  });
+
+  test("berhenti di kedua ujung skala, bukan diam-diam tidak berbuat apa-apa", async ({ page }) => {
+    await stubSignedInApi(page);
+    await page.goto("/inspections/SN2026-00001");
+    await page.getByRole("button", { name: /Lihat foto/ }).first().click();
+
+    const viewer = page.getByRole("dialog");
+    // A control that does nothing and says nothing is the dead-button defect
+    // this codebase has already fixed four times.
+    await expect(viewer.getByRole("button", { name: "Perkecil" })).toBeDisabled();
+
+    for (let step = 0; step < 4; step += 1) {
+      await viewer.getByRole("button", { name: "Perbesar" }).click();
+    }
+    await expect(viewer.getByText("4×")).toBeVisible();
+    await expect(viewer.getByRole("button", { name: "Perbesar" })).toBeDisabled();
+  });
+
+  test("kembali ke 1× saat berpindah foto", async ({ page }) => {
+    // Carrying a 4× magnification into the next photograph shows a corner of it
+    // and reads as a broken image.
+    await stubSignedInApi(page);
+    await page.goto("/inspections/SN2026-00001");
+    await page.getByRole("button", { name: /Lihat foto/ }).first().click();
+
+    const viewer = page.getByRole("dialog");
+    await viewer.getByRole("button", { name: "Perbesar" }).click();
+    await expect(viewer.getByText("1,5×")).toBeVisible();
+
+    await viewer.getByRole("button", { name: "Berikutnya" }).click();
+    await expect(viewer.getByText("1×")).toBeVisible();
+  });
+
+  test("menawarkan layar penuh", async ({ page }) => {
+    await stubSignedInApi(page);
+    await page.goto("/inspections/SN2026-00001");
+    await page.getByRole("button", { name: /Lihat foto/ }).first().click();
+
+    await expect(page.getByRole("button", { name: "Layar Penuh" })).toBeVisible();
+  });
+
   for (const theme of THEMES) {
     test(`pratinjau memenuhi WCAG 2.1 AA di tema ${theme}`, async ({ page }) => {
       await page.emulateMedia({ colorScheme: theme });
