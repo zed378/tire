@@ -34,6 +34,13 @@ import {
 const log = getLogger();
 
 async function registerHandlers(boss: PgBoss): Promise<void> {
+  /*
+   * Kept as a queue handler so the outbox can still be drained on demand — the
+   * operations panel retries failed jobs by name, and a stuck outbox is exactly
+   * what PLAN/12 §7.1 asks an operator to be able to act on. It is no longer the
+   * scheduled path; `startOutboxLoop` is, because pg-boss caps a schedule at one
+   * minute and this needs five seconds.
+   */
   await boss.work(JOB_NAMES.outboxDispatch, async () => {
     const result = await dispatchOutbox();
     if (result.created > 0) log.info(result, "outbox dispatched");
@@ -93,12 +100,26 @@ async function registerHandlers(boss: PgBoss): Promise<void> {
 /**
  * Schedules (PLAN/12 §7).
  *
- * The outbox is polled every 5 seconds: the whole point of writing an event in
- * the data transaction is that it gets delivered promptly afterwards.
+ * THE OUTBOX IS NOT SCHEDULED HERE. It used to be, on a six-field cron whose
+ * seconds field asked for every five, and the comment above this function
+ * claimed that is what happened. (The expression is not written out here: it
+ * contains the characters that end a block comment, which is its own small
+ * lesson.) It was
+ * not: pg-boss inserts every scheduled job with `singletonKey: name,
+ * singletonSeconds: 60` (`timekeeper.js`), and its `shouldSendIt` accepts a
+ * schedule only when the previous cron time is less than 60 seconds old. Both
+ * caps are one minute, so the seconds field was silently discarded and a
+ * notification arrived up to a minute after the event that caused it. Submitting
+ * an inspection and watching an admin's dashboard stay empty is exactly what
+ * that looks like from the outside.
+ *
+ * It runs on a plain interval below instead. Safe to do because `dispatchOutbox`
+ * is idempotent in the database rather than by arrangement: `uq_notif` refuses a
+ * duplicate notification, so two overlapping runs cannot produce two of
+ * anything.
  */
 async function registerSchedules(boss: PgBoss): Promise<void> {
   const schedules: [string, string][] = [
-    [JOB_NAMES.outboxDispatch, "*/5 * * * * *"],
     [JOB_NAMES.reportRefresh, "*/10 * * * *"],
     [JOB_NAMES.queueHealth, "*/5 * * * *"],
     // 02:00 WIB is 19:00 UTC the previous day.
@@ -112,6 +133,43 @@ async function registerSchedules(boss: PgBoss): Promise<void> {
   for (const [name, cron] of schedules) {
     await boss.schedule(name, cron, {}, { tz: "UTC" });
   }
+}
+
+/**
+ * How often the outbox is drained.
+ *
+ * The whole point of writing an event inside the data transaction is that it is
+ * delivered promptly afterwards. Five seconds is the promise `PLAN/12` §7 makes
+ * and the one this now keeps.
+ */
+const OUTBOX_INTERVAL_MS = 5_000;
+
+function startOutboxLoop(): () => void {
+  let running = false;
+
+  const timer = setInterval(() => {
+    // A slow drain must not stack up behind itself. Skipping a tick is correct:
+    // the rows are still there and the next tick takes them.
+    if (running) return;
+    running = true;
+
+    void dispatchOutbox()
+      .then((result) => {
+        if (result.created > 0) log.info(result, "outbox dispatched");
+      })
+      .catch((error: unknown) => {
+        // Logged and swallowed on purpose. An unhandled rejection here would
+        // take the worker down and stop every other job with it.
+        log.error({ err: error }, "outbox dispatch failed");
+      })
+      .finally(() => {
+        running = false;
+      });
+  }, OUTBOX_INTERVAL_MS);
+
+  return () => {
+    clearInterval(timer);
+  };
 }
 
 async function main(): Promise<void> {
@@ -128,10 +186,13 @@ async function main(): Promise<void> {
   await registerHandlers(boss);
   await registerSchedules(boss);
 
-  log.info("worker started");
+  const stopOutboxLoop = startOutboxLoop();
+
+  log.info({ outboxIntervalMs: OUTBOX_INTERVAL_MS }, "worker started");
 
   const shutdown = (signal: string): void => {
     log.info({ signal }, "worker shutting down");
+    stopOutboxLoop();
     void stopQueue()
       .then(() => disconnectPrisma())
       .then(() => process.exit(0))
