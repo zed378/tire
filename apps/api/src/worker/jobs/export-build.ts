@@ -1,8 +1,13 @@
 import ExcelJS from "exceljs";
-import { EXPORT_KIND_LABELS, type ExportKind } from "@c26/contracts";
+import {
+  EXPORT_KIND_LABELS,
+  EXPORT_LINK_TTL_SECONDS,
+  PHOTO_SLOT_LABELS,
+  type ExportKind,
+} from "@c26/contracts";
 import { getPrisma, withTransaction } from "../../kernel/db.ts";
 import { publishEvent } from "../../kernel/outbox.ts";
-import { putObject } from "../../kernel/storage/index.ts";
+import { presignDownload, putObject } from "../../kernel/storage/index.ts";
 
 /**
  * Builds an Excel export (PLAN/05 §8, PLAN/08 F5).
@@ -55,6 +60,34 @@ function dateFilter(params: ExportParams): { gte?: Date; lte?: Date } | undefine
   };
 }
 
+/**
+ * The inspections an export covers, as one filter.
+ *
+ * Shared by the QC sheet and the photo sheet beside it. Two copies of this would
+ * be two chances for the photo sheet to describe a different set of inspections
+ * than the sheet it sits next to.
+ */
+function inspectionFilter(params: ExportParams): Record<string, unknown> {
+  return {
+    deletedAt: null,
+    ...(dateFilter(params) === undefined ? {} : { submittedAt: dateFilter(params) }),
+    ...(params.status !== undefined && params.status.length > 0
+      ? { status: { in: params.status as never } }
+      : {}),
+    ...(params.provinceId !== undefined || params.cityId !== undefined || params.category !== undefined
+      ? {
+          vehicle: {
+            ...(params.cityId !== undefined ? { cityId: BigInt(params.cityId) } : {}),
+            ...(params.provinceId !== undefined
+              ? { city: { provinceId: BigInt(params.provinceId) } }
+              : {}),
+            ...(params.category !== undefined ? { category: params.category } : {}),
+          },
+        }
+      : {}),
+  };
+}
+
 async function buildQcSheet(
   workbook: ExcelJS.Workbook,
   params: ExportParams,
@@ -81,24 +114,7 @@ async function buildQcSheet(
   ];
   styleHeader(sheet);
 
-  const where = {
-    deletedAt: null,
-    ...(dateFilter(params) === undefined ? {} : { submittedAt: dateFilter(params) }),
-    ...(params.status !== undefined && params.status.length > 0
-      ? { status: { in: params.status as never } }
-      : {}),
-    ...(params.provinceId !== undefined || params.cityId !== undefined || params.category !== undefined
-      ? {
-          vehicle: {
-            ...(params.cityId !== undefined ? { cityId: BigInt(params.cityId) } : {}),
-            ...(params.provinceId !== undefined
-              ? { city: { provinceId: BigInt(params.provinceId) } }
-              : {}),
-            ...(params.category !== undefined ? { category: params.category } : {}),
-          },
-        }
-      : {}),
-  };
+  const where = inspectionFilter(params);
 
   const total = await getPrisma().inspection.count({ where });
   const pageSize = 500;
@@ -150,6 +166,119 @@ async function buildQcSheet(
 
     written += rows.length;
     await reportProgress(jobId, Math.min(90, Math.round((written / Math.max(total, 1)) * 90)), written);
+  }
+
+  return written;
+}
+
+/**
+ * Every photograph in the export, grouped by the tire it belongs to.
+ *
+ * A SHEET RATHER THAN A COLUMN. The obvious reading of "include the links in the
+ * report" is one cell per inspection holding all of them, and that breaks on the
+ * vehicles that need it most: a six-axle truck has 22 positions, ten photographs
+ * each, and 220 signed URLs is well past Excel's 32,767-character cell limit.
+ * One row per photograph also stays sortable and filterable, which a block of
+ * text in a cell does not.
+ *
+ * The grouping the request asked for is the row order: an inspection, then its
+ * general shots, then each tire position in the order the axle engine generated
+ * them, then the photographs within it. `Posisi Ban` repeats down the group
+ * rather than being left blank on continuation rows — a blank would look tidier
+ * and would break every filter and sort applied to the column afterwards.
+ *
+ * The links are signed and expire with the export itself
+ * (`EXPORT_LINK_TTL_SECONDS`). They need no login, which is what makes them
+ * usable from a spreadsheet and is also what makes forwarding one a decision
+ * rather than a convenience.
+ */
+async function buildPhotoSheet(
+  workbook: ExcelJS.Workbook,
+  params: ExportParams,
+  jobId: string,
+): Promise<number> {
+  const sheet = workbook.addWorksheet("Foto");
+  sheet.columns = [
+    { header: "Serial Number", key: "sn", width: 18 },
+    { header: "Plat Nomor", key: "plate", width: 14 },
+    { header: "Posisi Ban", key: "position", width: 22 },
+    { header: "Kode Posisi", key: "positionCode", width: 14 },
+    { header: "Foto ke-", key: "index", width: 10 },
+    { header: "Diambil", key: "capturedAt", width: 18 },
+    { header: "Tautan", key: "url", width: 90 },
+  ];
+  styleHeader(sheet);
+
+  const where = inspectionFilter(params);
+  const total = await getPrisma().inspection.count({ where });
+  const pageSize = 100;
+  let written = 0;
+
+  // A smaller page than the QC sheet: each inspection here carries all of its
+  // photographs, so the object graph per row is far larger.
+  for (let skip = 0; skip < total; skip += pageSize) {
+    const inspections = await getPrisma().inspection.findMany({
+      where,
+      select: {
+        serialNumber: true,
+        vehicle: { select: { plateDisplay: true } },
+        photos: {
+          where: { deletedAt: null },
+          orderBy: [{ tirePositionId: "asc" }, { id: "asc" }],
+          select: {
+            storageKey: true,
+            slot: true,
+            capturedAt: true,
+            tirePosition: {
+              select: { positionLabel: true, positionCode: true, sortOrder: true },
+            },
+          },
+        },
+      },
+      orderBy: { createdAt: "asc" },
+      skip,
+      take: pageSize,
+    });
+
+    for (const inspection of inspections) {
+      // General shots first, then the tire positions in axle-engine order. A
+      // photograph with no position is a whole-vehicle shot, not a stray.
+      const ordered = [...inspection.photos].sort((a, b) => {
+        const left = a.tirePosition?.sortOrder ?? -1;
+        const right = b.tirePosition?.sortOrder ?? -1;
+        return left - right;
+      });
+
+      let positionKey = "";
+      let indexInPosition = 0;
+
+      for (const photo of ordered) {
+        const label = photo.tirePosition?.positionLabel ?? PHOTO_SLOT_LABELS[photo.slot];
+
+        // Restarts at 1 for each tire, so "Foto ke-" reads as the request asked:
+        // photo 1, photo 2, for this tire.
+        if (label !== positionKey) {
+          positionKey = label;
+          indexInPosition = 0;
+        }
+        indexInPosition += 1;
+
+        sheet.addRow({
+          sn: inspection.serialNumber,
+          plate: inspection.vehicle.plateDisplay,
+          position: label,
+          positionCode: photo.tirePosition?.positionCode ?? "",
+          index: indexInPosition,
+          capturedAt: photo.capturedAt === null ? "" : formatWib(photo.capturedAt),
+          url: await presignDownload(photo.storageKey, {
+            ttlSeconds: EXPORT_LINK_TTL_SECONDS,
+          }),
+        });
+        written += 1;
+      }
+    }
+
+    await reportProgress(jobId, Math.min(95, 90 + Math.round(((skip + pageSize) / Math.max(total, 1)) * 5)));
   }
 
   return written;
@@ -325,12 +454,18 @@ export async function buildExport(jobId: string): Promise<{ rowCount: number }> 
     const params = (job.params ?? {}) as ExportParams;
     const kind = job.kind as ExportKind;
 
-    const rowCount =
-      kind === "qc"
-        ? await buildQcSheet(workbook, params, jobId)
-        : kind === "tire_specs"
-          ? await buildTireSpecSheet(workbook, params, jobId)
-          : await buildRegionSheet(workbook, jobId);
+    let rowCount: number;
+    if (kind === "qc") {
+      rowCount = await buildQcSheet(workbook, params, jobId);
+      // A second sheet in the same workbook rather than a second export: the
+      // photographs are evidence for the rows beside them, and separating them
+      // into another file is how a report and its evidence get parted.
+      await buildPhotoSheet(workbook, params, jobId);
+    } else if (kind === "tire_specs") {
+      rowCount = await buildTireSpecSheet(workbook, params, jobId);
+    } else {
+      rowCount = await buildRegionSheet(workbook, jobId);
+    }
 
     const buffer = Buffer.from(await workbook.xlsx.writeBuffer());
     const storageKey = `exports/${new Date().getFullYear()}/${jobId}.xlsx`;
@@ -350,7 +485,7 @@ export async function buildExport(jobId: string): Promise<{ rowCount: number }> 
           rowCount,
           storageKey,
           finishedAt: new Date(),
-          expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+          expiresAt: new Date(Date.now() + EXPORT_LINK_TTL_SECONDS * 1000),
         },
       });
 

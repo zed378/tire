@@ -55,6 +55,27 @@ export const EXPORT_KIND_LABELS: Record<ExportKind, string> = {
 };
 
 /**
+ * How long an export, and every link inside it, remains usable.
+ *
+ * ONE NUMBER FOR BOTH, on purpose. The export row carries an `expiresAt` and the
+ * photo links in the sheet are signed URLs with their own expiry; if those two
+ * drift apart you get a spreadsheet that is still listed as available and full
+ * of links that answer 404, which is worse than one that is plainly gone.
+ *
+ * Seven days is also the ceiling rather than a preference: AWS SigV4, which R2
+ * speaks, refuses to sign a URL for longer. Choosing anything above it would
+ * work on the local driver and silently fail the day storage moves to R2.
+ *
+ * WHAT THIS COSTS, stated plainly because it is a real trade. A signed photo
+ * link needs no login — the signature is the authorisation (PLAN/05 §7). A
+ * spreadsheet full of them is therefore a spreadsheet that grants a week of
+ * access to customer fleet photographs to anyone it is forwarded to. That is the
+ * price of a report whose links work; the alternative is links that expire
+ * before the person reading the report gets to them.
+ */
+export const EXPORT_LINK_TTL_SECONDS = 7 * 24 * 60 * 60;
+
+/**
  * The name an export is saved under.
  *
  * Written here rather than in the API because it is a user-facing string, and
