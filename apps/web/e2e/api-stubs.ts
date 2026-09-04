@@ -186,6 +186,24 @@ const PHOTOS: PhotoRecord[] = [
     createdAt: NOW,
     commentCount: 1,
   },
+  {
+    // A second one, and on a tire position rather than a general slot: it is
+    // what makes the viewer's navigation, its "1 dari 2", and the grouping on
+    // the export sheet observable at all.
+    id: 2,
+    slot: "tire_position",
+    tirePositionId: 1,
+    tirePositionLabel: "Steer 1 Kiri",
+    url: "/img/depot-640.jpg",
+    thumbnailUrl: "/img/depot-640.jpg",
+    byteSize: 31_002,
+    width: 640,
+    height: 427,
+    capturedAt: null,
+    uploadedByName: "Joko Supplier",
+    createdAt: NOW,
+    commentCount: 0,
+  },
 ];
 
 const MASTER_DATA: MasterDataBundle = {
