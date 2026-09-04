@@ -4,6 +4,7 @@ import {
   EXPORT_LINK_TTL_SECONDS,
   PHOTO_SLOT_LABELS,
   type ExportKind,
+  type PhotoSlot,
 } from "@c26/contracts";
 import { getPrisma, withTransaction } from "../../kernel/db.ts";
 import { publishEvent } from "../../kernel/outbox.ts";
@@ -171,6 +172,65 @@ async function buildQcSheet(
   return written;
 }
 
+export interface ExportablePhoto {
+  storageKey: string;
+  slot: PhotoSlot;
+  capturedAt: Date | null;
+  tirePosition: { positionLabel: string; positionCode: string; sortOrder: number } | null;
+}
+
+export interface GroupedPhoto extends ExportablePhoto {
+  /** The tire's name, or the slot's label for a whole-vehicle shot. */
+  label: string;
+  positionCode: string;
+  /** Restarts at 1 for each tire: "photo 1, photo 2, for this tire". */
+  index: number;
+}
+
+/**
+ * Orders an inspection's photographs by tire, and numbers them within each.
+ *
+ * General shots come first — a photograph with no tire position is a
+ * whole-vehicle shot, not a stray — and then the positions in the order the axle
+ * engine generated them, which is the order they appear on every other screen
+ * (`PLAN/03` §1). Sorting by label instead would put "Drive 1 Kiri" before
+ * "Steer 1 Kanan" and break the correspondence.
+ *
+ * Pure, and separate from the sheet, because this is the part that can be wrong
+ * without anything failing: a spreadsheet with the photographs in the wrong
+ * order still opens.
+ */
+export function groupPhotosByPosition(photos: readonly ExportablePhoto[]): GroupedPhoto[] {
+  const ordered = [...photos].sort((a, b) => {
+    const left = a.tirePosition?.sortOrder ?? -1;
+    const right = b.tirePosition?.sortOrder ?? -1;
+    return left - right;
+  });
+
+  const rows: GroupedPhoto[] = [];
+  let currentLabel = "";
+  let index = 0;
+
+  for (const photo of ordered) {
+    const label = photo.tirePosition?.positionLabel ?? PHOTO_SLOT_LABELS[photo.slot];
+
+    if (label !== currentLabel) {
+      currentLabel = label;
+      index = 0;
+    }
+    index += 1;
+
+    rows.push({
+      ...photo,
+      label,
+      positionCode: photo.tirePosition?.positionCode ?? "",
+      index,
+    });
+  }
+
+  return rows;
+}
+
 /**
  * Every photograph in the export, grouped by the tire it belongs to.
  *
@@ -241,34 +301,13 @@ async function buildPhotoSheet(
     });
 
     for (const inspection of inspections) {
-      // General shots first, then the tire positions in axle-engine order. A
-      // photograph with no position is a whole-vehicle shot, not a stray.
-      const ordered = [...inspection.photos].sort((a, b) => {
-        const left = a.tirePosition?.sortOrder ?? -1;
-        const right = b.tirePosition?.sortOrder ?? -1;
-        return left - right;
-      });
-
-      let positionKey = "";
-      let indexInPosition = 0;
-
-      for (const photo of ordered) {
-        const label = photo.tirePosition?.positionLabel ?? PHOTO_SLOT_LABELS[photo.slot];
-
-        // Restarts at 1 for each tire, so "Foto ke-" reads as the request asked:
-        // photo 1, photo 2, for this tire.
-        if (label !== positionKey) {
-          positionKey = label;
-          indexInPosition = 0;
-        }
-        indexInPosition += 1;
-
+      for (const photo of groupPhotosByPosition(inspection.photos)) {
         sheet.addRow({
           sn: inspection.serialNumber,
           plate: inspection.vehicle.plateDisplay,
-          position: label,
-          positionCode: photo.tirePosition?.positionCode ?? "",
-          index: indexInPosition,
+          position: photo.label,
+          positionCode: photo.positionCode,
+          index: photo.index,
           capturedAt: photo.capturedAt === null ? "" : formatWib(photo.capturedAt),
           url: await presignDownload(photo.storageKey, {
             ttlSeconds: EXPORT_LINK_TTL_SECONDS,
