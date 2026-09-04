@@ -44,11 +44,45 @@ export default defineConfig({
         "src/scripts/**",
       ],
       thresholds: {
-        // Ratchet. Raise, never lower. Target is 70 (PLAN/08 §6.1).
-        lines: 11,
-        statements: 11,
-        functions: 44,
-        branches: 68,
+        /*
+         * Ratchet. Raise, never lower — with one recorded exception, below.
+         * Target is 70 (PLAN/08 §6.1).
+         *
+         * ── WHY `functions` WENT DOWN, 44 → 34 ──────────────────────────────
+         * `storage-host.test.ts` boots the application through `buildApp()`.
+         * It is the first test that does, and loading that module graph changed
+         * what v8 can see: a file that is never imported is counted from static
+         * analysis, and v8 attributes fewer functions to it than actually exist.
+         * Two thirds of this package — every route module and service — had
+         * been counted that flattering way.
+         *
+         * Measured on the same suite, immediately before and after adding that
+         * one file:
+         *
+         *              lines    branches   functions
+         *   before     16.75      76.85       55.84
+         *   after      23.20      82.80       34.31
+         *
+         * Lines and branches rose because the test genuinely exercises more
+         * code. Functions fell because the denominator stopped being wrong.
+         * Nothing became less tested.
+         *
+         * So `lines`, `statements` and `branches` are ratcheted UP here to lock
+         * in the gain, and `functions` is set to the honest floor. This is not
+         * the move the note above forbids — that one raises a number by
+         * narrowing the denominator. This one lowers a number because the
+         * denominator widened.
+         *
+         * OWNER'S CALL: if you would rather keep the 44 and the older, kinder
+         * measurement, delete `src/kernel/http/storage-host.test.ts` and put
+         * these four numbers back. What you lose is the only test that exercises
+         * the storage-host boundary through a real request — the boundary a
+         * misconfiguration silently disabled in production.
+         */
+        lines: 22,
+        statements: 22,
+        functions: 34,
+        branches: 82,
 
         // Real gates on the unit-testable core. The axle engine's own 100%
         // branch gate (G-05) lives in packages/contracts, where the engine sits
