@@ -42,6 +42,21 @@ export function NotificationsPage(): ReactNode {
     enabled: showPreferences,
   });
 
+  /**
+   * Opening a notification is reading it.
+   *
+   * `POST /api/notifications/read` already existed and nothing on this screen
+   * called it — the only way to clear the badge was "tandai semua dibaca",
+   * which also clears the ones you have not looked at.
+   */
+  const markRead = useMutation({
+    mutationFn: (ids: number[]) => api.post("/api/notifications/read", { ids }),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["notifications"] });
+      await queryClient.invalidateQueries({ queryKey: ["session"] });
+    },
+  });
+
   const markAllRead = useMutation({
     mutationFn: () => api.post("/api/notifications/read-all"),
     onSuccess: async () => {
@@ -134,25 +149,41 @@ export function NotificationsPage(): ReactNode {
          ) : (
            <ul className="divide-y divide-line">
             {inbox.data.items.map((notification) => (
-               <li
-                 key={notification.id}
-                 className={
-                   notification.readAt === null
-                     ? "border-l-2 border-accent bg-accent-soft/40 py-3 pl-3"
-                     : "py-3 pl-3"
-                 }
-               >
-                 <p className="text-sm font-medium text-body">{notification.title}</p>
-                 <p className="mt-0.5 text-sm text-muted">{notification.body}</p>
-                 <p className="mt-1 text-xs text-muted">
-                  {formatRelative(notification.createdAt)}
-                  {notification.link !== null ? " · " : ""}
-                  {notification.link !== null ? (
-                    <Link to={notification.link} className="text-accent-text underline">
-                      Buka
-                    </Link>
-                  ) : null}
-                </p>
+              <li
+                key={notification.id}
+                className={
+                  notification.readAt === null
+                    ? "border-l-2 border-accent bg-accent-soft/40"
+                    : ""
+                }
+              >
+                {/*
+                  The whole row is the link, not a small "Buka" at the end of the
+                  timestamp. A notification says something happened somewhere
+                  else, so going there is the only thing anyone wants from it —
+                  and a person told to click a notification clicks its title.
+
+                  One anchor around everything, so it is one tab stop and one
+                  announcement rather than a heading, a body, a date and a link
+                  that read as four unrelated things.
+                */}
+                {notification.link === null ? (
+                  <div className="py-3 pl-3">
+                    <NotificationBody notification={notification} />
+                  </div>
+                ) : (
+                  <Link
+                    to={notification.link}
+                    onClick={() => {
+                      // Opening it is reading it. Leaving the badge counting an
+                      // item the user has just acted on is its own small lie.
+                      if (notification.readAt === null) markRead.mutate([notification.id]);
+                    }}
+                    className="block py-3 pl-3 pr-3 transition-colors hover:bg-surface-sunken focus-visible:bg-surface-sunken"
+                  >
+                    <NotificationBody notification={notification} />
+                  </Link>
+                )}
               </li>
             ))}
           </ul>
@@ -167,5 +198,22 @@ export function NotificationsPage(): ReactNode {
         />
       </Card>
     </div>
+  );
+}
+
+/**
+ * A notification's text, drawn the same whether or not it leads anywhere.
+ *
+ * Extracted only because the row is an anchor when it has a link and a plain
+ * `div` when it does not, and an anchor wrapping nothing navigable would be a
+ * tab stop that goes nowhere.
+ */
+function NotificationBody({ notification }: { notification: NotificationRecord }): ReactNode {
+  return (
+    <>
+      <p className="text-sm font-medium text-body">{notification.title}</p>
+      <p className="mt-0.5 text-sm text-muted">{notification.body}</p>
+      <p className="mt-1 text-xs text-muted">{formatRelative(notification.createdAt)}</p>
+    </>
   );
 }
