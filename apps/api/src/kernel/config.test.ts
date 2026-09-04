@@ -134,6 +134,37 @@ describe('loadConfig: STORAGE_HOST when uploads go elsewhere', () => {
     expect(() => loadConfig()).not.toThrow();
   });
 
+  it('refuses a URL where a hostname belongs', () => {
+    /*
+     * The obvious mistake, and the one actually made. `app.ts` composes the CSP
+     * source as `https://${STORAGE_HOST}`, so a URL here becomes
+     * `https://https://tire-store...`; the browser discards a source it cannot
+     * parse and blocks every upload. `normalizeHost` meanwhile splits on `:` to
+     * drop a port and reduces the same value to `https`, matching no request,
+     * which switches the storage-host restriction off. Two silent failures from
+     * one extra `https://`.
+     */
+    baseEnv();
+    process.env.WEB_ORIGIN = 'https://tire.zedth.my.id';
+    process.env.PUBLIC_API_URL = 'https://tire-store.zedth.my.id';
+    process.env.STORAGE_HOST = 'https://tire-store.zedth.my.id';
+
+    expect(() => loadConfig()).toThrow(/bare hostname/);
+  });
+
+  it('refuses a hostname carrying a port or a path', () => {
+    baseEnv();
+    process.env.WEB_ORIGIN = 'https://tire.zedth.my.id';
+    process.env.PUBLIC_API_URL = 'https://tire-store.zedth.my.id';
+
+    process.env.STORAGE_HOST = 'tire-store.zedth.my.id:3000';
+    expect(() => loadConfig()).toThrow(/bare hostname/);
+
+    resetConfigCache();
+    process.env.STORAGE_HOST = 'tire-store.zedth.my.id/api';
+    expect(() => loadConfig()).toThrow(/bare hostname/);
+  });
+
   it('accepts a host listed among several in WEB_ORIGIN', () => {
     baseEnv();
     process.env.WEB_ORIGIN = 'https://tire.zedth.my.id,https://admin.zedth.my.id';
