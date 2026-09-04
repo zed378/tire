@@ -713,3 +713,28 @@ model MigrationQuarantine {
 
   @@map("migration_quarantine")
 }
+
+/**
+ * A short, permanent URL for one stored photograph.
+ *
+ * The signed token that normally authorises a download runs to roughly 300
+ * characters, and an Excel cell stops at 32,767. A six-axle truck has 22 tire
+ * positions at up to ten photographs each, so a spreadsheet listing them all by
+ * signed URL does not fit in the cell it belongs in.
+ *
+ * The code replaces the signature, so it has to do the signature's job: it is
+ * the only thing standing between a stranger and a customer's fleet photograph.
+ * It is generated from a CSPRNG at 16 characters of base58 — about 93 bits —
+ * which is not guessable at any rate a network will sustain.
+ *
+ * One row per storage key, so re-exporting the same inspection produces the same
+ * links rather than an ever-growing table of aliases to the same file.
+ */
+model PhotoLink {
+  /** The code itself, and the primary key: there is nothing else to look up by. */
+  code       String   @id
+  storageKey String   @unique @map("storage_key")
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@map("photo_links")
+}

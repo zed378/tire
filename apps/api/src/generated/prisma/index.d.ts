@@ -168,6 +168,25 @@ export type DailyMetric = $Result.DefaultSelection<Prisma.$DailyMetricPayload>
  * 
  */
 export type MigrationQuarantine = $Result.DefaultSelection<Prisma.$MigrationQuarantinePayload>
+/**
+ * Model PhotoLink
+ * *
+ *  * A short, permanent URL for one stored photograph.
+ *  *
+ *  * The signed token that normally authorises a download runs to roughly 300
+ *  * characters, and an Excel cell stops at 32,767. A six-axle truck has 22 tire
+ *  * positions at up to ten photographs each, so a spreadsheet listing them all by
+ *  * signed URL does not fit in the cell it belongs in.
+ *  *
+ *  * The code replaces the signature, so it has to do the signature's job: it is
+ *  * the only thing standing between a stranger and a customer's fleet photograph.
+ *  * It is generated from a CSPRNG at 16 characters of base58 — about 93 bits —
+ *  * which is not guessable at any rate a network will sustain.
+ *  *
+ *  * One row per storage key, so re-exporting the same inspection produces the same
+ *  * links rather than an ever-growing table of aliases to the same file.
+ */
+export type PhotoLink = $Result.DefaultSelection<Prisma.$PhotoLinkPayload>
 
 /**
  * Enums
@@ -770,6 +789,16 @@ export class PrismaClient<
     * ```
     */
   get migrationQuarantine(): Prisma.MigrationQuarantineDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.photoLink`: Exposes CRUD operations for the **PhotoLink** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more PhotoLinks
+    * const photoLinks = await prisma.photoLink.findMany()
+    * ```
+    */
+  get photoLink(): Prisma.PhotoLinkDelegate<ExtArgs, ClientOptions>;
 }
 
 export namespace Prisma {
@@ -1241,7 +1270,8 @@ export namespace Prisma {
     NotificationPreference: 'NotificationPreference',
     ExportJob: 'ExportJob',
     DailyMetric: 'DailyMetric',
-    MigrationQuarantine: 'MigrationQuarantine'
+    MigrationQuarantine: 'MigrationQuarantine',
+    PhotoLink: 'PhotoLink'
   };
 
   export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -1260,7 +1290,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "province" | "city" | "vehicleBrand" | "tireBrand" | "tireBrandPattern" | "tireSize" | "user" | "userRegion" | "session" | "loginAttempt" | "userMfa" | "mfaRecoveryCode" | "mfaUsedCode" | "vehicle" | "vehiclePlateHistory" | "axleConfig" | "inspection" | "serialCounter" | "tirePosition" | "tireSpec" | "photo" | "pendingUpload" | "qcReview" | "qcComment" | "auditLog" | "outbox" | "notification" | "notificationPreference" | "exportJob" | "dailyMetric" | "migrationQuarantine"
+      modelProps: "province" | "city" | "vehicleBrand" | "tireBrand" | "tireBrandPattern" | "tireSize" | "user" | "userRegion" | "session" | "loginAttempt" | "userMfa" | "mfaRecoveryCode" | "mfaUsedCode" | "vehicle" | "vehiclePlateHistory" | "axleConfig" | "inspection" | "serialCounter" | "tirePosition" | "tireSpec" | "photo" | "pendingUpload" | "qcReview" | "qcComment" | "auditLog" | "outbox" | "notification" | "notificationPreference" | "exportJob" | "dailyMetric" | "migrationQuarantine" | "photoLink"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -3558,6 +3588,80 @@ export namespace Prisma {
           }
         }
       }
+      PhotoLink: {
+        payload: Prisma.$PhotoLinkPayload<ExtArgs>
+        fields: Prisma.PhotoLinkFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.PhotoLinkFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PhotoLinkPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.PhotoLinkFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PhotoLinkPayload>
+          }
+          findFirst: {
+            args: Prisma.PhotoLinkFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PhotoLinkPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.PhotoLinkFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PhotoLinkPayload>
+          }
+          findMany: {
+            args: Prisma.PhotoLinkFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PhotoLinkPayload>[]
+          }
+          create: {
+            args: Prisma.PhotoLinkCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PhotoLinkPayload>
+          }
+          createMany: {
+            args: Prisma.PhotoLinkCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.PhotoLinkCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PhotoLinkPayload>[]
+          }
+          delete: {
+            args: Prisma.PhotoLinkDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PhotoLinkPayload>
+          }
+          update: {
+            args: Prisma.PhotoLinkUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PhotoLinkPayload>
+          }
+          deleteMany: {
+            args: Prisma.PhotoLinkDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.PhotoLinkUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.PhotoLinkUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PhotoLinkPayload>[]
+          }
+          upsert: {
+            args: Prisma.PhotoLinkUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PhotoLinkPayload>
+          }
+          aggregate: {
+            args: Prisma.PhotoLinkAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregatePhotoLink>
+          }
+          groupBy: {
+            args: Prisma.PhotoLinkGroupByArgs<ExtArgs>
+            result: $Utils.Optional<PhotoLinkGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.PhotoLinkCountArgs<ExtArgs>
+            result: $Utils.Optional<PhotoLinkCountAggregateOutputType> | number
+          }
+        }
+      }
     }
   } & {
     other: {
@@ -3685,6 +3789,7 @@ export namespace Prisma {
     exportJob?: ExportJobOmit
     dailyMetric?: DailyMetricOmit
     migrationQuarantine?: MigrationQuarantineOmit
+    photoLink?: PhotoLinkOmit
   }
 
   /* Types for Logging */
@@ -40865,6 +40970,978 @@ export namespace Prisma {
 
 
   /**
+   * Model PhotoLink
+   */
+
+  export type AggregatePhotoLink = {
+    _count: PhotoLinkCountAggregateOutputType | null
+    _min: PhotoLinkMinAggregateOutputType | null
+    _max: PhotoLinkMaxAggregateOutputType | null
+  }
+
+  export type PhotoLinkMinAggregateOutputType = {
+    code: string | null
+    storageKey: string | null
+    createdAt: Date | null
+  }
+
+  export type PhotoLinkMaxAggregateOutputType = {
+    code: string | null
+    storageKey: string | null
+    createdAt: Date | null
+  }
+
+  export type PhotoLinkCountAggregateOutputType = {
+    code: number
+    storageKey: number
+    createdAt: number
+    _all: number
+  }
+
+
+  export type PhotoLinkMinAggregateInputType = {
+    code?: true
+    storageKey?: true
+    createdAt?: true
+  }
+
+  export type PhotoLinkMaxAggregateInputType = {
+    code?: true
+    storageKey?: true
+    createdAt?: true
+  }
+
+  export type PhotoLinkCountAggregateInputType = {
+    code?: true
+    storageKey?: true
+    createdAt?: true
+    _all?: true
+  }
+
+  export type PhotoLinkAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which PhotoLink to aggregate.
+     */
+    where?: PhotoLinkWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of PhotoLinks to fetch.
+     */
+    orderBy?: PhotoLinkOrderByWithRelationInput | PhotoLinkOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: PhotoLinkWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` PhotoLinks from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` PhotoLinks.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned PhotoLinks
+    **/
+    _count?: true | PhotoLinkCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: PhotoLinkMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: PhotoLinkMaxAggregateInputType
+  }
+
+  export type GetPhotoLinkAggregateType<T extends PhotoLinkAggregateArgs> = {
+        [P in keyof T & keyof AggregatePhotoLink]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregatePhotoLink[P]>
+      : GetScalarType<T[P], AggregatePhotoLink[P]>
+  }
+
+
+
+
+  export type PhotoLinkGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: PhotoLinkWhereInput
+    orderBy?: PhotoLinkOrderByWithAggregationInput | PhotoLinkOrderByWithAggregationInput[]
+    by: PhotoLinkScalarFieldEnum[] | PhotoLinkScalarFieldEnum
+    having?: PhotoLinkScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: PhotoLinkCountAggregateInputType | true
+    _min?: PhotoLinkMinAggregateInputType
+    _max?: PhotoLinkMaxAggregateInputType
+  }
+
+  export type PhotoLinkGroupByOutputType = {
+    code: string
+    storageKey: string
+    createdAt: Date
+    _count: PhotoLinkCountAggregateOutputType | null
+    _min: PhotoLinkMinAggregateOutputType | null
+    _max: PhotoLinkMaxAggregateOutputType | null
+  }
+
+  type GetPhotoLinkGroupByPayload<T extends PhotoLinkGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<PhotoLinkGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof PhotoLinkGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], PhotoLinkGroupByOutputType[P]>
+            : GetScalarType<T[P], PhotoLinkGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type PhotoLinkSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    code?: boolean
+    storageKey?: boolean
+    createdAt?: boolean
+  }, ExtArgs["result"]["photoLink"]>
+
+  export type PhotoLinkSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    code?: boolean
+    storageKey?: boolean
+    createdAt?: boolean
+  }, ExtArgs["result"]["photoLink"]>
+
+  export type PhotoLinkSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    code?: boolean
+    storageKey?: boolean
+    createdAt?: boolean
+  }, ExtArgs["result"]["photoLink"]>
+
+  export type PhotoLinkSelectScalar = {
+    code?: boolean
+    storageKey?: boolean
+    createdAt?: boolean
+  }
+
+  export type PhotoLinkOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"code" | "storageKey" | "createdAt", ExtArgs["result"]["photoLink"]>
+
+  export type $PhotoLinkPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "PhotoLink"
+    objects: {}
+    scalars: $Extensions.GetPayloadResult<{
+      /**
+       * * The code itself, and the primary key: there is nothing else to look up by.
+       */
+      code: string
+      storageKey: string
+      createdAt: Date
+    }, ExtArgs["result"]["photoLink"]>
+    composites: {}
+  }
+
+  type PhotoLinkGetPayload<S extends boolean | null | undefined | PhotoLinkDefaultArgs> = $Result.GetResult<Prisma.$PhotoLinkPayload, S>
+
+  type PhotoLinkCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<PhotoLinkFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: PhotoLinkCountAggregateInputType | true
+    }
+
+  export interface PhotoLinkDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['PhotoLink'], meta: { name: 'PhotoLink' } }
+    /**
+     * Find zero or one PhotoLink that matches the filter.
+     * @param {PhotoLinkFindUniqueArgs} args - Arguments to find a PhotoLink
+     * @example
+     * // Get one PhotoLink
+     * const photoLink = await prisma.photoLink.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends PhotoLinkFindUniqueArgs>(args: SelectSubset<T, PhotoLinkFindUniqueArgs<ExtArgs>>): Prisma__PhotoLinkClient<$Result.GetResult<Prisma.$PhotoLinkPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one PhotoLink that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {PhotoLinkFindUniqueOrThrowArgs} args - Arguments to find a PhotoLink
+     * @example
+     * // Get one PhotoLink
+     * const photoLink = await prisma.photoLink.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends PhotoLinkFindUniqueOrThrowArgs>(args: SelectSubset<T, PhotoLinkFindUniqueOrThrowArgs<ExtArgs>>): Prisma__PhotoLinkClient<$Result.GetResult<Prisma.$PhotoLinkPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first PhotoLink that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PhotoLinkFindFirstArgs} args - Arguments to find a PhotoLink
+     * @example
+     * // Get one PhotoLink
+     * const photoLink = await prisma.photoLink.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends PhotoLinkFindFirstArgs>(args?: SelectSubset<T, PhotoLinkFindFirstArgs<ExtArgs>>): Prisma__PhotoLinkClient<$Result.GetResult<Prisma.$PhotoLinkPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first PhotoLink that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PhotoLinkFindFirstOrThrowArgs} args - Arguments to find a PhotoLink
+     * @example
+     * // Get one PhotoLink
+     * const photoLink = await prisma.photoLink.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends PhotoLinkFindFirstOrThrowArgs>(args?: SelectSubset<T, PhotoLinkFindFirstOrThrowArgs<ExtArgs>>): Prisma__PhotoLinkClient<$Result.GetResult<Prisma.$PhotoLinkPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more PhotoLinks that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PhotoLinkFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all PhotoLinks
+     * const photoLinks = await prisma.photoLink.findMany()
+     * 
+     * // Get first 10 PhotoLinks
+     * const photoLinks = await prisma.photoLink.findMany({ take: 10 })
+     * 
+     * // Only select the `code`
+     * const photoLinkWithCodeOnly = await prisma.photoLink.findMany({ select: { code: true } })
+     * 
+     */
+    findMany<T extends PhotoLinkFindManyArgs>(args?: SelectSubset<T, PhotoLinkFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PhotoLinkPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a PhotoLink.
+     * @param {PhotoLinkCreateArgs} args - Arguments to create a PhotoLink.
+     * @example
+     * // Create one PhotoLink
+     * const PhotoLink = await prisma.photoLink.create({
+     *   data: {
+     *     // ... data to create a PhotoLink
+     *   }
+     * })
+     * 
+     */
+    create<T extends PhotoLinkCreateArgs>(args: SelectSubset<T, PhotoLinkCreateArgs<ExtArgs>>): Prisma__PhotoLinkClient<$Result.GetResult<Prisma.$PhotoLinkPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many PhotoLinks.
+     * @param {PhotoLinkCreateManyArgs} args - Arguments to create many PhotoLinks.
+     * @example
+     * // Create many PhotoLinks
+     * const photoLink = await prisma.photoLink.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends PhotoLinkCreateManyArgs>(args?: SelectSubset<T, PhotoLinkCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many PhotoLinks and returns the data saved in the database.
+     * @param {PhotoLinkCreateManyAndReturnArgs} args - Arguments to create many PhotoLinks.
+     * @example
+     * // Create many PhotoLinks
+     * const photoLink = await prisma.photoLink.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many PhotoLinks and only return the `code`
+     * const photoLinkWithCodeOnly = await prisma.photoLink.createManyAndReturn({
+     *   select: { code: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends PhotoLinkCreateManyAndReturnArgs>(args?: SelectSubset<T, PhotoLinkCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PhotoLinkPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a PhotoLink.
+     * @param {PhotoLinkDeleteArgs} args - Arguments to delete one PhotoLink.
+     * @example
+     * // Delete one PhotoLink
+     * const PhotoLink = await prisma.photoLink.delete({
+     *   where: {
+     *     // ... filter to delete one PhotoLink
+     *   }
+     * })
+     * 
+     */
+    delete<T extends PhotoLinkDeleteArgs>(args: SelectSubset<T, PhotoLinkDeleteArgs<ExtArgs>>): Prisma__PhotoLinkClient<$Result.GetResult<Prisma.$PhotoLinkPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one PhotoLink.
+     * @param {PhotoLinkUpdateArgs} args - Arguments to update one PhotoLink.
+     * @example
+     * // Update one PhotoLink
+     * const photoLink = await prisma.photoLink.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends PhotoLinkUpdateArgs>(args: SelectSubset<T, PhotoLinkUpdateArgs<ExtArgs>>): Prisma__PhotoLinkClient<$Result.GetResult<Prisma.$PhotoLinkPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more PhotoLinks.
+     * @param {PhotoLinkDeleteManyArgs} args - Arguments to filter PhotoLinks to delete.
+     * @example
+     * // Delete a few PhotoLinks
+     * const { count } = await prisma.photoLink.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends PhotoLinkDeleteManyArgs>(args?: SelectSubset<T, PhotoLinkDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more PhotoLinks.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PhotoLinkUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many PhotoLinks
+     * const photoLink = await prisma.photoLink.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends PhotoLinkUpdateManyArgs>(args: SelectSubset<T, PhotoLinkUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more PhotoLinks and returns the data updated in the database.
+     * @param {PhotoLinkUpdateManyAndReturnArgs} args - Arguments to update many PhotoLinks.
+     * @example
+     * // Update many PhotoLinks
+     * const photoLink = await prisma.photoLink.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more PhotoLinks and only return the `code`
+     * const photoLinkWithCodeOnly = await prisma.photoLink.updateManyAndReturn({
+     *   select: { code: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends PhotoLinkUpdateManyAndReturnArgs>(args: SelectSubset<T, PhotoLinkUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PhotoLinkPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one PhotoLink.
+     * @param {PhotoLinkUpsertArgs} args - Arguments to update or create a PhotoLink.
+     * @example
+     * // Update or create a PhotoLink
+     * const photoLink = await prisma.photoLink.upsert({
+     *   create: {
+     *     // ... data to create a PhotoLink
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the PhotoLink we want to update
+     *   }
+     * })
+     */
+    upsert<T extends PhotoLinkUpsertArgs>(args: SelectSubset<T, PhotoLinkUpsertArgs<ExtArgs>>): Prisma__PhotoLinkClient<$Result.GetResult<Prisma.$PhotoLinkPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of PhotoLinks.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PhotoLinkCountArgs} args - Arguments to filter PhotoLinks to count.
+     * @example
+     * // Count the number of PhotoLinks
+     * const count = await prisma.photoLink.count({
+     *   where: {
+     *     // ... the filter for the PhotoLinks we want to count
+     *   }
+     * })
+    **/
+    count<T extends PhotoLinkCountArgs>(
+      args?: Subset<T, PhotoLinkCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], PhotoLinkCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a PhotoLink.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PhotoLinkAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends PhotoLinkAggregateArgs>(args: Subset<T, PhotoLinkAggregateArgs>): Prisma.PrismaPromise<GetPhotoLinkAggregateType<T>>
+
+    /**
+     * Group by PhotoLink.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PhotoLinkGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends PhotoLinkGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: PhotoLinkGroupByArgs['orderBy'] }
+        : { orderBy?: PhotoLinkGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, PhotoLinkGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetPhotoLinkGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the PhotoLink model
+   */
+  readonly fields: PhotoLinkFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for PhotoLink.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__PhotoLinkClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the PhotoLink model
+   */
+  interface PhotoLinkFieldRefs {
+    readonly code: FieldRef<"PhotoLink", 'String'>
+    readonly storageKey: FieldRef<"PhotoLink", 'String'>
+    readonly createdAt: FieldRef<"PhotoLink", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * PhotoLink findUnique
+   */
+  export type PhotoLinkFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PhotoLink
+     */
+    select?: PhotoLinkSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PhotoLink
+     */
+    omit?: PhotoLinkOmit<ExtArgs> | null
+    /**
+     * Filter, which PhotoLink to fetch.
+     */
+    where: PhotoLinkWhereUniqueInput
+  }
+
+  /**
+   * PhotoLink findUniqueOrThrow
+   */
+  export type PhotoLinkFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PhotoLink
+     */
+    select?: PhotoLinkSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PhotoLink
+     */
+    omit?: PhotoLinkOmit<ExtArgs> | null
+    /**
+     * Filter, which PhotoLink to fetch.
+     */
+    where: PhotoLinkWhereUniqueInput
+  }
+
+  /**
+   * PhotoLink findFirst
+   */
+  export type PhotoLinkFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PhotoLink
+     */
+    select?: PhotoLinkSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PhotoLink
+     */
+    omit?: PhotoLinkOmit<ExtArgs> | null
+    /**
+     * Filter, which PhotoLink to fetch.
+     */
+    where?: PhotoLinkWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of PhotoLinks to fetch.
+     */
+    orderBy?: PhotoLinkOrderByWithRelationInput | PhotoLinkOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for PhotoLinks.
+     */
+    cursor?: PhotoLinkWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` PhotoLinks from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` PhotoLinks.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of PhotoLinks.
+     */
+    distinct?: PhotoLinkScalarFieldEnum | PhotoLinkScalarFieldEnum[]
+  }
+
+  /**
+   * PhotoLink findFirstOrThrow
+   */
+  export type PhotoLinkFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PhotoLink
+     */
+    select?: PhotoLinkSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PhotoLink
+     */
+    omit?: PhotoLinkOmit<ExtArgs> | null
+    /**
+     * Filter, which PhotoLink to fetch.
+     */
+    where?: PhotoLinkWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of PhotoLinks to fetch.
+     */
+    orderBy?: PhotoLinkOrderByWithRelationInput | PhotoLinkOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for PhotoLinks.
+     */
+    cursor?: PhotoLinkWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` PhotoLinks from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` PhotoLinks.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of PhotoLinks.
+     */
+    distinct?: PhotoLinkScalarFieldEnum | PhotoLinkScalarFieldEnum[]
+  }
+
+  /**
+   * PhotoLink findMany
+   */
+  export type PhotoLinkFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PhotoLink
+     */
+    select?: PhotoLinkSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PhotoLink
+     */
+    omit?: PhotoLinkOmit<ExtArgs> | null
+    /**
+     * Filter, which PhotoLinks to fetch.
+     */
+    where?: PhotoLinkWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of PhotoLinks to fetch.
+     */
+    orderBy?: PhotoLinkOrderByWithRelationInput | PhotoLinkOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing PhotoLinks.
+     */
+    cursor?: PhotoLinkWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` PhotoLinks from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` PhotoLinks.
+     */
+    skip?: number
+    distinct?: PhotoLinkScalarFieldEnum | PhotoLinkScalarFieldEnum[]
+  }
+
+  /**
+   * PhotoLink create
+   */
+  export type PhotoLinkCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PhotoLink
+     */
+    select?: PhotoLinkSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PhotoLink
+     */
+    omit?: PhotoLinkOmit<ExtArgs> | null
+    /**
+     * The data needed to create a PhotoLink.
+     */
+    data: XOR<PhotoLinkCreateInput, PhotoLinkUncheckedCreateInput>
+  }
+
+  /**
+   * PhotoLink createMany
+   */
+  export type PhotoLinkCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many PhotoLinks.
+     */
+    data: PhotoLinkCreateManyInput | PhotoLinkCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * PhotoLink createManyAndReturn
+   */
+  export type PhotoLinkCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PhotoLink
+     */
+    select?: PhotoLinkSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the PhotoLink
+     */
+    omit?: PhotoLinkOmit<ExtArgs> | null
+    /**
+     * The data used to create many PhotoLinks.
+     */
+    data: PhotoLinkCreateManyInput | PhotoLinkCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * PhotoLink update
+   */
+  export type PhotoLinkUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PhotoLink
+     */
+    select?: PhotoLinkSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PhotoLink
+     */
+    omit?: PhotoLinkOmit<ExtArgs> | null
+    /**
+     * The data needed to update a PhotoLink.
+     */
+    data: XOR<PhotoLinkUpdateInput, PhotoLinkUncheckedUpdateInput>
+    /**
+     * Choose, which PhotoLink to update.
+     */
+    where: PhotoLinkWhereUniqueInput
+  }
+
+  /**
+   * PhotoLink updateMany
+   */
+  export type PhotoLinkUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update PhotoLinks.
+     */
+    data: XOR<PhotoLinkUpdateManyMutationInput, PhotoLinkUncheckedUpdateManyInput>
+    /**
+     * Filter which PhotoLinks to update
+     */
+    where?: PhotoLinkWhereInput
+    /**
+     * Limit how many PhotoLinks to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * PhotoLink updateManyAndReturn
+   */
+  export type PhotoLinkUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PhotoLink
+     */
+    select?: PhotoLinkSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the PhotoLink
+     */
+    omit?: PhotoLinkOmit<ExtArgs> | null
+    /**
+     * The data used to update PhotoLinks.
+     */
+    data: XOR<PhotoLinkUpdateManyMutationInput, PhotoLinkUncheckedUpdateManyInput>
+    /**
+     * Filter which PhotoLinks to update
+     */
+    where?: PhotoLinkWhereInput
+    /**
+     * Limit how many PhotoLinks to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * PhotoLink upsert
+   */
+  export type PhotoLinkUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PhotoLink
+     */
+    select?: PhotoLinkSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PhotoLink
+     */
+    omit?: PhotoLinkOmit<ExtArgs> | null
+    /**
+     * The filter to search for the PhotoLink to update in case it exists.
+     */
+    where: PhotoLinkWhereUniqueInput
+    /**
+     * In case the PhotoLink found by the `where` argument doesn't exist, create a new PhotoLink with this data.
+     */
+    create: XOR<PhotoLinkCreateInput, PhotoLinkUncheckedCreateInput>
+    /**
+     * In case the PhotoLink was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<PhotoLinkUpdateInput, PhotoLinkUncheckedUpdateInput>
+  }
+
+  /**
+   * PhotoLink delete
+   */
+  export type PhotoLinkDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PhotoLink
+     */
+    select?: PhotoLinkSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PhotoLink
+     */
+    omit?: PhotoLinkOmit<ExtArgs> | null
+    /**
+     * Filter which PhotoLink to delete.
+     */
+    where: PhotoLinkWhereUniqueInput
+  }
+
+  /**
+   * PhotoLink deleteMany
+   */
+  export type PhotoLinkDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which PhotoLinks to delete
+     */
+    where?: PhotoLinkWhereInput
+    /**
+     * Limit how many PhotoLinks to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * PhotoLink without action
+   */
+  export type PhotoLinkDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PhotoLink
+     */
+    select?: PhotoLinkSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PhotoLink
+     */
+    omit?: PhotoLinkOmit<ExtArgs> | null
+  }
+
+
+  /**
    * Enums
    */
 
@@ -41326,6 +42403,15 @@ export namespace Prisma {
   };
 
   export type MigrationQuarantineScalarFieldEnum = (typeof MigrationQuarantineScalarFieldEnum)[keyof typeof MigrationQuarantineScalarFieldEnum]
+
+
+  export const PhotoLinkScalarFieldEnum: {
+    code: 'code',
+    storageKey: 'storageKey',
+    createdAt: 'createdAt'
+  };
+
+  export type PhotoLinkScalarFieldEnum = (typeof PhotoLinkScalarFieldEnum)[keyof typeof PhotoLinkScalarFieldEnum]
 
 
   export const SortOrder: {
@@ -44128,6 +45214,48 @@ export namespace Prisma {
     createdAt?: DateTimeWithAggregatesFilter<"MigrationQuarantine"> | Date | string
   }
 
+  export type PhotoLinkWhereInput = {
+    AND?: PhotoLinkWhereInput | PhotoLinkWhereInput[]
+    OR?: PhotoLinkWhereInput[]
+    NOT?: PhotoLinkWhereInput | PhotoLinkWhereInput[]
+    code?: StringFilter<"PhotoLink"> | string
+    storageKey?: StringFilter<"PhotoLink"> | string
+    createdAt?: DateTimeFilter<"PhotoLink"> | Date | string
+  }
+
+  export type PhotoLinkOrderByWithRelationInput = {
+    code?: SortOrder
+    storageKey?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type PhotoLinkWhereUniqueInput = Prisma.AtLeast<{
+    code?: string
+    storageKey?: string
+    AND?: PhotoLinkWhereInput | PhotoLinkWhereInput[]
+    OR?: PhotoLinkWhereInput[]
+    NOT?: PhotoLinkWhereInput | PhotoLinkWhereInput[]
+    createdAt?: DateTimeFilter<"PhotoLink"> | Date | string
+  }, "code" | "storageKey">
+
+  export type PhotoLinkOrderByWithAggregationInput = {
+    code?: SortOrder
+    storageKey?: SortOrder
+    createdAt?: SortOrder
+    _count?: PhotoLinkCountOrderByAggregateInput
+    _max?: PhotoLinkMaxOrderByAggregateInput
+    _min?: PhotoLinkMinOrderByAggregateInput
+  }
+
+  export type PhotoLinkScalarWhereWithAggregatesInput = {
+    AND?: PhotoLinkScalarWhereWithAggregatesInput | PhotoLinkScalarWhereWithAggregatesInput[]
+    OR?: PhotoLinkScalarWhereWithAggregatesInput[]
+    NOT?: PhotoLinkScalarWhereWithAggregatesInput | PhotoLinkScalarWhereWithAggregatesInput[]
+    code?: StringWithAggregatesFilter<"PhotoLink"> | string
+    storageKey?: StringWithAggregatesFilter<"PhotoLink"> | string
+    createdAt?: DateTimeWithAggregatesFilter<"PhotoLink"> | Date | string
+  }
+
   export type ProvinceCreateInput = {
     id?: bigint | number
     code: string
@@ -46741,6 +47869,48 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
+  export type PhotoLinkCreateInput = {
+    code: string
+    storageKey: string
+    createdAt?: Date | string
+  }
+
+  export type PhotoLinkUncheckedCreateInput = {
+    code: string
+    storageKey: string
+    createdAt?: Date | string
+  }
+
+  export type PhotoLinkUpdateInput = {
+    code?: StringFieldUpdateOperationsInput | string
+    storageKey?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type PhotoLinkUncheckedUpdateInput = {
+    code?: StringFieldUpdateOperationsInput | string
+    storageKey?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type PhotoLinkCreateManyInput = {
+    code: string
+    storageKey: string
+    createdAt?: Date | string
+  }
+
+  export type PhotoLinkUpdateManyMutationInput = {
+    code?: StringFieldUpdateOperationsInput | string
+    storageKey?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type PhotoLinkUncheckedUpdateManyInput = {
+    code?: StringFieldUpdateOperationsInput | string
+    storageKey?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
   export type BigIntFilter<$PrismaModel = never> = {
     equals?: bigint | number | BigIntFieldRefInput<$PrismaModel>
     in?: bigint[] | number[] | ListBigIntFieldRefInput<$PrismaModel>
@@ -49132,6 +50302,24 @@ export namespace Prisma {
     id?: SortOrder
     sourceRow?: SortOrder
     resolvedById?: SortOrder
+  }
+
+  export type PhotoLinkCountOrderByAggregateInput = {
+    code?: SortOrder
+    storageKey?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type PhotoLinkMaxOrderByAggregateInput = {
+    code?: SortOrder
+    storageKey?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type PhotoLinkMinOrderByAggregateInput = {
+    code?: SortOrder
+    storageKey?: SortOrder
+    createdAt?: SortOrder
   }
 
   export type CityCreateNestedManyWithoutProvinceInput = {

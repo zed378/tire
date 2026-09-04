@@ -478,6 +478,12 @@ exports.Prisma.MigrationQuarantineScalarFieldEnum = {
   createdAt: 'createdAt'
 };
 
+exports.Prisma.PhotoLinkScalarFieldEnum = {
+  code: 'code',
+  storageKey: 'storageKey',
+  createdAt: 'createdAt'
+};
+
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -616,7 +622,8 @@ exports.Prisma.ModelName = {
   NotificationPreference: 'NotificationPreference',
   ExportJob: 'ExportJob',
   DailyMetric: 'DailyMetric',
-  MigrationQuarantine: 'MigrationQuarantine'
+  MigrationQuarantine: 'MigrationQuarantine',
+  PhotoLink: 'PhotoLink'
 };
 
 /**

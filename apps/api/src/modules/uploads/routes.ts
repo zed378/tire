@@ -4,6 +4,8 @@ import { ACCEPTED_PHOTO_MIME_TYPES, MAX_PHOTO_BYTES } from "@c26/contracts";
 import { loadConfig } from "../../kernel/config.ts";
 import { AppError, wrapRoute } from "../../kernel/envelope/index.ts";
 import { getObject } from "../../kernel/storage/index.ts";
+import { contentTypeFor } from "../../kernel/storage/driver.ts";
+import { storageKeyForPhotoLink } from "../../kernel/storage/photo-link.ts";
 import { verifyStorageToken, writeUpload } from "../../kernel/storage/local-driver.ts";
 
 /**
@@ -71,6 +73,39 @@ export function registerUploadRoutes(app: FastifyInstance): void {
       await writeUpload(payload.key, body);
       return { stored: true };
     }, 201),
+  );
+
+  /*
+   * The short form of a photo link.
+   *
+   * The code IS the authorisation here, exactly as the signature is on the route
+   * below. Sixteen characters of CSPRNG base58 — about 93 bits — is what stands
+   * between a stranger and a customer's fleet photograph, so nothing else about
+   * the request is trusted: no session, no referer, and no host beyond the
+   * boundary `kernel/http/hosts.ts` already enforces.
+   *
+   * It exists because the signed token is ~300 characters and an Excel cell
+   * stops at 32,767, which is not enough for a six-axle truck's photographs.
+   */
+  app.get<{ Params: { code: string } }>(
+    "/api/uploads/s/:code",
+    async (request, reply) => {
+      const storageKey = await storageKeyForPhotoLink(request.params.code);
+
+      // A code that stands for nothing and a photograph that is no longer there
+      // answer identically. Telling them apart would make this an oracle for
+      // which codes exist.
+      if (storageKey === null) return reply.status(404).send();
+
+      const body = await getObject(storageKey);
+      if (body === null) return reply.status(404).send();
+
+      return reply
+        .header("content-type", contentTypeFor(storageKey))
+        .header("cache-control", "private, max-age=300")
+        .header("x-content-type-options", "nosniff")
+        .send(body);
+    },
   );
 
   app.get<{ Params: { token: string } }>(

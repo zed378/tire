@@ -1,9 +1,10 @@
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { mkdtemp, mkdir, writeFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import type { FastifyInstance } from "fastify";
 import type * as LocalDriver from "../../kernel/storage/local-driver.ts";
+import * as photoLink from "../../kernel/storage/photo-link.ts";
 
 /**
  * Serving a downloaded file, through the running application.
@@ -58,6 +59,10 @@ beforeAll(async () => {
   app = buildApp();
   await app.ready();
 }, 60_000);
+
+afterEach(() => {
+  vi.restoreAllMocks();
+});
 
 afterAll(async () => {
   await app?.close();
@@ -177,6 +182,51 @@ describe("a token that does not authorise this", () => {
   it("answers 404 for an object that is not there", async () => {
     const missing = getToken("exports/2026/nothing-here.xlsx", XLSX_MIME);
     const response = await app.inject({ method: "GET", url: `/api/uploads/${missing}` });
+    expect(response.statusCode).toBe(404);
+  });
+});
+
+describe("the short link", () => {
+  /*
+   * The reason it exists: a signed token is ~300 characters and 220 of them do
+   * not fit in an Excel cell. These tests reach the route directly with a row
+   * written by hand, because minting a code needs the database and serving one
+   * does not.
+   */
+  it("serves the photograph its code stands for", async () => {
+    const code = "AbCdEfGhJkLmNpQr";
+    vi.spyOn(photoLink, "storageKeyForPhotoLink").mockResolvedValue(PHOTO_KEY);
+
+    const response = await app.inject({ method: "GET", url: `/api/uploads/s/${code}` });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.headers["content-type"]).toBe("image/webp");
+  });
+
+  it("keeps nosniff and stays private", async () => {
+    vi.spyOn(photoLink, "storageKeyForPhotoLink").mockResolvedValue(PHOTO_KEY);
+
+    const response = await app.inject({ method: "GET", url: "/api/uploads/s/AbCdEfGhJkLmNpQr" });
+
+    expect(response.headers["x-content-type-options"]).toBe("nosniff");
+    expect(String(response.headers["cache-control"])).toContain("private");
+  });
+
+  it("answers 404 for a code that stands for nothing", async () => {
+    vi.spyOn(photoLink, "storageKeyForPhotoLink").mockResolvedValue(null);
+
+    const response = await app.inject({ method: "GET", url: "/api/uploads/s/notarealcode1234" });
+    expect(response.statusCode).toBe(404);
+  });
+
+  it("answers 404 identically when the photograph is gone", async () => {
+    // Same answer as an unknown code, on purpose: telling them apart would make
+    // this an oracle for which codes exist.
+    vi.spyOn(photoLink, "storageKeyForPhotoLink").mockResolvedValue(
+      "inspections/2026/SN2026-00001/STEER_1_L/deleted.webp",
+    );
+
+    const response = await app.inject({ method: "GET", url: "/api/uploads/s/AbCdEfGhJkLmNpQr" });
     expect(response.statusCode).toBe(404);
   });
 });

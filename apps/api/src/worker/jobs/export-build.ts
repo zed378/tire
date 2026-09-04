@@ -1,7 +1,6 @@
 import ExcelJS from "exceljs";
 import {
   EXPORT_KIND_LABELS,
-  EXPORT_PHOTO_LINK_TTL_SECONDS,
   EXPORT_RETENTION_SECONDS,
   PHOTO_SLOT_LABELS,
   type ExportKind,
@@ -9,7 +8,9 @@ import {
 } from "@c26/contracts";
 import { getPrisma, withTransaction } from "../../kernel/db.ts";
 import { publishEvent } from "../../kernel/outbox.ts";
-import { presignDownload, putObject } from "../../kernel/storage/index.ts";
+import { putObject } from "../../kernel/storage/index.ts";
+import { photoLinkCodeFor, SHORT_LINK_PREFIX } from "../../kernel/storage/photo-link.ts";
+import { loadConfig } from "../../kernel/config.ts";
 
 /**
  * Builds an Excel export (PLAN/05 §8, PLAN/08 F5).
@@ -319,13 +320,24 @@ export function formatPhotoLinkCell(
   return text.slice(0, MAX_CELL_LENGTH - notice.length) + notice;
 }
 
+/**
+ * The short, permanent URL for one photograph.
+ *
+ * A signed token is ~300 characters and 220 of them do not fit in an Excel
+ * cell; this is about sixty. The code carries the authorisation the signature
+ * used to, and it does not expire — which is what was asked for, and which the
+ * token route cannot offer on R2 anyway (`EXPORT_PHOTO_LINK_TTL_SECONDS`).
+ */
+async function shortPhotoUrl(storageKey: string): Promise<string> {
+  const base = loadConfig().PUBLIC_API_URL.replace(/\/$/, "");
+  return `${base}${SHORT_LINK_PREFIX}${await photoLinkCodeFor(storageKey)}`;
+}
+
 async function renderPhotoLinks(photos: readonly ExportablePhoto[]): Promise<string> {
   const groups: { label: string; urls: string[] }[] = [];
 
   for (const photo of groupPhotosByPosition(photos)) {
-    const url = await presignDownload(photo.storageKey, {
-      ttlSeconds: EXPORT_PHOTO_LINK_TTL_SECONDS,
-    });
+    const url = await shortPhotoUrl(photo.storageKey);
 
     const last = groups[groups.length - 1];
     if (last !== undefined && last.label === photo.label) last.urls.push(url);
@@ -392,9 +404,7 @@ async function buildPhotoSheet(
           positionCode: photo.positionCode,
           index: photo.index,
           capturedAt: photo.capturedAt === null ? "" : formatWib(photo.capturedAt),
-          url: await presignDownload(photo.storageKey, {
-            ttlSeconds: EXPORT_PHOTO_LINK_TTL_SECONDS,
-          }),
+          url: await shortPhotoUrl(photo.storageKey),
         });
         written += 1;
       }
