@@ -1,5 +1,5 @@
 import AxeBuilder from "@axe-core/playwright";
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 import {
   stubOffline,
   stubServerError,
@@ -92,6 +92,29 @@ test.beforeEach(() => {
   );
 });
 
+/**
+ * Lets the opening animation settle before axe measures anything.
+ *
+ * The landing page runs one orchestration sequence and `networkidle` says
+ * nothing about it: axe sampling a half-faded heading reads the interpolated
+ * colour and reports a contrast failure that exists for 400ms and belongs to
+ * nobody.
+ *
+ * Bounded rather than awaited to completion. The scroll progress strip and the
+ * parallax band are driven by `animation-timeline`, and an animation bound to a
+ * scroll timeline never finishes — awaiting those hung the audit outright, which
+ * is a worse test than the flake it was meant to remove.
+ */
+async function settleAnimations(page: Page): Promise<void> {
+  await page.evaluate(async () => {
+    const finished = Promise.allSettled(
+      document.getAnimations().map(async (animation) => animation.finished),
+    );
+    const budget = new Promise((resolve) => setTimeout(resolve, 1500));
+    await Promise.race([finished, budget]);
+  });
+}
+
 for (const theme of THEMES) {
   test.describe(`Aksesibilitas — tema ${theme}`, () => {
     test.use({ colorScheme: theme });
@@ -100,9 +123,8 @@ for (const theme of THEMES) {
       test(`${route.name} tidak melanggar WCAG 2.1 AA`, async ({ page }) => {
         await stubSignedOutSession(page);
         await page.goto(route.path);
-        // The landing page opens with one orchestration sequence; auditing
-        // mid-animation reads half-faded text as a contrast failure.
         await page.waitForLoadState("networkidle");
+        await settleAnimations(page);
 
         const results = await new AxeBuilder({ page })
           .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
