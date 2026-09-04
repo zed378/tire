@@ -115,6 +115,46 @@ describe('translateDatabaseError', () => {
     expect(result?.code).toBe('SERVICE_UNAVAILABLE');
   });
 
+  /**
+   * The redeployment family (`PLAN/05` §4.6).
+   *
+   * These all describe a connection that existed and then did not: Postgres
+   * restarting under a deploy, a pool that cannot hand out a connection in time.
+   * The contract puts every one of them at 503 with "coba lagi", because there
+   * is nothing for the user to report and nothing for an admin to fix.
+   *
+   * The distinction that matters is the one asserted at the end: a wrong request
+   * must NOT be laundered into a 503. A 503 says "try again", and telling
+   * somebody to retry a request that will never succeed is worse than the 500.
+   */
+  describe('a database that went away mid-request', () => {
+    const CASES = [
+      ['P1001', 'the server cannot be reached'],
+      ['P1002', 'the server was reached and timed out'],
+      ['P1008', 'the operation timed out'],
+      ['P1017', 'the server closed the connection'],
+      ['P2024', 'the connection pool timed out'],
+    ] as const;
+
+    for (const [code, situation] of CASES) {
+      it(`answers 503 when ${situation} (${code})`, () => {
+        const result = translateDatabaseError(makePrismaError(code));
+
+        expect(result?.code).toBe('SERVICE_UNAVAILABLE');
+        // The whole point: not the 500 copy, which tells the user to quote a
+        // request id to an admin who will find nothing wrong.
+        expect(result?.message).toContain('coba lagi');
+      });
+    }
+
+    it('does not launder a genuine client mistake into "try again"', () => {
+      // P2003 is a foreign key that does not resolve. Retrying it forever is
+      // exactly what a 503 would invite.
+      expect(translateDatabaseError(makePrismaError('P2003'))?.code).toBe('VALIDATION_ERROR');
+      expect(translateDatabaseError(makePrismaError('P2025'))?.code).toBe('NOT_FOUND');
+    });
+  });
+
   it('returns null for an unknown constraint', () => {
     const err = makePrismaError('P2002', { target: ['unknown_constraint_xyz'] });
     const result = translateDatabaseError(err);

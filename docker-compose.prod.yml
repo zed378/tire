@@ -61,6 +61,12 @@ services:
       interval: 30s
       timeout: 5s
       retries: 3
+      # Boot is not a failure. Without this, the first check fires 30s in and a
+      # container still connecting to Postgres burns all three retries and is
+      # reported unhealthy during an ordinary deployment — which makes
+      # `docker compose ps` say the opposite of the truth at the one moment
+      # somebody is actually reading it.
+      start_period: 60s
 
   # Everything that must happen once per deployment, in order, before api and
   # worker are allowed to start. api and worker both wait on this completing

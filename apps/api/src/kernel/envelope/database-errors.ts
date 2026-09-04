@@ -186,6 +186,30 @@ const TRIGGER_MAP: { prefix: string; toError: (message: string) => AppError }[] 
   },
 ];
 
+/**
+ * Prisma codes that mean "the database is not available right now", not "your
+ * request was wrong".
+ *
+ * `PLAN/05` §4.6 maps this whole family to a 503 with a banner and a suggestion
+ * to try again. Only two of them were being caught: the initialization error and
+ * the Rust panic — both of which describe a client that never connected. The
+ * codes below describe a client that *had* connected and then lost the server,
+ * which is the ordinary shape of a redeployment: Postgres restarts, the pooled
+ * connections die, and every request in flight lands here.
+ *
+ * Falling through to a 500 was not a cosmetic mistake. The 500 copy tells the
+ * user to report a code to the admin, so a thirty-second restart window turns
+ * into a defect report about a system that was working correctly — and the code
+ * they were told to quote points at no bug at all.
+ */
+const UNAVAILABLE_CODES = new Set([
+  "P1001", // Cannot reach the database server.
+  "P1002", // Reached it; it timed out.
+  "P1008", // The operation timed out.
+  "P1017", // The server closed the connection.
+  "P2024", // Timed out taking a connection from the pool — the redeploy case.
+]);
+
 function constraintNameFrom(error: Prisma.PrismaClientKnownRequestError): string | null {
   const meta = error.meta ?? {};
   const target = (meta as { target?: unknown }).target;
@@ -227,6 +251,12 @@ export function translateDatabaseError(error: unknown): AppError | null {
       });
     }
     if (error.code === "P2025") return new AppError("NOT_FOUND");
+
+    // Checked after the constraint and reference cases above, because those are
+    // specific and these are a catch-all for the connection itself.
+    if (UNAVAILABLE_CODES.has(error.code)) {
+      return new AppError("SERVICE_UNAVAILABLE", { cause: error });
+    }
   }
 
   const message =
