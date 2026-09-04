@@ -29,11 +29,37 @@ const configSchema = z.object({
     .enum(["fatal", "error", "warn", "info", "debug", "trace", "silent"])
     .default("info"),
 
-  // Hostname that serves signed photo URLs and nothing else. Empty disables the
-  // restriction, which is right for local development where everything is
-  // localhost. See kernel/http/hosts.ts.
-  // production: tire-store.zedth.my.id
-  STORAGE_HOST: z.string().default(""),
+  /*
+   * Hostname that serves signed photo URLs and nothing else. Empty disables the
+   * restriction, which is right for local development where everything is
+   * localhost. See kernel/http/hosts.ts.
+   *
+   * production: tire-store.zedth.my.id
+   *
+   * A BARE HOSTNAME. Not a URL — and this is checked because writing the URL is
+   * the obvious mistake and it fails silently in two directions at once:
+   *
+   *   `app.ts` builds the CSP source as `https://${STORAGE_HOST}`, so a value
+   *   of `https://tire-store...` yields `https://https://tire-store...`. The
+   *   browser discards a source expression it cannot parse, and every photo
+   *   upload is blocked exactly as if the setting were missing.
+   *
+   *   `normalizeHost` splits on `:` to drop the port, so the same value reduces
+   *   to `https`, which matches no request. The restriction keeping that
+   *   hostname to `/api/uploads/` is off, and it serves the whole API again.
+   *
+   * Both failures are invisible from the server: the upload never arrives, and
+   * the relaxed routing looks like ordinary traffic.
+   */
+  STORAGE_HOST: z
+    .string()
+    .default("")
+    .refine((value) => value === "" || /^[a-z0-9.-]+$/i.test(value.trim()), {
+      message:
+        "STORAGE_HOST must be a bare hostname such as tire-store.zedth.my.id — no scheme, no " +
+        "port, no path. The scheme is added when the CSP source is built, so a URL here " +
+        "produces https://https://… and the browser blocks every photo upload.",
+    }),
 
   // Built SPA. Empty means this process serves no static files, which is what
   // local development wants — Vite serves them on :5173 and proxies /api here.
