@@ -388,6 +388,115 @@ test.describe("Kanal galat", () => {
   }
 });
 
+/**
+ * A finished upload has to reach the screen without a reload.
+ *
+ * Reported from the field: the photograph uploaded, the network tab showed
+ * presign, PUT and confirm all succeeding, and the slot went straight back to
+ * "Belum ada foto." and `0/10`. Only F5 revealed it.
+ *
+ * The queue can only report what is still waiting, so a completed item leaves it
+ * as an absence — the placeholder vanishes and nothing replaces it, because the
+ * server list on screen was fetched before the photograph existed.
+ */
+test.describe("Unggahan selesai", () => {
+  test("foto muncul tanpa memuat ulang halaman", async ({ page }) => {
+    let confirmed = false;
+
+    await stubSignedInApi(page);
+
+    // Registered after the catch-all, so these win for their paths.
+    await page.route("**/photos/presign", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          ok: true,
+          requestId: "req_e2e_upload",
+          data: {
+            uploadUrl: "https://tire-store.e2e.test/api/uploads/token",
+            storageKey: "inspections/2026/SN2026-00002/side/e2e.webp",
+            expiresAt: new Date(Date.now() + 600_000).toISOString(),
+            alreadyUploaded: false,
+            existingPhotoId: null,
+          },
+        }),
+      });
+    });
+
+    await page.route("https://tire-store.e2e.test/**", async (route) => {
+      await route.fulfill({ status: 200, body: "" });
+    });
+
+    await page.route("**/photos/confirm", async (route) => {
+      confirmed = true;
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ ok: true, requestId: "req_e2e_upload", data: { id: 99 } }),
+      });
+    });
+
+    // The list the screen holds: empty until the confirm lands, one photograph
+    // afterwards. This is the server's view, and the whole question is whether
+    // the screen goes back for it.
+    await page.route("**/api/inspections/*/photos", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          ok: true,
+          requestId: "req_e2e_upload",
+          data: confirmed
+            ? [
+                {
+                  id: 99,
+                  slot: "side",
+                  tirePositionId: null,
+                  tirePositionLabel: null,
+                  url: "/img/depot-640.jpg",
+                  thumbnailUrl: "/img/depot-640.jpg",
+                  byteSize: 1024,
+                  width: 640,
+                  height: 427,
+                  capturedAt: null,
+                  uploadedByName: "Joko Supplier",
+                  createdAt: new Date().toISOString(),
+                  commentCount: 0,
+                },
+              ]
+            : [],
+        }),
+      });
+    });
+
+    await page.goto("/inspections/SN2026-00002");
+    await expect(page.getByRole("navigation", { name: "Navigasi utama" })).toBeVisible();
+
+    const slot = page.locator("div").filter({ hasText: /^Tampak Samping/ }).first();
+    await expect(slot).toContainText("0/10");
+
+    await page
+      .getByLabel("Ambil foto Tampak Samping")
+      .setInputFiles({ name: "ban.jpg", mimeType: "image/jpeg", buffer: onePixelJpeg() });
+
+    // No reload anywhere in this test. If the screen only learns about the
+    // photograph by being reloaded, this is where it fails.
+    await expect(slot).toContainText("1/10", { timeout: 15_000 });
+    await expect(slot.locator("img")).toBeVisible();
+  });
+});
+
+/** The smallest thing the compressor will accept as a photograph. */
+function onePixelJpeg(): Buffer {
+  return Buffer.from(
+    "/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0a" +
+      "HBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL/wAALCAABAAEBAREA/8QAFAABAAAAAAAA" +
+      "AAAAAAAAAAAACf/EABQQAQAAAAAAAAAAAAAAAAAAAAD/2gAIAQEAAD8AKp//2Q==",
+    "base64",
+  );
+}
+
 test.describe("Lebar layar", () => {
   for (const route of PUBLIC_ROUTES) {
     for (const size of WIDTHS) {

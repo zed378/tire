@@ -17,6 +17,7 @@ import {
   removeQueueItems,
   retryFailedIn,
   subscribeToQueue,
+  subscribeToUploadCompletions,
 } from "../../lib/photo/upload-queue.ts";
 import type { QueueItem } from "../../lib/photo/queue-store.ts";
 import { Banner, ErrorBanner, StatusBadge, useToast } from "../../components/ui/feedback.tsx";
@@ -40,6 +41,40 @@ export function InspectionDetailPage(): ReactNode {
   const [error, setError] = useState<unknown>(null);
 
   useEffect(() => subscribeToQueue(setQueue), []);
+
+  /*
+   * A finished upload leaves the queue, so the queue subscription above reports
+   * it only as an absence: the "Menunggu unggah" tile disappears and the slot
+   * falls back to "Belum ada foto." and `0/10`. The photograph is on the server;
+   * this screen is simply holding a list it fetched before the upload existed,
+   * and a manual reload was the only way to see it.
+   *
+   * The detail query is invalidated too, not just the photo list: `canSubmit`
+   * and `submitBlockedReason` are computed from the photo count, so the submit
+   * button stays blocked for a reason that has stopped being true.
+   *
+   * Debounced, because uploads finish one after another. Thirty photographs
+   * would otherwise mean thirty round trips on the 4G connection PLAN/06 §3 is
+   * written around.
+   */
+  useEffect(() => {
+    let timer: number | undefined;
+
+    const unsubscribe = subscribeToUploadCompletions((serialNumber) => {
+      if (serialNumber !== sn) return;
+
+      window.clearTimeout(timer);
+      timer = window.setTimeout(() => {
+        void queryClient.invalidateQueries({ queryKey: ["inspection-photos", sn] });
+        void queryClient.invalidateQueries({ queryKey: ["inspection", sn] });
+      }, 400);
+    });
+
+    return () => {
+      window.clearTimeout(timer);
+      unsubscribe();
+    };
+  }, [sn, queryClient]);
 
   const detail = useQuery({
     queryKey: ["inspection", sn],

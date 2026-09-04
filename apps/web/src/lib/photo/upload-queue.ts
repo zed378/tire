@@ -49,6 +49,32 @@ export function subscribeToQueue(listener: QueueListener): () => void {
   return () => listeners.delete(listener);
 }
 
+/**
+ * Announces that a photograph finished and now belongs to the server.
+ *
+ * A SEPARATE EVENT FROM THE QUEUE, because the queue can only say what is still
+ * waiting. When an upload completes the item is deleted, so the queue listener
+ * fires with the item simply gone — the placeholder tile disappears and nothing
+ * takes its place. The screen went from "Menunggu unggah" straight back to
+ * "Belum ada foto." and `0/10`, and only a manual reload showed the photograph
+ * that had in fact been stored.
+ *
+ * The server's list is what holds it now, so what this carries is the serial
+ * number of the inspection whose list is stale.
+ */
+export type UploadCompletedListener = (serialNumber: string) => void;
+
+const completionListeners = new Set<UploadCompletedListener>();
+
+export function subscribeToUploadCompletions(listener: UploadCompletedListener): () => void {
+  completionListeners.add(listener);
+  return () => completionListeners.delete(listener);
+}
+
+function notifyCompleted(serialNumber: string): void {
+  for (const listener of completionListeners) listener(serialNumber);
+}
+
 /** Backoff with jitter, so a returning signal does not stampede the server. */
 function backoffFor(attempts: number): number {
   const base = BASE_BACKOFF_MS * Math.pow(2, attempts);
@@ -202,6 +228,9 @@ export async function processQueue(): Promise<void> {
 
       try {
         await uploadOne(item);
+        // Only on the way out of a successful upload: the row exists on the
+        // server now, and whatever is showing the old list has to ask again.
+        notifyCompleted(item.serialNumber);
       } catch (error) {
         const attempts = item.attempts + 1;
         const permanent =
