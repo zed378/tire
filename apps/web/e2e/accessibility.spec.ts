@@ -566,6 +566,22 @@ test.describe("Pratinjau foto", () => {
     await expect(page.getByRole("button", { name: "Hapus Foto" })).toBeVisible();
   });
 
+  test("tidak menawarkan hapus setelah pengajuan dikirim", async ({ page }) => {
+    /*
+     * `deletePhoto` refuses a supplier once the inspection has left `draft` or
+     * `needs_revision`. Offering a button the server will refuse is the shape of
+     * defect this codebase keeps finding: a control that looks available and
+     * answers with an error.
+     */
+    await stubSignedInApi(page, { inspectionStatus: "pending_qc" });
+    await page.goto("/inspections/SN2026-00001");
+    await expect(page.getByRole("navigation", { name: "Navigasi utama" })).toBeVisible();
+
+    await page.getByRole("button", { name: /Lihat foto/ }).first().click();
+    await expect(page.getByRole("dialog")).toBeVisible();
+    await expect(page.getByRole("button", { name: "Hapus Foto" })).toHaveCount(0);
+  });
+
   test("tidak menawarkan hapus di tinjauan QC", async ({ page }) => {
     // QC judges the evidence; it does not remove it. A reviewer who could delete
     // a photograph could change what a decision rested on.

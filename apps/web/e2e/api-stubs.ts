@@ -505,12 +505,19 @@ async function answer(route: Route, body: unknown): Promise<void> {
  */
 export async function stubSignedInApi(
   page: Page,
-  options: { empty?: boolean } = {},
+  options: { empty?: boolean; inspectionStatus?: InspectionListItem["status"] } = {},
 ): Promise<void> {
   await page.route("**/api/**", async (route) => {
     const path = new URL(route.request().url()).pathname;
     const matched = ROUTES.find((entry) => entry.match(path));
-    const body = matched?.body ?? {};
+    let body = matched?.body ?? {};
+
+    // The detail screen renders very differently either side of `draft`: the
+    // photo slots, the submit panel and the delete affordance all depend on it.
+    // Overriding it here keeps one fixture rather than a second copy of it.
+    if (options.inspectionStatus !== undefined && body === INSPECTION_DETAIL) {
+      body = { ...INSPECTION_DETAIL, status: options.inspectionStatus };
+    }
 
     // The session itself is never emptied — an empty list is a screen with no
     // rows, not a user who is suddenly signed out.
