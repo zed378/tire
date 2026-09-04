@@ -95,9 +95,23 @@ describe("the QR code an authenticator has to read", () => {
   });
 
   it("surrounds the symbol with the four-module quiet zone the spec requires", () => {
-    // §9.1. A scanner needs the blank margin to find the symbol's edges; the
-    // previous rendering left two.
-    const { viewBox } = renderedModules(REAL_URI);
+    /*
+     * §9.1. A scanner needs the blank margin to find the symbol's edges; the
+     * previous rendering left two.
+     *
+     * The symbol's own extent is measured rather than inferred from the
+     * viewBox. The old encoder chose version 8 and a 2-module margin, which
+     * comes to 49 + 4 = 53 — the same total as version 7 with the correct
+     * 4-module margin. Asserting the total alone would pass on both.
+     */
+    const { points, viewBox } = renderedModules(REAL_URI);
+
+    const coordinates = [...points].map((point) => point.split(",").map(Number));
+    const lowest = Math.min(...coordinates.flat());
+    const highest = Math.max(...coordinates.flat());
+
+    expect(lowest).toBe(4);
+    expect(highest).toBe(4 + 45 - 1);
     expect(viewBox).toBe(45 + 4 * 2);
   });
 });
