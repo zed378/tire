@@ -1,7 +1,8 @@
 import ExcelJS from "exceljs";
 import {
   EXPORT_KIND_LABELS,
-  EXPORT_LINK_TTL_SECONDS,
+  EXPORT_PHOTO_LINK_TTL_SECONDS,
+  EXPORT_RETENTION_SECONDS,
   PHOTO_SLOT_LABELS,
   type ExportKind,
   type PhotoSlot,
@@ -310,7 +311,7 @@ async function buildPhotoSheet(
           index: photo.index,
           capturedAt: photo.capturedAt === null ? "" : formatWib(photo.capturedAt),
           url: await presignDownload(photo.storageKey, {
-            ttlSeconds: EXPORT_LINK_TTL_SECONDS,
+            ttlSeconds: EXPORT_PHOTO_LINK_TTL_SECONDS,
           }),
         });
         written += 1;
@@ -524,7 +525,7 @@ export async function buildExport(jobId: string): Promise<{ rowCount: number }> 
           rowCount,
           storageKey,
           finishedAt: new Date(),
-          expiresAt: new Date(Date.now() + EXPORT_LINK_TTL_SECONDS * 1000),
+          expiresAt: new Date(Date.now() + EXPORT_RETENTION_SECONDS * 1000),
         },
       });
 

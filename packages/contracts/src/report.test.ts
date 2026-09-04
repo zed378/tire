@@ -2,7 +2,8 @@ import { describe, expect, it } from "vitest";
 import {
   EXPORT_KINDS,
   EXPORT_KIND_LABELS,
-  EXPORT_LINK_TTL_SECONDS,
+  EXPORT_PHOTO_LINK_TTL_SECONDS,
+  EXPORT_RETENTION_SECONDS,
   exportFileName,
 } from "./report.ts";
 
@@ -41,17 +42,24 @@ describe("exportFileName", () => {
   });
 });
 
-describe("EXPORT_LINK_TTL_SECONDS", () => {
-  it("does not exceed the seven days AWS SigV4 will sign", () => {
-    // Anything longer works on the local driver and fails the day storage moves
-    // to R2 — the worst kind of limit to discover, because nothing fails until
-    // the environment changes.
-    expect(EXPORT_LINK_TTL_SECONDS).toBeLessThanOrEqual(7 * 24 * 60 * 60);
+describe("how long an export and its links last", () => {
+  it("keeps the export file for a week", () => {
+    expect(EXPORT_RETENTION_SECONDS).toBe(7 * 24 * 60 * 60);
   });
 
-  it("is long enough to outlive the report being read", () => {
-    // A link that expires in fifteen minutes is a link that is dead by the time
-    // anyone opens the spreadsheet it is in.
-    expect(EXPORT_LINK_TTL_SECONDS).toBeGreaterThanOrEqual(24 * 60 * 60);
+  it("gives the photo links inside it no expiry at all", () => {
+    // Asked for explicitly. It is a grant, not a setting: a signed link carries
+    // its own authorisation, so one that never expires is permanent
+    // unauthenticated access for anyone the spreadsheet reaches. Revoking means
+    // rotating STORAGE_SIGNING_KEY, which kills every link in every export.
+    expect(EXPORT_PHOTO_LINK_TTL_SECONDS).toBeNull();
+  });
+
+  it("stays within what R2 can sign, if it is ever given a number", () => {
+    // AWS SigV4 refuses to sign beyond seven days. `null` is refused outright by
+    // the S3 driver rather than capped; any number here has to fit.
+    if (EXPORT_PHOTO_LINK_TTL_SECONDS !== null) {
+      expect(EXPORT_PHOTO_LINK_TTL_SECONDS).toBeLessThanOrEqual(7 * 24 * 60 * 60);
+    }
   });
 });

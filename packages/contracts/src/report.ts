@@ -55,25 +55,35 @@ export const EXPORT_KIND_LABELS: Record<ExportKind, string> = {
 };
 
 /**
- * How long an export, and every link inside it, remains usable.
+ * How long a finished export stays available for download.
  *
- * ONE NUMBER FOR BOTH, on purpose. The export row carries an `expiresAt` and the
- * photo links in the sheet are signed URLs with their own expiry; if those two
- * drift apart you get a spreadsheet that is still listed as available and full
- * of links that answer 404, which is worse than one that is plainly gone.
- *
- * Seven days is also the ceiling rather than a preference: AWS SigV4, which R2
- * speaks, refuses to sign a URL for longer. Choosing anything above it would
- * work on the local driver and silently fail the day storage moves to R2.
- *
- * WHAT THIS COSTS, stated plainly because it is a real trade. A signed photo
- * link needs no login — the signature is the authorisation (PLAN/05 §7). A
- * spreadsheet full of them is therefore a spreadsheet that grants a week of
- * access to customer fleet photographs to anyone it is forwarded to. That is the
- * price of a report whose links work; the alternative is links that expire
- * before the person reading the report gets to them.
+ * The row carries an `expiresAt` and a cleanup job removes the file, so this is
+ * the file's own lifetime — not the lifetime of the photo links inside it. Those
+ * are separate and deliberately different; see `EXPORT_PHOTO_LINK_TTL_SECONDS`.
  */
-export const EXPORT_LINK_TTL_SECONDS = 7 * 24 * 60 * 60;
+export const EXPORT_RETENTION_SECONDS = 7 * 24 * 60 * 60;
+
+/**
+ * How long a photo link inside an export stays valid. `null` means never.
+ *
+ * ASKED FOR EXPLICITLY, and it is a grant rather than a setting, so it is worth
+ * stating what it grants. A signed photo link carries its own authorisation —
+ * that is what makes it work from a spreadsheet with no login (`PLAN/05` §7). A
+ * link with no expiry is therefore permanent, unauthenticated access to that
+ * photograph for anyone the spreadsheet is ever forwarded to. Revoking one means
+ * rotating `STORAGE_SIGNING_KEY`, which invalidates every link in every export
+ * ever issued.
+ *
+ * IT ALSO PINS THE STORAGE DRIVER. AWS SigV4, which R2 speaks, refuses to sign a
+ * URL for longer than seven days, so `null` cannot be honoured there. The S3
+ * driver throws rather than quietly capping — a "permanent" link that silently
+ * becomes a seven-day one is the worse failure. Moving to R2 means setting a
+ * number here first.
+ *
+ * A number is the alternative if that trade stops looking worthwhile: 604800 is
+ * the longest R2 will accept.
+ */
+export const EXPORT_PHOTO_LINK_TTL_SECONDS: number | null = null;
 
 /**
  * The name an export is saved under.

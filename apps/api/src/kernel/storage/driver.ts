@@ -18,7 +18,16 @@ export interface PresignedUpload {
 }
 
 export interface DownloadOptions {
-  ttlSeconds?: number;
+  /**
+   * Seconds the link stays valid, or `null` for a link that never expires.
+   *
+   * `null` IS NOT AVAILABLE ON S3/R2 and the driver there refuses it rather
+   * than quietly capping: AWS SigV4 will not sign a URL for longer than seven
+   * days, so a "permanent" link would silently become a seven-day one the day
+   * storage moves. Better to fail at the moment of asking than to hand somebody
+   * a link that dies without warning.
+   */
+  ttlSeconds?: number | null;
   /**
    * When set, the browser is told to save the file under this name rather than
    * try to display it.

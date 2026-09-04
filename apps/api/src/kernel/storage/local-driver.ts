@@ -39,7 +39,15 @@ interface TokenPayload {
   size: number;
   mime: string;
   checksum: string;
-  expiresAt: number;
+  /**
+   * When the token stops working, or `null` for one that never does.
+   *
+   * `null` is only ever used for the photo links inside an Excel export, and it
+   * is a deliberate grant: a signed link needs no login, so a link that never
+   * expires is permanent unauthenticated access to that photograph for anyone
+   * the spreadsheet reaches. Upload tokens are never issued this way.
+   */
+  expiresAt: number | null;
   operation: "put" | "get";
   /** Present on a download token when the file should be saved, not displayed. */
   filename?: string;
@@ -70,7 +78,9 @@ export function verifyStorageToken(token: string): TokenPayload | null {
 
   try {
     const payload = JSON.parse(Buffer.from(body, "base64url").toString("utf8")) as TokenPayload;
-    if (payload.expiresAt < Date.now()) return null;
+    // `null` means the token was issued without an expiry. It cannot be forged
+    // into one: the whole payload is under the HMAC.
+    if (payload.expiresAt !== null && payload.expiresAt < Date.now()) return null;
     return payload;
   } catch {
     return null;
@@ -132,7 +142,7 @@ export const localStorageDriver: StorageDriver = {
   },
 
   presignDownload(storageKey, options = {}): Promise<string> {
-    const ttlSeconds = options.ttlSeconds ?? 900;
+    const ttlSeconds = options.ttlSeconds === undefined ? 900 : options.ttlSeconds;
 
     const token = createStorageToken({
       key: storageKey,
@@ -141,7 +151,7 @@ export const localStorageDriver: StorageDriver = {
       // guess was `webp or jpeg`, which served every Excel export as an image.
       mime: contentTypeFor(storageKey),
       checksum: "",
-      expiresAt: Date.now() + ttlSeconds * 1000,
+      expiresAt: ttlSeconds === null ? null : Date.now() + ttlSeconds * 1000,
       operation: "get",
       ...(options.filename === undefined ? {} : { filename: options.filename }),
     });

@@ -73,6 +73,18 @@ export const s3StorageDriver: StorageDriver = {
   },
 
   presignDownload(storageKey, options = {}): Promise<string> {
+    if (options.ttlSeconds === null) {
+      // Refused rather than capped. AWS SigV4 will not sign a URL for more than
+      // seven days, so honouring "never expires" here is impossible — and
+      // quietly substituting seven days would hand an operator a spreadsheet of
+      // links they believe are permanent and that stop working next week.
+      throw new Error(
+        "STORAGE_DRIVER=s3 cannot issue a download link without an expiry: AWS SigV4 caps a " +
+          "presigned URL at 7 days. Set a ttlSeconds of at most 604800 for links that must work " +
+          "on R2, or keep STORAGE_DRIVER=local.",
+      );
+    }
+
     return getSignedUrl(
       getClient(),
       new GetObjectCommand({

@@ -1,5 +1,5 @@
 import {
-  EXPORT_LINK_TTL_SECONDS,
+  EXPORT_RETENTION_SECONDS,
   exportFileName,
   type CreateExportInput,
   type ExportJobStatus,
@@ -173,7 +173,7 @@ export async function getExportStatus(actor: Actor, jobId: string): Promise<Expo
       job.storageKey === null
         ? null
         : await presignDownload(job.storageKey, {
-            ttlSeconds: EXPORT_LINK_TTL_SECONDS,
+            ttlSeconds: EXPORT_RETENTION_SECONDS,
             filename: exportFileName(job.kind as ExportKind, job.createdAt),
           }),
     error: job.errorMessage,
@@ -200,7 +200,7 @@ export async function listExports(actor: Actor): Promise<ExportJobStatus[]> {
         job.storageKey === null
           ? null
           : await presignDownload(job.storageKey, {
-              ttlSeconds: EXPORT_LINK_TTL_SECONDS,
+              ttlSeconds: EXPORT_RETENTION_SECONDS,
               filename: exportFileName(job.kind as ExportKind, job.createdAt),
             }),
       error: job.errorMessage,
